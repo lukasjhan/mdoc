@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.3
+
+### Patch Changes
+
+- 713905b: ops: only include dist in release
+- Updated dependencies [713905b]
+  - @protokoll/core@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes
