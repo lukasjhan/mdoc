@@ -36,6 +36,22 @@ export type GetAuthRequestParametersOut = v.InferOutput<
   typeof vGetAuthRequestParamsOut
 >;
 
+export type JoseJweVerify = (input: {
+  compact: string;
+  jwsVerificationMethod: JwsVerificationMethod;
+}) => MaybePromise<{
+  payload: JWTPayload;
+  protectedHeader: ProtectedHeaderParameters;
+}>;
+
+export type JoseJweDecrypt = (input: {
+  jwe: string;
+  jwk: JWK;
+}) => MaybePromise<{
+  plaintext: string;
+  protectedHeader: CompactJWEHeaderParameters;
+}>;
+
 export interface JarmDirectPostJwtAuthResponseValidationContext {
   oAuth: {
     authRequest: {
@@ -46,19 +62,10 @@ export interface JarmDirectPostJwtAuthResponseValidationContext {
   };
   jose: {
     jwe: {
-      decrypt: (input: { jwe: string; jwk: JWK }) => MaybePromise<{
-        plaintext: string;
-        protectedHeader: CompactJWEHeaderParameters;
-      }>;
+      decrypt: JoseJweDecrypt;
     };
     jws: {
-      verify: (input: {
-        compact: string;
-        jwsVerificationMethod: JwsVerificationMethod;
-      }) => MaybePromise<{
-        payload: JWTPayload;
-        protectedHeader: ProtectedHeaderParameters;
-      }>;
+      verify: JoseJweVerify;
     };
   };
 }

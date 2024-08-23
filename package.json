@@ -19,7 +19,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "postinstall": "pnpm lint:ws",
-    "release": "pnpm changeset publish"
+    "release": "turbo run release && pnpm changeset publish"
   },
   "devDependencies": {
     "@protokoll/prettier-config": "workspace:*",
