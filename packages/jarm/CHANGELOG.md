@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.6
+
+### Patch Changes
+
+- 52fb831: ops: package.json interop with older module-resolution settings
+- Updated dependencies [52fb831]
+  - @protokoll/core@0.2.6
+
 ## 0.2.5
 
 ### Patch Changes
