@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.3
+
+### Patch Changes
+
+- 713905b: ops: only include dist in release
+
 ## 0.2.2
 
 ### Patch Changes
