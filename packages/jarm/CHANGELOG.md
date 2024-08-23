@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.5
+
+### Patch Changes
+
+- 2e94435: ops: point types to correct location
+- Updated dependencies [2e94435]
+  - @protokoll/core@0.2.5
+
 ## 0.2.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.5
+
+### Patch Changes
+
+- 2e94435: ops: point types to correct location
+
 ## 0.2.4
 
 ## 0.2.3
