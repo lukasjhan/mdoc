@@ -23,7 +23,7 @@ export type JarmAuthResponseParams = v.InferInput<
   typeof vJarmAuthResponseParams
 >;
 
-export const jarmAuthResponseValidateParams = (input: {
+export const validateJarmAuthResponseParams = (input: {
   authRequestParams: { client_id: string; state: string };
   authResponseParams: JarmAuthResponseParams;
 }) => {

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import type { JSONWebKeySet, JWK } from '@protokoll/core';
+import type { JWK } from '@protokoll/core';
 import {
   decodeJwt,
   decodeProtectedHeader,
@@ -10,13 +10,9 @@ import {
 
 import type { JarmDirectPostJwtAuthResponseValidationContext } from './c-jarm-auth-response.js';
 import {
-  jarmOpenid4vpAuthResponseValidateParams,
-  vJarmOpenid4vpResponseParams,
+  validateJarmDirectPostJwtAuthResponseParams,
+  vJarmDirectPostJwtParams,
 } from '../index.js';
-
-export interface ClientMetadata {
-  jwks: JSONWebKeySet;
-}
 
 export interface JarmAuthResponseValidation {
   /**
@@ -38,7 +34,7 @@ export interface JarmAuthResponseValidation {
  * * The decryption key should be resolvable using the the protected header's 'kid' field
  * * The signature verification jwk should be resolvable using the jws protected header's 'kid' field and the payload's 'iss' field.
  */
-export const jarmDirectPostJwtAuthResponseValidation = async (
+export const validateJarmDirectPostResponse = async (
   input: JarmAuthResponseValidation,
   ctx: JarmDirectPostJwtAuthResponseValidationContext
 ) => {
@@ -68,10 +64,7 @@ export const jarmDirectPostJwtAuthResponseValidation = async (
     }
   }
 
-  const authResponseParams = v.parse(
-    vJarmOpenid4vpResponseParams,
-    responseParams
-  );
+  const authResponseParams = v.parse(vJarmDirectPostJwtParams, responseParams);
 
   const { authRequestParams } =
     await ctx.oAuth.authRequest.getParams(authResponseParams);
@@ -79,7 +72,7 @@ export const jarmDirectPostJwtAuthResponseValidation = async (
   // TODO: MATCH REQUEST TO RESPONSE
   // TODO: check if it is an actual error response with error, error_uri etc and handle that accordingly
 
-  jarmOpenid4vpAuthResponseValidateParams({
+  validateJarmDirectPostJwtAuthResponseParams({
     authRequestParams,
     authResponseParams,
   });

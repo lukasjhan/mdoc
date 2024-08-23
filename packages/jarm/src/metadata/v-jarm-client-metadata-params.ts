@@ -7,6 +7,9 @@ const vJarmClientMetadataParamsBase = v.object({
       'JWA. If this is specified, the response will be signed using JWS and the configured algorithm. The algorithm none is not allowed.'
     )
   ),
+
+  authorization_encrypted_response_alg: v.optional(v.never()),
+  authorization_encrypted_response_enc: v.optional(v.never()),
 });
 
 /**
@@ -34,3 +37,7 @@ export const vJarmClientMetadataParams = v.union([
     ),
   }),
 ]);
+
+export type JarmClientMetadataParams = v.InferInput<
+  typeof vJarmClientMetadataParams
+>;

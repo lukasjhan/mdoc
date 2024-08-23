@@ -33,7 +33,7 @@
     "@protokoll/eslint-config": "workspace:*",
     "@protokoll/prettier-config": "workspace:*",
     "@protokoll/tsconfig": "workspace:*",
-    "@types/node": "^22.0.2",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "jose": "^5.6.3",
     "msw": "^2.3.5",

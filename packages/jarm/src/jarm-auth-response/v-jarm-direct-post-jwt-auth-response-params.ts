@@ -2,19 +2,19 @@ import * as v from 'valibot';
 
 import { vJarmAuthResponseParams } from './v-jarm-auth-response-params.js';
 
-export const vJarmOpenid4vpResponseParams = v.looseObject({
+export const vJarmDirectPostJwtParams = v.looseObject({
   ...v.omit(vJarmAuthResponseParams, ['iss', 'aud', 'exp']).entries,
   vp_token: v.string(),
   presentation_submission: v.unknown(),
 });
 
-export type JarmOpenId4VpResponseParams = v.InferInput<
-  typeof vJarmOpenid4vpResponseParams
+export type JarmDirectPostJwtResponseParams = v.InferInput<
+  typeof vJarmDirectPostJwtParams
 >;
 
-export const jarmOpenid4vpAuthResponseValidateParams = (input: {
+export const validateJarmDirectPostJwtAuthResponseParams = (input: {
   authRequestParams: { state?: string };
-  authResponseParams: JarmOpenId4VpResponseParams;
+  authResponseParams: JarmDirectPostJwtResponseParams;
 }) => {
   const { authRequestParams, authResponseParams } = input;
 

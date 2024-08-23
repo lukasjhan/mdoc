@@ -1,9 +1,11 @@
+import type { JSONWebKeySet } from '@protokoll/core';
 import {
   appendFragmentParams,
   appendQueryParams,
   NOT_IMPLEMENTED,
 } from '@protokoll/core';
 
+import type { JarmClientMetadataParams } from '../metadata/v-jarm-client-metadata-params.js';
 import type {
   JarmResponseMode,
   Openid4vpJarmResponseMode,
@@ -14,7 +16,44 @@ import {
   validateResponseMode,
 } from '../v-response-mode-registry.js';
 
-interface JarmAuthResponseSend {
+export interface ClientMetadata {
+  jwks?: JSONWebKeySet;
+  jwks_uri?: string;
+}
+
+export const extractJarmAuthResponseEncJwk = (input: {
+  client_metadata: ClientMetadata & JarmClientMetadataParams;
+}) => {
+  const { client_metadata } = input;
+
+  if (!client_metadata.jwks && !client_metadata.jwks_uri) {
+    throw new Error(
+      `Invalid client metadata. Neither 'jwks' nor 'jwks_uri' provided. Cannot extract encryption jwk.`
+    );
+  }
+
+  if (!client_metadata.jwks) {
+    throw new Error(
+      'Jwk extraction from Remote Json Web Keysets is not yet supported.'
+    );
+  }
+
+  const encAlg = client_metadata.authorization_encrypted_response_alg;
+
+  const [jwk, ..._rest] = client_metadata.jwks.keys.filter(
+    key => key.use === 'enc' && key.alg === encAlg
+  );
+
+  if (!jwk) {
+    throw new Error(
+      `No suitable encryption key found in client_metadata. Expected jwk with use 'enc' and alg '${encAlg}'.`
+    );
+  }
+
+  return jwk;
+};
+
+interface SendJarmAuthResponseInput {
   authRequestParams: {
     response_mode?: JarmResponseMode | Openid4vpJarmResponseMode;
     response_type: ResponseTypeOut;
@@ -32,8 +71,8 @@ interface JarmAuthResponseSend {
   };
 }
 
-export const jarmAuthResponseSend = async (
-  input: JarmAuthResponseSend
+export const sendJarmAuthResponse = async (
+  input: SendJarmAuthResponseInput
 ): Promise<Response> => {
   const { authRequestParams, authResponseParams } = input;
 

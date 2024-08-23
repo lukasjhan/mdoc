@@ -10,7 +10,7 @@ import type {
 } from '@protokoll/core';
 
 import type { JarmAuthResponseParams } from './v-jarm-auth-response-params.js';
-import type { JarmOpenId4VpResponseParams } from './v-jarm-openid4vp-response-params.js';
+import type { JarmDirectPostJwtResponseParams } from './v-jarm-direct-post-jwt-auth-response-params.js';
 import {
   vJarmResponseMode,
   vOpenid4vpJarmResponseMode,
@@ -28,20 +28,27 @@ export const vAuthRequestParams = v.looseObject({
 
 export type AuthRequestParams = v.InferInput<typeof vAuthRequestParams>;
 
-export const vGetAuthRequestParamsOut = v.object({
+export const vOAuthAuthRequestGetParamsOut = v.object({
   authRequestParams: vAuthRequestParams,
 });
 
-export type GetAuthRequestParametersOut = v.InferOutput<
-  typeof vGetAuthRequestParamsOut
+export type OAuthAuthRequestGetParamsOut = v.InferOutput<
+  typeof vOAuthAuthRequestGetParamsOut
 >;
 
-export type JoseJweVerify = (input: {
+export type JoseJwsVerify = (input: {
   compact: string;
   jwsVerificationMethod: JwsVerificationMethod;
 }) => MaybePromise<{
   payload: JWTPayload;
   protectedHeader: ProtectedHeaderParameters;
+}>;
+
+export type JoseJweEncrypt = (input: {
+  plaintext: string;
+  jwk: JWK;
+}) => MaybePromise<{
+  jwe: string;
 }>;
 
 export type JoseJweDecrypt = (input: {
@@ -56,16 +63,12 @@ export interface JarmDirectPostJwtAuthResponseValidationContext {
   oAuth: {
     authRequest: {
       getParams: (
-        input: JarmAuthResponseParams | JarmOpenId4VpResponseParams
-      ) => MaybePromise<GetAuthRequestParametersOut>;
+        input: JarmAuthResponseParams | JarmDirectPostJwtResponseParams
+      ) => MaybePromise<OAuthAuthRequestGetParamsOut>;
     };
   };
   jose: {
-    jwe: {
-      decrypt: JoseJweDecrypt;
-    };
-    jws: {
-      verify: JoseJweVerify;
-    };
+    jwe: { decrypt: JoseJweDecrypt };
+    jws: { verify: JoseJwsVerify };
   };
 }

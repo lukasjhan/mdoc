@@ -12,7 +12,10 @@ export const oAuthMRTEPResponseTypes = v.picklist([
   'code id_token token',
 ]);
 
-export const openid4vpResponseTypes = v.picklist(['vp_token']);
+export const openid4vpResponseTypes = v.picklist([
+  'vp_token',
+  'id_token vp_token',
+]);
 
 export const vTransformedResponseTypes = v.picklist([
   ...openid4vpResponseTypes.options,

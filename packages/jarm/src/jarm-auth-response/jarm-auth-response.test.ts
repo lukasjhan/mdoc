@@ -11,7 +11,7 @@ import {
   ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
   ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
 } from './jarm-auth-response.fixtures.js';
-import { jarmDirectPostJwtAuthResponseValidation } from './jarm-auth-response.js';
+import { validateJarmDirectPostResponse } from './jarm-auth-response.js';
 
 export const decrypt = async (input: {
   jwe: string;
@@ -36,7 +36,7 @@ export const decrypt = async (input: {
 void describe('Jarm Auth Response', () => {
   void it(`'ISO_MDL_7_JARM_AUTH_RESPONSE' can be validated`, async () => {
     const { authRequestParams, authResponseParams } =
-      await jarmDirectPostJwtAuthResponseValidation(
+      await validateJarmDirectPostResponse(
         {
           response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
           resolveDecryptionJwk: () => ({

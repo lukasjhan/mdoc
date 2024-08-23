@@ -74,6 +74,7 @@ export const getDefaultResponseMode = (input: {
     case 'id_token token':
     case 'code id_token token':
     case 'vp_token':
+    case 'id_token vp_token':
       return 'fragment';
   }
 };
