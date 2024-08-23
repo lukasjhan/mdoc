@@ -3,7 +3,7 @@
   "description": "protokoll Eslint Config",
   "author": "Martin Auer",
   "private": true,
-  "version": "0.2.5",
+  "version": "0.2.6",
   "type": "module",
   "exports": {
     "./base": "./base.js"
