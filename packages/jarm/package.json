@@ -5,6 +5,9 @@
   "version": "0.2.2",
   "private": false,
   "type": "module",
+  "files": [
+    "./dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/src/index.js",
