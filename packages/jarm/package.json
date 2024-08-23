@@ -2,7 +2,7 @@
   "name": "@protokoll/jarm",
   "description": "JWT Secured Authorization Response Mode (JARM)",
   "author": "Auer Martin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": false,
   "type": "module",
   "exports": {
