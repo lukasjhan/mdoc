@@ -28,7 +28,7 @@
       "dependsOn": ["^build"]
     },
     "release": {
-      "dependsOn": ["^build", "build"]
+      "dependsOn": ["build"]
     },
     "clean": {
       "cache": false
