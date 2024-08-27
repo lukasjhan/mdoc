@@ -9,8 +9,12 @@ import { ISO_MDL_7_JARM_AUTH_RESPONSE_JWT } from './jarm-auth-response.fixtures.
 void describe('Jarm Auth Response Send', async () => {
   await it(`response_type 'vp_token' response_mode 'direct_post.jwt'`, async () => {
     const handlers = [
-      // TODO: check that the request has an xxx form urlencoded body with the response param
-      http.post(`https://example-relying-party.com`, () => {
+      http.post(`https://example-relying-party.com`, async ({ request }) => {
+        const contentType = request.headers.get('Content-Type');
+        assert.equal(contentType, 'application/x-www-form-urlencoded');
+
+        const text = await request.text();
+        assert.equal(text, ISO_MDL_7_JARM_AUTH_RESPONSE_JWT);
         return HttpResponse.json({});
       }),
     ];
@@ -84,6 +88,7 @@ void describe('Jarm Auth Response Send', async () => {
       },
     });
 
+    server.close();
     assert.ok(response.ok);
   });
 });

@@ -1,76 +1,116 @@
 import * as v from 'valibot';
 
-import type { JWK } from '@protokoll/core';
 import {
   decodeJwt,
   decodeProtectedHeader,
-  getJwsVerificationMethod,
+  isJwe,
   isJws,
 } from '@protokoll/core';
 
-import type { JarmDirectPostJwtAuthResponseValidationContext } from './c-jarm-auth-response.js';
+import type { JarmDirectPostJwtResponseParams } from '../index.js';
+import type {
+  AuthRequestParams,
+  JarmDirectPostJwtAuthResponseValidationContext,
+} from './c-jarm-auth-response.js';
 import {
   validateJarmDirectPostJwtAuthResponseParams,
+  vJarmAuthResponseErrorParams,
   vJarmDirectPostJwtParams,
 } from '../index.js';
 
-export interface JarmAuthResponseValidation {
+export interface JarmDirectPostJwtAuthResponseValidation {
   /**
    * The JARM response parameter conveyed either as url query param, fragment param, or application/x-www-form-urlencoded in the body of the post request
-   *
    */
   response: string;
-
-  /**
-   * (OPTIONAL) The client decrypts the JWT using the key determined by the kid JWT header parameter.
-   * The key might be a private key, where the corresponding public key is registered with the expected issuer of the response
-   * ("use":"enc" via the client's metadata jwks or jwks_uri) or a key derived from its client secret (see section 4.2).
-   */
-  resolveDecryptionJwk: (input: { kid: string }) => { jwk: JWK };
 }
 
-/**
- * Validate a JARM compliant authentication response
- * * The decryption key should be resolvable using the the protected header's 'kid' field
- * * The signature verification jwk should be resolvable using the jws protected header's 'kid' field and the payload's 'iss' field.
- */
-export const validateJarmDirectPostResponse = async (
-  input: JarmAuthResponseValidation,
+const parseJarmAuthResponseParams = (responseParams: unknown) => {
+  if (v.is(vJarmAuthResponseErrorParams, responseParams)) {
+    const errorResponseJson = JSON.stringify(responseParams, undefined, 2);
+    throw new Error(
+      `Received error response from authorization server. '${errorResponseJson}'`
+    );
+  }
+
+  return v.parse(vJarmDirectPostJwtParams, responseParams);
+};
+
+const decryptJarmAuthResponse = async (
+  input: { response: string },
   ctx: JarmDirectPostJwtAuthResponseValidationContext
 ) => {
   const { response } = input;
 
   const responseProtectedHeader = decodeProtectedHeader(response);
-
-  let responseParams: unknown;
-
-  if (!responseProtectedHeader.enc) {
-    responseParams = await jarmResponseVerifyJws(input, ctx);
-  } else {
-    if (!responseProtectedHeader.kid) {
-      throw new Error(`JWE is missing required protected header field 'kid'`);
-    }
-
-    const { jwk } = input.resolveDecryptionJwk({
-      kid: responseProtectedHeader.kid,
-    });
-
-    const { plaintext } = await ctx.jose.jwe.decrypt({ jwe: response, jwk });
-
-    if (isJws(plaintext)) {
-      responseParams = await jarmResponseVerifyJws(input, ctx);
-    } else {
-      responseParams = JSON.parse(plaintext);
-    }
+  if (!responseProtectedHeader.kid) {
+    throw new Error(`Jarm JWE is missing the protected header field 'kid'.`);
   }
 
-  const authResponseParams = v.parse(vJarmDirectPostJwtParams, responseParams);
+  const jwk = { kid: responseProtectedHeader.kid };
+  const { plaintext } = await ctx.jose.jwe.decrypt({ jwe: response, jwk });
 
-  const { authRequestParams } =
-    await ctx.oAuth.authRequest.getParams(authResponseParams);
+  return plaintext;
+};
 
-  // TODO: MATCH REQUEST TO RESPONSE
-  // TODO: check if it is an actual error response with error, error_uri etc and handle that accordingly
+/**
+ * Validate a JARM direct_post.jwt compliant authentication response
+ * * The decryption key should be resolvable using the the protected header's 'kid' field
+ * * The signature verification jwk should be resolvable using the jws protected header's 'kid' field and the payload's 'iss' field.
+ */
+export const validateJarmDirectPostJwtResponse = async (
+  input: JarmDirectPostJwtAuthResponseValidation,
+  ctx: JarmDirectPostJwtAuthResponseValidationContext
+) => {
+  const { response } = input;
+
+  if (!isJws(response) && !isJwe(response)) {
+    throw new Error(
+      'Jarm Auth Response must be either encrypted, signed, or signed and encrypted.'
+    );
+  }
+
+  const decryptedResponse = isJwe(response)
+    ? await decryptJarmAuthResponse(input, ctx)
+    : response;
+
+  let authResponseParams: JarmDirectPostJwtResponseParams;
+  let authRequestParams: AuthRequestParams;
+
+  if (isJws(decryptedResponse)) {
+    const jwsProtectedHeader = decodeProtectedHeader(decryptedResponse);
+    const jwsPayload = decodeJwt(decryptedResponse);
+
+    authResponseParams = parseJarmAuthResponseParams(jwsPayload);
+    const getParamsResult =
+      await ctx.openid4vp.authRequest.getParams(authResponseParams);
+    authRequestParams = getParamsResult.authRequestParams;
+
+    if (!jwsProtectedHeader.kid) {
+      throw new Error(`Jarm JWS is missing the protected header field 'kid'.`);
+    }
+
+    const jwk = authRequestParams.client_metadata.jwks?.keys.find(
+      key => key.kid === jwsProtectedHeader.kid
+    );
+
+    if (!jwk) {
+      throw new Error(
+        'Could not determine the signature verification JWK from the client_metadata for the Jarm Response.'
+      );
+    }
+
+    await ctx.jose.jws.verify({ compact: response, jwk });
+  } else {
+    const jsonResponse: unknown = JSON.parse(decryptedResponse);
+    authResponseParams = parseJarmAuthResponseParams(jsonResponse);
+    const getParamsResult =
+      await ctx.openid4vp.authRequest.getParams(authResponseParams);
+
+    authRequestParams = getParamsResult.authRequestParams;
+  }
+
+  // TODO: MUST WE CHECK WHEATHER THE KEY USED TO DECRYPT THE ACTUAL RESPONSE WAS CONVEYED IN THE METADATA?
 
   validateJarmDirectPostJwtAuthResponseParams({
     authRequestParams,
@@ -79,20 +119,3 @@ export const validateJarmDirectPostResponse = async (
 
   return { authRequestParams, authResponseParams };
 };
-
-async function jarmResponseVerifyJws(
-  input: Pick<JarmAuthResponseValidation, 'response'>,
-  ctx: JarmDirectPostJwtAuthResponseValidationContext
-) {
-  const { response } = input;
-  const jwsProtectedHeader = decodeProtectedHeader(response);
-  const jwsPayload = decodeJwt(response);
-
-  const jwsVerificationMethod = getJwsVerificationMethod(
-    { header: jwsProtectedHeader, payload: jwsPayload },
-    { type: 'jarm-response' }
-  );
-
-  await ctx.jose.jws.verify({ compact: response, jwsVerificationMethod });
-  return jwsPayload;
-}

@@ -3,7 +3,6 @@ import * as v from 'valibot';
 import type {
   CompactJWEHeaderParameters,
   JWK,
-  JwsVerificationMethod,
   JWTPayload,
   MaybePromise,
   ProtectedHeaderParameters,
@@ -24,6 +23,14 @@ export const vAuthRequestParams = v.looseObject({
   ),
   client_id: v.string(),
   response_type: vResponseType,
+  client_metadata: v.looseObject({
+    jwks: v.optional(
+      v.object({
+        keys: v.array(v.looseObject({ kid: v.optional(v.string()) })),
+      })
+    ),
+    jwks_uri: v.optional(v.string()),
+  }),
 });
 
 export type AuthRequestParams = v.InferInput<typeof vAuthRequestParams>;
@@ -38,7 +45,7 @@ export type OAuthAuthRequestGetParamsOut = v.InferOutput<
 
 export type JoseJwsVerify = (input: {
   compact: string;
-  jwsVerificationMethod: JwsVerificationMethod;
+  jwk: JWK;
 }) => MaybePromise<{
   payload: JWTPayload;
   protectedHeader: ProtectedHeaderParameters;
@@ -60,7 +67,7 @@ export type JoseJweDecrypt = (input: {
 }>;
 
 export interface JarmDirectPostJwtAuthResponseValidationContext {
-  oAuth: {
+  openid4vp: {
     authRequest: {
       getParams: (
         input: JarmAuthResponseParams | JarmDirectPostJwtResponseParams

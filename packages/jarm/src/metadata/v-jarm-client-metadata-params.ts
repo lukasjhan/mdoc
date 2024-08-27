@@ -30,7 +30,7 @@ export const vJarmClientMetadataParams = v.union([
     ),
 
     authorization_encrypted_response_enc: v.pipe(
-      v.string(),
+      v.optional(v.string(), 'A128CBC-HS256'),
       v.description(
         'JWE enc algorithm JWA. If both signing and encryption are requested, the response will be signed then encrypted with the provided algorithm.'
       )

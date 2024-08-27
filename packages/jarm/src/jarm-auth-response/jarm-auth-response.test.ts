@@ -11,16 +11,23 @@ import {
   ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
   ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
 } from './jarm-auth-response.fixtures.js';
-import { validateJarmDirectPostResponse } from './jarm-auth-response.js';
+import { validateJarmDirectPostJwtResponse } from './jarm-auth-response.js';
 
 export const decrypt = async (input: {
   jwe: string;
   jwk: JWK;
   alg?: string;
 }) => {
-  const { jwe, jwk, alg } = input;
+  const { jwe, jwk } = input;
   const decode = TextDecoder.prototype.decode.bind(new TextDecoder());
-  const privateKey = await jose.importJWK(jwk, alg ?? jwk.alg);
+
+  let privateKeyJwk: JWK;
+  if (jwk.kid === ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK.kid) {
+    privateKeyJwk = ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK;
+  } else {
+    throw new Error('Received jwk with invalid kid.');
+  }
+  const privateKey = await jose.importJWK(privateKeyJwk);
 
   const { plaintext, protectedHeader } = await jose.compactDecrypt(
     jwe,
@@ -36,15 +43,10 @@ export const decrypt = async (input: {
 void describe('Jarm Auth Response', () => {
   void it(`'ISO_MDL_7_JARM_AUTH_RESPONSE' can be validated`, async () => {
     const { authRequestParams, authResponseParams } =
-      await validateJarmDirectPostResponse(
+      await validateJarmDirectPostJwtResponse(
+        { response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT },
         {
-          response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
-          resolveDecryptionJwk: () => ({
-            jwk: ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK,
-          }),
-        },
-        {
-          oAuth: {
+          openid4vp: {
             authRequest: {
               getParams: () => ({
                 authRequestParams: ISO_MDL_7_JAR_AUTH_REQUEST_PARAMS,
