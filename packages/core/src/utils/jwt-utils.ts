@@ -15,8 +15,7 @@ export const isJws = (jws: string) => {
 export const isJwe = (jwe: string) => {
   const jweParts = jwe.split('.');
   return (
-    jweParts.length === 5 &&
-    jweParts.every(part => BASE64_URL_REGEX.test(part) || part === '') // TODO: WHY IS THIS NOT WORKING
+    jweParts.length === 5 && jweParts.every(part => BASE64_URL_REGEX.test(part))
   );
 };
 
@@ -26,7 +25,7 @@ export const checkExp = (input: {
   clockSkew?: number;
 }) => {
   const { exp, now, clockSkew } = input;
-  return exp < (now ?? Date.now() / 1000) + (clockSkew ?? 120);
+  return exp < (now ?? Date.now() / 1000) - (clockSkew ?? 120);
 };
 
 export const decodeProtectedHeader = (
