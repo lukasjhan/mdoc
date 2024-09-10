@@ -82,9 +82,8 @@ export const validateJarmDirectPostJwtResponse = async (
     const jwsPayload = decodeJwt(decryptedResponse);
 
     authResponseParams = parseJarmAuthResponseParams(jwsPayload);
-    const getParamsResult =
-      await ctx.openid4vp.authRequest.getParams(authResponseParams);
-    authRequestParams = getParamsResult.authRequestParams;
+    ({ authRequestParams } =
+      await ctx.openid4vp.authRequest.getParams(authResponseParams));
 
     if (!jwsProtectedHeader.kid) {
       throw new Error(`Jarm JWS is missing the protected header field 'kid'.`);
@@ -104,10 +103,8 @@ export const validateJarmDirectPostJwtResponse = async (
   } else {
     const jsonResponse: unknown = JSON.parse(decryptedResponse);
     authResponseParams = parseJarmAuthResponseParams(jsonResponse);
-    const getParamsResult =
-      await ctx.openid4vp.authRequest.getParams(authResponseParams);
-
-    authRequestParams = getParamsResult.authRequestParams;
+    ({ authRequestParams } =
+      await ctx.openid4vp.authRequest.getParams(authResponseParams));
   }
 
   // TODO: MUST WE CHECK WHEATHER THE KEY USED TO DECRYPT THE ACTUAL RESPONSE WAS CONVEYED IN THE METADATA?
