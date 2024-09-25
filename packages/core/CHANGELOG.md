@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.10
+
+### Patch Changes
+
+- f73bda1: feat: add utility
+
 ## 0.2.9
 
 ### Patch Changes
