@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.10
+
+### Patch Changes
+
+- f73bda1: feat: add utility
+- Updated dependencies [f73bda1]
+  - @protokoll/core@0.2.10
+
 ## 0.2.9
 
 ### Patch Changes
