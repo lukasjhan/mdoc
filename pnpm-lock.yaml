@@ -12,6 +12,15 @@ catalogs:
     eslint:
       specifier: ^9.9.0
       version: 9.9.0
+    jose:
+      specifier: ^5.6.3
+      version: 5.9.3
+    msw:
+      specifier: ^2.3.5
+      version: 2.4.9
+    pkgroll:
+      specifier: ^2.5.0
+      version: 2.5.0
     prettier:
       specifier: ^3.3.3
       version: 3.3.3
@@ -76,10 +85,10 @@ importers:
         specifier: 'catalog:'
         version: 9.9.0(jiti@1.21.6)
       jose:
-        specifier: ^5.6.3
+        specifier: 'catalog:'
         version: 5.9.3
       pkgroll:
-        specifier: ^2.5.0
+        specifier: 'catalog:'
         version: 2.5.0(typescript@5.5.4)
       prettier:
         specifier: 'catalog:'
@@ -119,11 +128,14 @@ importers:
         specifier: 'catalog:'
         version: 9.9.0(jiti@1.21.6)
       jose:
-        specifier: ^5.6.3
+        specifier: 'catalog:'
         version: 5.9.3
       msw:
-        specifier: ^2.3.5
+        specifier: 'catalog:'
         version: 2.4.9(typescript@5.5.4)
+      pkgroll:
+        specifier: 'catalog:'
+        version: 2.5.0(typescript@5.5.4)
       prettier:
         specifier: 'catalog:'
         version: 3.3.3
