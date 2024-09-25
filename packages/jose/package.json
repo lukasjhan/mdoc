@@ -1,0 +1,45 @@
+{
+  "name": "@protokoll/jose",
+  "description": "Protokoll Jose",
+  "author": "Martin Auer",
+  "private": false,
+  "version": "0.2.1",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    "require": {
+      "types": "./dist/index.d.cts",
+      "default": "./dist/index.cjs"
+    },
+    "import": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules dist",
+    "build": "pkgroll",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@protokoll/core": "workspace:*",
+    "jwt-decode": "^4.0.0",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@protokoll/eslint-config": "workspace:*",
+    "@protokoll/prettier-config": "workspace:*",
+    "@protokoll/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "pkgroll": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@protokoll/prettier-config"
+}

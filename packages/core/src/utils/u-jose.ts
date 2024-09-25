@@ -105,34 +105,33 @@ export const vJwksExtractable = v.looseObject({
 });
 
 /**
- * Extracts JSON Web Key Set (JWKS) from the provided client metadata.
+ * Extracts JSON Web Key Set (JWKS) from the provided metadata.
  * If a jwks field is provided, the JWKS will be extracted from the field.
  * If a jwks_uri is provided, the JWKS will be fetched from the URI.
  *
- * @param input - The client metadata input to be validated and parsed.
+ * @param input - The metadata input to be validated and parsed.
  * @returns A promise that resolves to the extracted JWKS or undefined.
- * @throws {JwksExtractionError} If the client metadata format is invalid or no decryption key is found.
+ * @throws {JwksExtractionError} If the metadata format is invalid or no decryption key is found.
  */
 export const joseExtractJWKS = async (
   input: v.InferInput<typeof vJwksExtractable>
 ) => {
-  const vClientMetadata = vJwksExtractable;
-  const parsedClientMetadata = v.safeParse(vClientMetadata, input);
+  const parsedMetadata = v.safeParse(vJwksExtractable, input);
 
-  if (!parsedClientMetadata.success) {
+  if (!parsedMetadata.success) {
     throw new JwksExtractionError({
       code: 'BAD_REQUEST',
-      message: `Invalid client metadata format: ${JSON.stringify(v.flatten(parsedClientMetadata.issues))}`,
+      message: `Invalid metadata format: ${JSON.stringify(v.flatten(parsedMetadata.issues))}`,
     });
   }
 
-  const clientMetadata = parsedClientMetadata.output;
-  let jwks: JWKS | undefined = clientMetadata.jwks?.keys[0]
-    ? clientMetadata.jwks
+  const metadata = parsedMetadata.output;
+  let jwks: JWKS | undefined = metadata.jwks?.keys[0]
+    ? metadata.jwks
     : undefined;
 
-  if (!jwks && clientMetadata.jwks_uri) {
-    jwks = await joseFetchJWKS(clientMetadata.jwks_uri);
+  if (!jwks && metadata.jwks_uri) {
+    jwks = await joseFetchJWKS(metadata.jwks_uri);
   }
 
   return jwks;
