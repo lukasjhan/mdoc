@@ -3,8 +3,8 @@ import { setupServer } from 'msw/node';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
-import { sendJarmAuthResponse } from './jarm-auth-response-send.js';
-import { ISO_MDL_7_JARM_AUTH_RESPONSE_JWT } from './jarm-auth-response.fixtures.js';
+import { ISO_MDL_7_JARM_AUTH_RESPONSE_JWT } from '../jarm-auth-response/jarm-auth-response.fixtures.js';
+import { sendJarmAuthRequest } from './jarm-auth-request.js';
 
 void describe('Jarm Auth Response Send', async () => {
   await it(`response_type 'vp_token' response_mode 'direct_post.jwt'`, async () => {
@@ -21,7 +21,7 @@ void describe('Jarm Auth Response Send', async () => {
     const server = setupServer(...handlers);
     server.listen();
 
-    const response = await sendJarmAuthResponse({
+    const response = await sendJarmAuthRequest({
       authRequestParams: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
@@ -49,7 +49,7 @@ void describe('Jarm Auth Response Send', async () => {
     const server = setupServer(...handlers);
     server.listen();
 
-    const response = await sendJarmAuthResponse({
+    const response = await sendJarmAuthRequest({
       authRequestParams: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
@@ -77,7 +77,7 @@ void describe('Jarm Auth Response Send', async () => {
     const server = setupServer(...handlers);
     server.listen();
 
-    const response = await sendJarmAuthResponse({
+    const response = await sendJarmAuthRequest({
       authRequestParams: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',

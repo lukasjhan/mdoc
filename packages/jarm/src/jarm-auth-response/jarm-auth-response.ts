@@ -5,6 +5,7 @@ import {
   decodeProtectedHeader,
   isJwe,
   isJws,
+  joseExtractJWKS,
 } from '@protokoll/core';
 
 import {
@@ -24,7 +25,7 @@ import {
 
 export interface JarmDirectPostJwtAuthResponseValidation {
   /**
-   * The JARM response parameter conveyed either as url query param, fragment param, or application/x-www-form-urlencoded in the body of the post request
+   * The JARM response parameter conveyed either as url query param, fragment param, or application/x-www-form-urlencoded in the body of a post request
    */
   response: string;
 }
@@ -99,9 +100,8 @@ export const validateJarmDirectPostJwtResponse = async (
       });
     }
 
-    const jwk = authRequestParams.client_metadata.jwks?.keys.find(
-      key => key.kid === jwsProtectedHeader.kid
-    );
+    const jwks = await joseExtractJWKS(authRequestParams.client_metadata);
+    const jwk = jwks?.keys.find(key => key.kid === jwsProtectedHeader.kid);
 
     if (!jwk) {
       throw new JarmAuthResponseValidationError({
@@ -117,8 +117,6 @@ export const validateJarmDirectPostJwtResponse = async (
     ({ authRequestParams } =
       await ctx.openid4vp.authRequest.getParams(authResponseParams));
   }
-
-  // TODO: MUST WE CHECK WHEATHER THE KEY USED TO DECRYPT THE ACTUAL RESPONSE WAS CONVEYED IN THE METADATA?
 
   validateJarmDirectPostJwtAuthResponseParams({
     authRequestParams,

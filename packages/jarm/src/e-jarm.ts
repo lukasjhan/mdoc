@@ -8,4 +8,3 @@ export class JarmAuthResponseValidationError extends JarmError {
     super({ code: 'BAD_REQUEST', ...opts });
   }
 }
-export class JarmDecryptionJwkExtractionError extends JarmError {}

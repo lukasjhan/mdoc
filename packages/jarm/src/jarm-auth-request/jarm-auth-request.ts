@@ -15,7 +15,7 @@ import {
 } from '../v-response-mode-registry.js';
 import type { ResponseTypeOut } from '../v-response-type-registry.js';
 
-interface SendJarmAuthResponseInput {
+interface SendJarmAuthRequestInput {
   authRequestParams: {
     response_mode?: JarmResponseMode | Openid4vpJarmResponseMode;
     response_type: ResponseTypeOut;
@@ -33,8 +33,8 @@ interface SendJarmAuthResponseInput {
   };
 }
 
-export const sendJarmAuthResponse = async (
-  input: SendJarmAuthResponseInput
+export const sendJarmAuthRequest = async (
+  input: SendJarmAuthRequestInput
 ): Promise<Response> => {
   const { authRequestParams, authResponseParams } = input;
 
