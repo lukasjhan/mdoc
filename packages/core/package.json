@@ -38,6 +38,7 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jose": "catalog:",
+    "msw": "catalog:",
     "pkgroll": "catalog:",
     "prettier": "catalog:",
     "tsx": "catalog:",

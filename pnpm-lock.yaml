@@ -87,6 +87,9 @@ importers:
       jose:
         specifier: 'catalog:'
         version: 5.9.3
+      msw:
+        specifier: 'catalog:'
+        version: 2.4.9(typescript@5.5.4)
       pkgroll:
         specifier: 'catalog:'
         version: 2.5.0(typescript@5.5.4)

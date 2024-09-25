@@ -53,7 +53,6 @@ export const validateJarmAuthResponseParams = (input: {
   // 2. The client obtains the state parameter from the JWT and checks its binding to the user agent. If the check fails, the client MUST abort processing and refuse the response.
   if (authRequestParams.state !== authResponseParams.state) {
     throw new JarmAuthResponseValidationError({
-      code: 'BAD_REQUEST',
       message: `State missmatch in jarm-auth-response. Expected '${authRequestParams.state}' received '${authRequestParams.state}'.`,
     });
   }
@@ -61,7 +60,6 @@ export const validateJarmAuthResponseParams = (input: {
   // 4. The client obtains the aud element from the JWT and checks whether it matches the client id the client used to identify itself in the corresponding authorization request. If the check fails, the client MUST abort processing and refuse the response.
   if (authRequestParams.client_id !== authResponseParams.client_id) {
     throw new JarmAuthResponseValidationError({
-      code: 'BAD_REQUEST',
       message: `Invalid audience in jarm-auth-response. Expected '${authRequestParams.client_id}' received '${authResponseParams.aud}'.`,
     });
   }
@@ -70,7 +68,6 @@ export const validateJarmAuthResponseParams = (input: {
   // 120 seconds clock skew
   if (checkExp({ exp: authResponseParams.exp })) {
     throw new JarmAuthResponseValidationError({
-      code: 'BAD_REQUEST',
       message: `The '${authRequestParams.state}' and the jarm-auth-response.`,
     });
   }

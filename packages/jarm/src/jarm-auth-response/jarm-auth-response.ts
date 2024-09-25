@@ -9,18 +9,18 @@ import {
 
 import {
   JarmAuthResponseValidationError,
-  JarmErrorResponseError,
+  JarmReceivedErrorResponse,
 } from '../e-jarm.js';
 import type { JarmDirectPostJwtResponseParams } from '../index.js';
-import {
-  validateJarmDirectPostJwtAuthResponseParams,
-  vJarmAuthResponseErrorParams,
-  vJarmDirectPostJwtParams,
-} from '../index.js';
 import type {
   AuthRequestParams,
   JarmDirectPostJwtAuthResponseValidationContext,
 } from './c-jarm-auth-response.js';
+import { vJarmAuthResponseErrorParams } from './v-jarm-auth-response-params.js';
+import {
+  vJarmDirectPostJwtParams,
+  validateJarmDirectPostJwtAuthResponseParams,
+} from './v-jarm-direct-post-jwt-auth-response-params.js';
 
 export interface JarmDirectPostJwtAuthResponseValidation {
   /**
@@ -32,7 +32,7 @@ export interface JarmDirectPostJwtAuthResponseValidation {
 const parseJarmAuthResponseParams = (responseParams: unknown) => {
   if (v.is(vJarmAuthResponseErrorParams, responseParams)) {
     const errorResponseJson = JSON.stringify(responseParams, undefined, 2);
-    throw new JarmErrorResponseError({
+    throw new JarmReceivedErrorResponse({
       code: 'PARSE_ERROR',
       message: `Received error response from authorization server. '${errorResponseJson}'`,
     });
@@ -50,7 +50,6 @@ const decryptJarmAuthResponse = async (
   const responseProtectedHeader = decodeProtectedHeader(response);
   if (!responseProtectedHeader.kid) {
     throw new JarmAuthResponseValidationError({
-      code: 'BAD_REQUEST',
       message: `Jarm JWE is missing the protected header field 'kid'.`,
     });
   }
@@ -74,7 +73,6 @@ export const validateJarmDirectPostJwtResponse = async (
 
   if (!isJws(response) && !isJwe(response)) {
     throw new JarmAuthResponseValidationError({
-      code: 'BAD_REQUEST',
       message:
         'Jarm Auth Response must be either encrypted, signed, or signed and encrypted.',
     });
@@ -97,7 +95,6 @@ export const validateJarmDirectPostJwtResponse = async (
 
     if (!jwsProtectedHeader.kid) {
       throw new JarmAuthResponseValidationError({
-        code: 'BAD_REQUEST',
         message: `Jarm JWS is missing the protected header field 'kid'.`,
       });
     }
@@ -108,8 +105,7 @@ export const validateJarmDirectPostJwtResponse = async (
 
     if (!jwk) {
       throw new JarmAuthResponseValidationError({
-        code: 'BAD_REQUEST',
-        cause:
+        message:
           'Could not determine the signature verification JWK from the client_metadata for the Jarm Response.',
       });
     }

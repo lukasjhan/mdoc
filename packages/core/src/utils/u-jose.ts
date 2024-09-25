@@ -1,5 +1,7 @@
 import type * as jose from 'jose';
 import { jwtDecode } from 'jwt-decode';
+import * as v from 'valibot';
+import { AusweisError } from '../e-ausweis.js';
 
 // https://base64.guru/standards/base64url
 const BASE64_URL_REGEX =
@@ -43,3 +45,52 @@ export type JWK = jose.JWK;
 export type JWTPayload = jose.JWTPayload;
 export type CompactJWEHeaderParameters = jose.CompactJWEHeaderParameters;
 export type ProtectedHeaderParameters = jose.ProtectedHeaderParameters;
+
+/**
+ * Fetches a JSON Web Key Set (JWKS) from the specified URI.
+ *
+ * @param jwksUri - The URI of the JWKS endpoint.
+ * @returns A Promise that resolves to the JWKS object.
+ * @throws Will throw an error if the fetch fails or if the response is not valid JSON.
+ */
+export async function fetchJWKS(jwksUri: string): Promise<{ keys: JWK[] }> {
+  try {
+    const response = await fetch(jwksUri, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new AusweisError({
+        code: 'BAD_REQUEST',
+        message: `HTTP error! status: ${response.status}`,
+      });
+    }
+
+    const vJwks = v.looseObject({
+      keys: v.array(
+        v.looseObject({
+          kid: v.optional(v.string()),
+          kty: v.string(),
+        })
+      ),
+    });
+
+    const parsedJwks = v.safeParse(vJwks, await response.json());
+
+    // Basic validation to ensure the response has a 'keys' array
+    if (!parsedJwks.success) {
+      throw new AusweisError({
+        code: 'BAD_REQUEST',
+        message: `Invalid JWKS format: missing or invalid "keys" array. ${JSON.stringify(v.flatten(parsedJwks.issues))}`,
+      });
+    }
+
+    return parsedJwks.output;
+  } catch (error) {
+    console.error('Error fetching JWKS:', error);
+    throw error;
+  }
+}

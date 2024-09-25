@@ -5,6 +5,7 @@ import { describe, it } from 'node:test';
 import type { JWK } from '@protokoll/core';
 import { NOT_IMPLEMENTED } from '@protokoll/core';
 
+import { JarmError } from '../e-jarm.js';
 import {
   ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK,
   ISO_MDL_7_JAR_AUTH_REQUEST_PARAMS,
@@ -48,7 +49,13 @@ void describe('Jarm Auth Response', () => {
           },
           jose: {
             jwe: { decrypt },
-            jws: { verify: () => NOT_IMPLEMENTED('Verification Not needed') },
+            jws: {
+              verify: () =>
+                NOT_IMPLEMENTED({
+                  message: 'Verification Not needed',
+                  error: JarmError,
+                }),
+            },
           },
           wallet: {
             getJwk: input => {

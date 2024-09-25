@@ -4,6 +4,7 @@ import {
   NOT_IMPLEMENTED,
 } from '@protokoll/core';
 
+import { JarmError } from '../e-jarm.js';
 import type {
   JarmResponseMode,
   Openid4vpJarmResponseMode,
@@ -60,7 +61,10 @@ export const sendJarmAuthResponse = async (
     case 'fragment.jwt':
       return handleFragmentJwt(responseEndpoint, authResponseParams.response);
     case 'form_post.jwt':
-      return NOT_IMPLEMENTED('form_post.jwt');
+      return NOT_IMPLEMENTED({
+        message: 'form_post.jwt',
+        error: JarmError,
+      });
   }
 };
 

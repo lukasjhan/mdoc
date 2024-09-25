@@ -22,7 +22,6 @@ export const validateJarmDirectPostJwtAuthResponseParams = (input: {
   // 2. The client obtains the state parameter from the JWT and checks its binding to the user agent. If the check fails, the client MUST abort processing and refuse the response.
   if (authRequestParams.state !== authResponseParams.state) {
     throw new JarmAuthResponseValidationError({
-      code: 'BAD_REQUEST',
       message: `State missmatch between auth request '${authRequestParams.state}' and the jarm-auth-response.`,
     });
   }

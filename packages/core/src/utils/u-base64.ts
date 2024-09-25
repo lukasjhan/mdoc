@@ -1,3 +1,5 @@
+import { Base64Error } from '../e-ausweis.js';
+
 // https://base64.guru/standards/base64url
 export const BASE64_URL_REGEX =
   /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/;
@@ -129,9 +131,9 @@ export function stringFromBase64URL(str: string) {
       // ignore spaces, tabs, newlines, =
       continue;
     } else {
-      throw new Error(
-        `Invalid Base64-URL character "${str.at(i)}" at position ${i}`
-      );
+      throw new Base64Error({
+        message: `Invalid Base64-URL character "${str.at(i)}" at position ${i}`,
+      });
     }
   }
 
@@ -168,7 +170,9 @@ export function codepointToUTF8(
     return;
   }
 
-  throw new Error(`Unrecognized Unicode codepoint: ${codepoint.toString(16)}`);
+  throw new Base64Error({
+    message: `Unrecognized Unicode codepoint: ${codepoint.toString(16)}`,
+  });
 }
 
 /**
@@ -229,13 +233,13 @@ export function stringFromUTF8(
     } else if (state.utf8seq === 4) {
       state.codepoint = byte & 7;
     } else {
-      throw new Error('Invalid UTF-8 sequence');
+      throw new Base64Error({ message: `Invalid UTF-8 sequence` });
     }
 
     state.utf8seq -= 1;
   } else if (state.utf8seq > 0) {
     if (byte <= 0x7f) {
-      throw new Error('Invalid UTF-8 sequence');
+      throw new Base64Error({ message: `Invalid UTF-8 sequence` });
     }
 
     state.codepoint = (state.codepoint << 6) | (byte & 63);

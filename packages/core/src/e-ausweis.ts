@@ -95,9 +95,20 @@ export class AusweisError extends Error {
   }
 }
 
-export const NOT_IMPLEMENTED = (message?: string) => {
-  throw new AusweisError({
+export const NOT_IMPLEMENTED = <Error extends typeof AusweisError>(input: {
+  message?: string;
+  error?: Error;
+}) => {
+  const { message, error } = input;
+
+  throw new (error ?? AusweisError)({
     code: 'NOT_IMPLEMENTED',
     message: `NOT IMPLEMENTED. ${message}`,
   });
 };
+
+export class Base64Error extends AusweisError {
+  constructor(opts: { message: string; cause?: unknown }) {
+    super({ code: 'BAD_REQUEST', ...opts });
+  }
+}
