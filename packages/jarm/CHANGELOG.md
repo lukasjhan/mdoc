@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.7
+
+### Patch Changes
+
+- a7e44d4: repo maintanence
+- Updated dependencies [a7e44d4]
+  - @protokoll/core@0.2.7
+
 ## 0.2.6
 
 ### Patch Changes

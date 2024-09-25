@@ -1,6 +1,6 @@
 {
   "name": "@protokoll/github",
   "description": "Protokoll Github Actions",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "private": true
 }
