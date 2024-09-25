@@ -1,3 +1,3 @@
-export * from './utils/index.js';
+export * from './e-ausweis.js';
 export * from './types.js';
-export * from './jwt-verifier.js';
+export * from './utils/index.js';

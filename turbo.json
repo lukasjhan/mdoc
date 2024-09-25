@@ -10,7 +10,7 @@
     "dev": {
       "cache": false,
       "persistent": false,
-      "dependsOn": ["^build", "build"]
+      "dependsOn": ["build"]
     },
     "format": {
       "outputs": [".cache/.prettiercache"],
@@ -25,15 +25,12 @@
       "outputs": [".cache/tsbuildinfo.json"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["build"]
     },
     "release": {
       "dependsOn": ["build"]
     },
     "clean": {
-      "cache": false
-    },
-    "//#clean": {
       "cache": false
     }
   },

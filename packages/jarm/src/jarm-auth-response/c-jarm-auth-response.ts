@@ -8,13 +8,13 @@ import type {
   ProtectedHeaderParameters,
 } from '@protokoll/core';
 
-import type { JarmAuthResponseParams } from './v-jarm-auth-response-params.js';
-import type { JarmDirectPostJwtResponseParams } from './v-jarm-direct-post-jwt-auth-response-params.js';
 import {
   vJarmResponseMode,
   vOpenid4vpJarmResponseMode,
 } from '../v-response-mode-registry.js';
 import { vResponseType } from '../v-response-type-registry.js';
+import type { JarmAuthResponseParams } from './v-jarm-auth-response-params.js';
+import type { JarmDirectPostJwtResponseParams } from './v-jarm-direct-post-jwt-auth-response-params.js';
 
 export const vAuthRequestParams = v.looseObject({
   state: v.optional(v.string()),
@@ -26,7 +26,9 @@ export const vAuthRequestParams = v.looseObject({
   client_metadata: v.looseObject({
     jwks: v.optional(
       v.object({
-        keys: v.array(v.looseObject({ kid: v.optional(v.string()) })),
+        keys: v.array(
+          v.looseObject({ kid: v.optional(v.string()), kty: v.string() })
+        ),
       })
     ),
     jwks_uri: v.optional(v.string()),
@@ -77,5 +79,8 @@ export interface JarmDirectPostJwtAuthResponseValidationContext {
   jose: {
     jwe: { decrypt: JoseJweDecrypt };
     jws: { verify: JoseJwsVerify };
+  };
+  wallet: {
+    getJwk: (input: { kid: string }) => MaybePromise<{ jwk: JWK }>;
   };
 }

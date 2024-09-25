@@ -7,16 +7,20 @@ import {
   isJws,
 } from '@protokoll/core';
 
+import {
+  JarmAuthResponseValidationError,
+  JarmErrorResponseError,
+} from '../e-jarm.js';
 import type { JarmDirectPostJwtResponseParams } from '../index.js';
-import type {
-  AuthRequestParams,
-  JarmDirectPostJwtAuthResponseValidationContext,
-} from './c-jarm-auth-response.js';
 import {
   validateJarmDirectPostJwtAuthResponseParams,
   vJarmAuthResponseErrorParams,
   vJarmDirectPostJwtParams,
 } from '../index.js';
+import type {
+  AuthRequestParams,
+  JarmDirectPostJwtAuthResponseValidationContext,
+} from './c-jarm-auth-response.js';
 
 export interface JarmDirectPostJwtAuthResponseValidation {
   /**
@@ -28,9 +32,10 @@ export interface JarmDirectPostJwtAuthResponseValidation {
 const parseJarmAuthResponseParams = (responseParams: unknown) => {
   if (v.is(vJarmAuthResponseErrorParams, responseParams)) {
     const errorResponseJson = JSON.stringify(responseParams, undefined, 2);
-    throw new Error(
-      `Received error response from authorization server. '${errorResponseJson}'`
-    );
+    throw new JarmErrorResponseError({
+      code: 'PARSE_ERROR',
+      message: `Received error response from authorization server. '${errorResponseJson}'`,
+    });
   }
 
   return v.parse(vJarmDirectPostJwtParams, responseParams);
@@ -44,10 +49,13 @@ const decryptJarmAuthResponse = async (
 
   const responseProtectedHeader = decodeProtectedHeader(response);
   if (!responseProtectedHeader.kid) {
-    throw new Error(`Jarm JWE is missing the protected header field 'kid'.`);
+    throw new JarmAuthResponseValidationError({
+      code: 'BAD_REQUEST',
+      message: `Jarm JWE is missing the protected header field 'kid'.`,
+    });
   }
 
-  const jwk = { kid: responseProtectedHeader.kid };
+  const { jwk } = await ctx.wallet.getJwk({ kid: responseProtectedHeader.kid });
   const { plaintext } = await ctx.jose.jwe.decrypt({ jwe: response, jwk });
 
   return plaintext;
@@ -65,9 +73,11 @@ export const validateJarmDirectPostJwtResponse = async (
   const { response } = input;
 
   if (!isJws(response) && !isJwe(response)) {
-    throw new Error(
-      'Jarm Auth Response must be either encrypted, signed, or signed and encrypted.'
-    );
+    throw new JarmAuthResponseValidationError({
+      code: 'BAD_REQUEST',
+      message:
+        'Jarm Auth Response must be either encrypted, signed, or signed and encrypted.',
+    });
   }
 
   const decryptedResponse = isJwe(response)
@@ -86,7 +96,10 @@ export const validateJarmDirectPostJwtResponse = async (
       await ctx.openid4vp.authRequest.getParams(authResponseParams));
 
     if (!jwsProtectedHeader.kid) {
-      throw new Error(`Jarm JWS is missing the protected header field 'kid'.`);
+      throw new JarmAuthResponseValidationError({
+        code: 'BAD_REQUEST',
+        message: `Jarm JWS is missing the protected header field 'kid'.`,
+      });
     }
 
     const jwk = authRequestParams.client_metadata.jwks?.keys.find(
@@ -94,9 +107,11 @@ export const validateJarmDirectPostJwtResponse = async (
     );
 
     if (!jwk) {
-      throw new Error(
-        'Could not determine the signature verification JWK from the client_metadata for the Jarm Response.'
-      );
+      throw new JarmAuthResponseValidationError({
+        code: 'BAD_REQUEST',
+        cause:
+          'Could not determine the signature verification JWK from the client_metadata for the Jarm Response.',
+      });
     }
 
     await ctx.jose.jws.verify({ compact: response, jwk });

@@ -1,6 +1,6 @@
 {
   "name": "@protokoll/prettier-config",
-  "description": "protokoll Prettier Config",
+  "description": "Protokoll Prettier Config",
   "author": "Martin Auer",
   "private": true,
   "version": "0.2.6",
@@ -14,8 +14,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
-    "prettier": "catalog:"
+    "prettier": "catalog:",
+    "prettier-plugin-organize-imports": "^4.0.0"
   },
   "devDependencies": {
     "@protokoll/tsconfig": "workspace:*",

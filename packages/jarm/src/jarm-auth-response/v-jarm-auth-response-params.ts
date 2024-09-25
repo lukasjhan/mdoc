@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 
 import { checkExp } from '@protokoll/core';
+import { JarmAuthResponseValidationError } from '../e-jarm.js';
 
 export const vJarmAuthResponseErrorParams = v.looseObject({
   error: v.string(),
@@ -51,23 +52,26 @@ export const validateJarmAuthResponseParams = (input: {
   const { authRequestParams, authResponseParams } = input;
   // 2. The client obtains the state parameter from the JWT and checks its binding to the user agent. If the check fails, the client MUST abort processing and refuse the response.
   if (authRequestParams.state !== authResponseParams.state) {
-    throw new Error(
-      `State missmatch in jarm-auth-response. Expected '${authRequestParams.state}' received '${authRequestParams.state}'.`
-    );
+    throw new JarmAuthResponseValidationError({
+      code: 'BAD_REQUEST',
+      message: `State missmatch in jarm-auth-response. Expected '${authRequestParams.state}' received '${authRequestParams.state}'.`,
+    });
   }
 
   // 4. The client obtains the aud element from the JWT and checks whether it matches the client id the client used to identify itself in the corresponding authorization request. If the check fails, the client MUST abort processing and refuse the response.
   if (authRequestParams.client_id !== authResponseParams.client_id) {
-    throw new Error(
-      `Invalid audience in jarm-auth-response. Expected '${authRequestParams.client_id}' received '${authResponseParams.aud}'.`
-    );
+    throw new JarmAuthResponseValidationError({
+      code: 'BAD_REQUEST',
+      message: `Invalid audience in jarm-auth-response. Expected '${authRequestParams.client_id}' received '${authResponseParams.aud}'.`,
+    });
   }
 
   // 5. The client checks the JWT's exp element to determine if the JWT is still valid. If the check fails, the client MUST abort processing and refuse the response.
   // 120 seconds clock skew
   if (checkExp({ exp: authResponseParams.exp })) {
-    throw new Error(
-      `The '${authRequestParams.state}' and the jarm-auth-response.`
-    );
+    throw new JarmAuthResponseValidationError({
+      code: 'BAD_REQUEST',
+      message: `The '${authRequestParams.state}' and the jarm-auth-response.`,
+    });
   }
 };

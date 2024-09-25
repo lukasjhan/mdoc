@@ -1,25 +1,27 @@
 {
   "name": "@protokoll/core",
-  "description": "Protokoll Core",
-  "author": "Auer Martin",
+  "description": "Protokoll Core Functionality",
+  "author": "Martin Auer",
   "version": "0.2.6",
   "private": false,
   "type": "module",
-  "files": [
-    "./dist"
-  ],
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
+    "require": {
+      "types": "./dist/index.d.cts",
+      "default": "./dist/index.cjs"
+    },
+    "import": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     }
   },
   "license": "MIT",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
-    "build": "tsc",
+    "build": "pkgroll",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -34,10 +36,12 @@
     "@protokoll/prettier-config": "workspace:*",
     "@protokoll/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "jose": "^5.6.3",
     "eslint": "catalog:",
+    "jose": "^5.6.3",
+    "pkgroll": "^2.5.0",
     "prettier": "catalog:",
     "tsx": "catalog:",
+    "type-fest": "^4.24.0",
     "typescript": "catalog:"
   },
   "prettier": "@protokoll/prettier-config"

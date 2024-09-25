@@ -1,6 +1,6 @@
 {
   "name": "@protokoll/tsconfig",
-  "description": "protokoll Typescript Config",
+  "description": "Protokoll Typescript Config",
   "author": "Martin Auer",
   "private": true,
   "version": "0.2.6",

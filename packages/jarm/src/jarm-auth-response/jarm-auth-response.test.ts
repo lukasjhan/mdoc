@@ -1,6 +1,6 @@
+import * as jose from 'jose';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import * as jose from 'jose';
 
 import type { JWK } from '@protokoll/core';
 import { NOT_IMPLEMENTED } from '@protokoll/core';
@@ -20,14 +20,7 @@ export const decrypt = async (input: {
 }) => {
   const { jwe, jwk } = input;
   const decode = TextDecoder.prototype.decode.bind(new TextDecoder());
-
-  let privateKeyJwk: JWK;
-  if (jwk.kid === ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK.kid) {
-    privateKeyJwk = ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK;
-  } else {
-    throw new Error('Received jwk with invalid kid.');
-  }
-  const privateKey = await jose.importJWK(privateKeyJwk);
+  const privateKey = await jose.importJWK(jwk);
 
   const { plaintext, protectedHeader } = await jose.compactDecrypt(
     jwe,
@@ -56,6 +49,17 @@ void describe('Jarm Auth Response', () => {
           jose: {
             jwe: { decrypt },
             jws: { verify: () => NOT_IMPLEMENTED('Verification Not needed') },
+          },
+          wallet: {
+            getJwk: input => {
+              if (
+                input.kid === ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK.kid
+              ) {
+                return { jwk: ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK };
+              } else {
+                throw new Error('Received jwk with invalid kid.');
+              }
+            },
           },
         }
       );

@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 
+import { JarmAuthResponseValidationError } from '../e-jarm.js';
 import { vJarmAuthResponseParams } from './v-jarm-auth-response-params.js';
 
 export const vJarmDirectPostJwtParams = v.looseObject({
@@ -20,8 +21,9 @@ export const validateJarmDirectPostJwtAuthResponseParams = (input: {
 
   // 2. The client obtains the state parameter from the JWT and checks its binding to the user agent. If the check fails, the client MUST abort processing and refuse the response.
   if (authRequestParams.state !== authResponseParams.state) {
-    throw new Error(
-      `State missmatch between auth request '${authRequestParams.state}' and the jarm-auth-response.`
-    );
+    throw new JarmAuthResponseValidationError({
+      code: 'BAD_REQUEST',
+      message: `State missmatch between auth request '${authRequestParams.state}' and the jarm-auth-response.`,
+    });
   }
 };

@@ -8,11 +8,11 @@ import type {
   JarmResponseMode,
   Openid4vpJarmResponseMode,
 } from '../v-response-mode-registry.js';
-import type { ResponseTypeOut } from '../v-response-type-registry.js';
 import {
   getJarmDefaultResponseMode,
   validateResponseMode,
 } from '../v-response-mode-registry.js';
+import type { ResponseTypeOut } from '../v-response-type-registry.js';
 
 interface SendJarmAuthResponseInput {
   authRequestParams: {

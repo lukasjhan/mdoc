@@ -1,9 +1,9 @@
 import assert from 'assert';
 import { describe, it } from 'node:test';
 
-import { appendFragmentParams, appendQueryParams } from './request-utils.js';
+import { appendFragmentParams, appendQueryParams } from './u-request.js';
 
-void describe('core utils', () => {
+void describe('request-utils', () => {
   void describe('appendQueryParams', () => {
     void it('appends query params (no query, no fragment)', () => {
       const url = appendQueryParams({
