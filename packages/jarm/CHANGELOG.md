@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.8
+
+### Patch Changes
+
+- edb40ef: build: build jarm package using pkgroll
+- Updated dependencies [edb40ef]
+  - @protokoll/core@0.2.8
+
 ## 0.2.7
 
 ### Patch Changes
