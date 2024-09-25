@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.9
+
+### Patch Changes
+
+- ba979ed: fix: utilties
+
 ## 0.2.8
 
 ### Patch Changes

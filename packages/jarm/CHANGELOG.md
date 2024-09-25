@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.9
+
+### Patch Changes
+
+- ba979ed: fix: utilties
+- Updated dependencies [ba979ed]
+  - @protokoll/core@0.2.9
+
 ## 0.2.8
 
 ### Patch Changes
