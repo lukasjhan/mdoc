@@ -3,7 +3,7 @@
   "description": "Protokoll Jose",
   "author": "Martin Auer",
   "private": false,
-  "version": "0.2.1",
+  "version": "0.2.9",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -24,7 +24,8 @@
     "build": "pkgroll",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@protokoll/core": "workspace:*",
@@ -37,8 +38,10 @@
     "@protokoll/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "msw": "catalog:",
     "pkgroll": "catalog:",
     "prettier": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@protokoll/prettier-config"

@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 
 import { emptyArrayToUndefined } from '@protokoll/core';
+import { vCompactJwsHeaderParameters } from '../jws/v-jws.js';
 
 export const vJwtPayload = v.looseObject({
   iss: v.pipe(
@@ -53,3 +54,9 @@ export const vJwtPayload = v.looseObject({
 });
 
 export type JwtPayload = v.InferInput<typeof vJwtPayload>;
+
+export const vJwtHeaderParameters = v.object({
+  ...vCompactJwsHeaderParameters.entries,
+  b64: v.optional(v.boolean()),
+});
+export type JwtHeaderParameters = v.InferInput<typeof vJwtHeaderParameters>;

@@ -1,6 +1,6 @@
 {
   "name": "@protokoll/jarm",
-  "description": "JWT Secured Authorization Response Mode (JARM)",
+  "description": "Protokoll JARM (JWT Secured Authorization Response Mode)",
   "author": "Auer Martin",
   "version": "0.2.9",
   "private": false,
@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@protokoll/core": "workspace:*",
+    "@protokoll/jose": "workspace:*",
     "valibot": "catalog:"
   },
   "devDependencies": {

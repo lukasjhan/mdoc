@@ -2,7 +2,7 @@ import * as v from 'valibot';
 
 import { emptyArrayToUndefined } from '@protokoll/core';
 
-import { vJoseHeaderParameters } from '../v-jose.js';
+import { vJoseHeaderParameters } from '../v-jose-protected-header.js';
 
 export const vJwsHeaderParameters = v.looseObject({
   ...vJoseHeaderParameters.entries,
@@ -23,3 +23,11 @@ export const vJwsHeaderParameters = v.looseObject({
   ),
 });
 export type JwsHeaderParameters = v.InferInput<typeof vJwsHeaderParameters>;
+
+export const vCompactJwsHeaderParameters = v.object({
+  ...vJwsHeaderParameters.entries,
+  alg: v.string(),
+});
+export type CompactJwsHeaderParameters = v.InferInput<
+  typeof vCompactJwsHeaderParameters
+>;

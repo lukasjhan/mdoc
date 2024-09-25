@@ -112,5 +112,3 @@ export class Base64Error extends AusweisError {
     super({ code: 'BAD_REQUEST', ...opts });
   }
 }
-
-export class JwksExtractionError extends AusweisError {}

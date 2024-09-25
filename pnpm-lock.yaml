@@ -111,6 +111,9 @@ importers:
       '@protokoll/core':
         specifier: workspace:*
         version: link:../core
+      '@protokoll/jose':
+        specifier: workspace:*
+        version: link:../jose
       valibot:
         specifier: 'catalog:'
         version: 0.37.0(typescript@5.5.4)
@@ -133,6 +136,49 @@ importers:
       jose:
         specifier: 'catalog:'
         version: 5.9.3
+      msw:
+        specifier: 'catalog:'
+        version: 2.4.9(typescript@5.5.4)
+      pkgroll:
+        specifier: 'catalog:'
+        version: 2.5.0(typescript@5.5.4)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      tsx:
+        specifier: 'catalog:'
+        version: 4.19.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.5.4
+
+  packages/jose:
+    dependencies:
+      '@protokoll/core':
+        specifier: workspace:*
+        version: link:../core
+      jwt-decode:
+        specifier: ^4.0.0
+        version: 4.0.0
+      valibot:
+        specifier: 'catalog:'
+        version: 0.37.0(typescript@5.5.4)
+    devDependencies:
+      '@protokoll/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@protokoll/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@protokoll/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.16.0
+      eslint:
+        specifier: 'catalog:'
+        version: 9.9.0(jiti@1.21.6)
       msw:
         specifier: 'catalog:'
         version: 2.4.9(typescript@5.5.4)
