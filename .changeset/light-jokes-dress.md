@@ -3,4 +3,4 @@
 '@protokoll/jarm': patch
 ---
 
-feat: add utility
+feat: jarm alpha

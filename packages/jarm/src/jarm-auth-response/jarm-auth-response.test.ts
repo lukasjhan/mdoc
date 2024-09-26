@@ -68,11 +68,6 @@ void describe('Jarm Auth Response', () => {
       { ...joseContext }
     );
 
-    const res = await joseContext.jose.jwe.decryptCompact({
-      jwe: authResponse,
-      jwk: ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK,
-    });
-
     const handlers = [
       http.post(`https://example-relying-party.com`, async ({ request }) => {
         const contentType = request.headers.get('Content-Type');
@@ -194,11 +189,6 @@ void describe('Jarm Auth Response', () => {
       },
       { ...joseContext }
     );
-
-    const res = await joseContext.jose.jwe.decryptCompact({
-      jwe: authResponse,
-      jwk: ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK,
-    });
 
     const handlers = [
       http.post(`https://example-relying-party.com`, async ({ request }) => {
