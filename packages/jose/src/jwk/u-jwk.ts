@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import { JoseError, JoseJwksExtractionError } from '../e-jose.js';
-import { vJwks, type Jwks } from './v-jwk.js';
+import type { Jwks } from './v-jwk.js';
+import { vJwks } from './v-jwk.js';
 
 /**
  * Fetches a JSON Web Key Set (JWKS) from the specified URI.

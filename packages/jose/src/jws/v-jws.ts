@@ -1,7 +1,5 @@
 import * as v from 'valibot';
 
-import { emptyArrayToUndefined } from '@protokoll/core';
-
 import { vJoseHeaderParameters } from '../v-jose-protected-header.js';
 
 export const vJwsHeaderParameters = v.looseObject({
@@ -18,7 +16,6 @@ export const vJwsHeaderParameters = v.looseObject({
   ),
   crit: v.pipe(
     v.optional(v.array(v.string())),
-    v.transform(emptyArrayToUndefined),
     v.description('JWS "crit" (Critical) Header Parameter.')
   ),
 });

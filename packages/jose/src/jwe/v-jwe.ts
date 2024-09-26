@@ -1,7 +1,5 @@
 import * as v from 'valibot';
 
-import { emptyArrayToUndefined } from '@protokoll/core';
-
 import { vCritOption } from '../jwt/v-jwt-claimset.js';
 import { vJoseHeaderParameters } from '../v-jose-protected-header.js';
 
@@ -17,7 +15,6 @@ export const vJweHeaderParameters = v.looseObject({
   ),
   crit: v.pipe(
     v.optional(v.array(v.string())),
-    v.transform(emptyArrayToUndefined),
     v.description('JWE "crit" (Critical) Header Parameter.')
   ),
   zip: v.pipe(

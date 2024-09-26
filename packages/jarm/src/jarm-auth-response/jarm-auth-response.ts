@@ -5,8 +5,8 @@ import {
   decodeProtectedHeader,
   isJwe,
   isJws,
-  joseExtractJWKS,
-} from '@protokoll/core';
+  joseJwksExtract,
+} from '@protokoll/jose';
 
 import {
   JarmAuthResponseValidationError,
@@ -56,7 +56,7 @@ const decryptJarmAuthResponse = async (
   }
 
   const { jwk } = await ctx.wallet.getJwk({ kid: responseProtectedHeader.kid });
-  const { plaintext } = await ctx.jose.jwe.decrypt({ jwe: response, jwk });
+  const { plaintext } = await ctx.jose.jwe.decryptJwt({ jwe: response, jwk });
 
   return plaintext;
 };
@@ -100,7 +100,7 @@ export const validateJarmDirectPostJwtResponse = async (
       });
     }
 
-    const jwks = await joseExtractJWKS(authRequestParams.client_metadata);
+    const jwks = await joseJwksExtract(authRequestParams.client_metadata);
     const jwk = jwks?.keys.find(key => key.kid === jwsProtectedHeader.kid);
 
     if (!jwk) {
@@ -110,7 +110,7 @@ export const validateJarmDirectPostJwtResponse = async (
       });
     }
 
-    await ctx.jose.jws.verify({ compact: response, jwk });
+    await ctx.jose.jws.verifyJwt({ jws: response, jwk });
   } else {
     const jsonResponse: unknown = JSON.parse(decryptedResponse);
     authResponseParams = parseJarmAuthResponseParams(jsonResponse);

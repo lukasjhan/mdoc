@@ -20,7 +20,7 @@ export type JoseJweDecryptCompact = (
 
 export const vJoseJweEncryptCompact = v.object({
   plaintext: v.string(),
-  recipientPublicKeyJwk: vJwk,
+  jwk: vJwk,
   protectedHeader: vCompactJweHeaderParameters,
   alg: v.optional(v.string()),
   keyManagementParameters: v.optional(
@@ -30,12 +30,12 @@ export const vJoseJweEncryptCompact = v.object({
 export const vJoseJweEncryptCompactOut = v.object({ jwe: v.string() });
 export type JoseJweEncryptCompact = (
   input: v.InferInput<typeof vJoseJweEncryptCompact>
-) => MaybePromise<v.InferOutput<typeof vJoseJweDecryptCompactOut>>;
+) => MaybePromise<v.InferOutput<typeof vJoseJweEncryptCompactOut>>;
 
 export const vJoseJweEncryptJwt = v.object({
   payload: vJwtPayload,
   protectedHeader: vCompactJweHeaderParameters,
-  recipientPublicKeyJwk: vJwk,
+  jwk: vJwk,
   alg: v.optional(v.string()),
   keyManagementParameters: v.optional(
     v.object({ apu: v.string(), apv: v.string() })
@@ -55,8 +55,8 @@ export const vJoseJweDecryptJwtOut = v.object({
   protectedHeader: vCompactJweHeaderParameters,
 });
 export type JoseJweDecryptJwt = (
-  input: v.InferInput<typeof vJoseJweDecryptCompact>
-) => MaybePromise<v.InferOutput<typeof vJoseJweDecryptCompactOut>>;
+  input: v.InferInput<typeof vJoseJweDecryptJwt>
+) => MaybePromise<v.InferOutput<typeof vJoseJweDecryptJwtOut>>;
 
 export interface JoseJweContext {
   jose: {

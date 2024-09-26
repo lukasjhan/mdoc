@@ -1,13 +1,8 @@
 import * as v from 'valibot';
 
-import type {
-  CompactJWEHeaderParameters,
-  JWK,
-  JWTPayload,
-  MaybePromise,
-  ProtectedHeaderParameters,
-} from '@protokoll/core';
+import type { MaybePromise, PickDeep } from '@protokoll/core';
 
+import type { JoseContext, Jwk } from '@protokoll/jose';
 import {
   vJarmResponseMode,
   vOpenid4vpJarmResponseMode,
@@ -45,30 +40,8 @@ export type OAuthAuthRequestGetParamsOut = v.InferOutput<
   typeof vOAuthAuthRequestGetParamsOut
 >;
 
-export type JoseJwsVerify = (input: {
-  compact: string;
-  jwk: JWK;
-}) => MaybePromise<{
-  payload: JWTPayload;
-  protectedHeader: ProtectedHeaderParameters;
-}>;
-
-export type JoseJweEncrypt = (input: {
-  plaintext: string;
-  jwk: JWK;
-}) => MaybePromise<{
-  jwe: string;
-}>;
-
-export type JoseJweDecrypt = (input: {
-  jwe: string;
-  jwk: JWK;
-}) => MaybePromise<{
-  plaintext: string;
-  protectedHeader: CompactJWEHeaderParameters;
-}>;
-
-export interface JarmDirectPostJwtAuthResponseValidationContext {
+export interface JarmDirectPostJwtAuthResponseValidationContext
+  extends PickDeep<JoseContext, 'jose.jwe.decryptJwt' | 'jose.jws.verifyJwt'> {
   openid4vp: {
     authRequest: {
       getParams: (
@@ -76,11 +49,7 @@ export interface JarmDirectPostJwtAuthResponseValidationContext {
       ) => MaybePromise<OAuthAuthRequestGetParamsOut>;
     };
   };
-  jose: {
-    jwe: { decrypt: JoseJweDecrypt };
-    jws: { verify: JoseJwsVerify };
-  };
   wallet: {
-    getJwk: (input: { kid: string }) => MaybePromise<{ jwk: JWK }>;
+    getJwk: (input: { kid: string }) => MaybePromise<{ jwk: Jwk }>;
   };
 }

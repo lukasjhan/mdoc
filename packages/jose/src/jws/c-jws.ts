@@ -4,15 +4,16 @@ import type { MaybePromise } from '@protokoll/core';
 
 import { vJwk } from '../jwk/v-jwk.js';
 import {
+  vJwtHeaderParameters,
   vJwtPayload,
   vJwtVerifyOptions,
   vVerifyOptions,
 } from '../jwt/index.js';
-import { vJoseProtectedHeaderParameters } from '../v-jose.js';
+import { vCompactJwsHeaderParameters } from './v-jws.js';
 
 export const vJoseJwsSignCompact = v.object({
   payload: v.string(),
-  protectedHeader: vJoseProtectedHeaderParameters,
+  protectedHeader: vCompactJwsHeaderParameters,
   jwk: vJwk,
 });
 export const vJoseJwsSignCompactOut = v.object({ jws: v.string() });
@@ -27,7 +28,7 @@ export const vJoseJwsVerifyCompact = v.object({
 });
 export const vJoseJwsVerifyCompactOut = v.object({
   payload: v.string(),
-  protectedHeader: vJoseProtectedHeaderParameters,
+  protectedHeader: vCompactJwsHeaderParameters,
 });
 export type JoseJwsVerifyCompact = (
   input: v.InferInput<typeof vJoseJwsVerifyCompact>
@@ -35,12 +36,12 @@ export type JoseJwsVerifyCompact = (
 
 export const vJoseJwsSignJwt = v.object({
   payload: vJwtPayload,
-  protectedHeader: vJoseProtectedHeaderParameters,
+  protectedHeader: vJwtHeaderParameters,
   jwk: vJwk,
 });
 export const vJoseJwsSignJwtOut = v.object({ jws: v.string() });
 export type JoseJwsSignJwt = (
-  input: v.InferInput<typeof vJoseJwsSignCompact>
+  input: v.InferInput<typeof vJoseJwsSignJwt>
 ) => MaybePromise<v.InferOutput<typeof vJoseJwsSignJwtOut>>;
 
 export const vJoseJwsVerifyJwt = v.object({
@@ -50,11 +51,11 @@ export const vJoseJwsVerifyJwt = v.object({
 });
 export const vJoseJwsVerifyJwtOut = v.object({
   payload: vJwtPayload,
-  protectedHeader: vJoseProtectedHeaderParameters,
+  protectedHeader: vJwtHeaderParameters,
 });
 export type JoseJwsVerifyJwt = (
-  input: v.InferInput<typeof vJoseJwsVerifyCompact>
-) => MaybePromise<v.InferInput<typeof vJoseJwsVerifyJwt>>;
+  input: v.InferInput<typeof vJoseJwsVerifyJwt>
+) => MaybePromise<v.InferInput<typeof vJoseJwsVerifyJwtOut>>;
 
 export interface JoseJwsContext {
   jose: {

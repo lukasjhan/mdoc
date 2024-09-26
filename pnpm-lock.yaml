@@ -133,9 +133,6 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.9.0(jiti@1.21.6)
-      jose:
-        specifier: 'catalog:'
-        version: 5.9.3
       msw:
         specifier: 'catalog:'
         version: 2.4.9(typescript@5.5.4)
@@ -179,6 +176,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.9.0(jiti@1.21.6)
+      jose:
+        specifier: 'catalog:'
+        version: 5.9.3
       msw:
         specifier: 'catalog:'
         version: 2.4.9(typescript@5.5.4)

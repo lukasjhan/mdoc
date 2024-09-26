@@ -9,13 +9,25 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.cts",
   "exports": {
-    "require": {
-      "types": "./dist/index.d.cts",
-      "default": "./dist/index.cjs"
+    ".": {
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      }
     },
-    "import": {
-      "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
+    "./u-jose-test": {
+      "require": {
+        "types": "./dist/u-jose-test.d.cts",
+        "default": "./dist/u-jose-test.cjs"
+      },
+      "import": {
+        "types": "./dist/u-jose-test.d.mts",
+        "default": "./dist/u-jose-test.mjs"
+      }
     }
   },
   "license": "MIT",
@@ -38,6 +50,7 @@
     "@protokoll/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "jose": "catalog:",
     "msw": "catalog:",
     "pkgroll": "catalog:",
     "prettier": "catalog:",

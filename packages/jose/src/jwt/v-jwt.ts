@@ -57,6 +57,6 @@ export type JwtPayload = v.InferInput<typeof vJwtPayload>;
 
 export const vJwtHeaderParameters = v.object({
   ...vCompactJwsHeaderParameters.entries,
-  b64: v.optional(v.boolean()),
+  b64: v.optional(v.literal(true)),
 });
 export type JwtHeaderParameters = v.InferInput<typeof vJwtHeaderParameters>;

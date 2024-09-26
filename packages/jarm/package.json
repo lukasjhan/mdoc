@@ -38,7 +38,6 @@
     "@protokoll/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
-    "jose": "catalog:",
     "msw": "catalog:",
     "pkgroll": "catalog:",
     "prettier": "catalog:",

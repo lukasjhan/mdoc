@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { checkExp } from '@protokoll/core';
+import { checkExp } from '@protokoll/jose';
 import { JarmAuthResponseValidationError } from '../e-jarm.js';
 
 export const vJarmAuthResponseErrorParams = v.looseObject({

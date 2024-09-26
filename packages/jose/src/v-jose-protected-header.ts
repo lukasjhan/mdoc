@@ -1,7 +1,5 @@
 import * as v from 'valibot';
 
-import { emptyArrayToUndefined } from '@protokoll/core';
-
 import { vJwk } from './jwk/v-jwk.js';
 
 export const vJoseHeaderParameters = v.looseObject({
@@ -17,7 +15,6 @@ export const vJoseHeaderParameters = v.looseObject({
   ),
   x5c: v.pipe(
     v.optional(v.array(v.string())),
-    v.transform(emptyArrayToUndefined),
     v.description('"x5c" (X.509 Certificate Chain) Header Parameter.')
   ),
   x5u: v.pipe(

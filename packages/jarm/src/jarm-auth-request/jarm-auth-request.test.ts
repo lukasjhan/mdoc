@@ -4,7 +4,7 @@ import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
 import { ISO_MDL_7_JARM_AUTH_RESPONSE_JWT } from '../jarm-auth-response/jarm-auth-response.fixtures.js';
-import { jarmAuthRequestSend } from './jarm-auth-request.js';
+import { jarmAuthResponseSend } from './jarm-auth-request.js';
 
 void describe('Jarm Auth Request', async () => {
   await it(`response_type 'vp_token' response_mode 'direct_post.jwt'`, async () => {
@@ -21,15 +21,13 @@ void describe('Jarm Auth Request', async () => {
     const server = setupServer(...handlers);
     server.listen();
 
-    const response = await jarmAuthRequestSend({
+    const response = await jarmAuthResponseSend({
       authRequestParams: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
         response_mode: 'direct_post.jwt',
       },
-      authResponseParams: {
-        response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
-      },
+      authResponse: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
     });
 
     server.close();
@@ -49,15 +47,13 @@ void describe('Jarm Auth Request', async () => {
     const server = setupServer(...handlers);
     server.listen();
 
-    const response = await jarmAuthRequestSend({
+    const response = await jarmAuthResponseSend({
       authRequestParams: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
         response_mode: 'jwt',
       },
-      authResponseParams: {
-        response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
-      },
+      authResponse: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
     });
 
     server.close();
@@ -77,15 +73,13 @@ void describe('Jarm Auth Request', async () => {
     const server = setupServer(...handlers);
     server.listen();
 
-    const response = await jarmAuthRequestSend({
+    const response = await jarmAuthResponseSend({
       authRequestParams: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
         response_mode: 'query.jwt',
       },
-      authResponseParams: {
-        response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
-      },
+      authResponse: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
     });
 
     server.close();
