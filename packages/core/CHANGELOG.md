@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.11
+
+### Patch Changes
+
+- feat: jarm alpha
+
 ## 0.2.10
 
 ### Patch Changes
