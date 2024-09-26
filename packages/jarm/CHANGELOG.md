@@ -1,5 +1,14 @@
 # @protokoll/jarm
 
+## 0.2.12
+
+### Patch Changes
+
+- e1f7f73: fix: nits
+- Updated dependencies [e1f7f73]
+  - @protokoll/core@0.2.12
+  - @protokoll/jose@0.2.12
+
 ## 0.2.11
 
 ### Patch Changes

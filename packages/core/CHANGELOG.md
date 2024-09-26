@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.12
+
+### Patch Changes
+
+- e1f7f73: fix: nits
+
 ## 0.2.11
 
 ### Patch Changes
