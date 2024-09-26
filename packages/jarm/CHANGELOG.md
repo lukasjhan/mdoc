@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.13
+
+### Patch Changes
+
+- aeff7a6: fix: some small nits
+  - @protokoll/core@0.2.13
+  - @protokoll/jose@0.2.13
+
 ## 0.2.12
 
 ### Patch Changes
