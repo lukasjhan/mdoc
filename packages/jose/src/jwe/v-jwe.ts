@@ -32,7 +32,6 @@ export const vCompactJweHeaderParameters = v.looseObject({
   alg: v.string(),
   enc: v.string(),
 });
-
 export type CompactJweHeaderParameters = v.InferInput<
   typeof vCompactJweHeaderParameters
 >;

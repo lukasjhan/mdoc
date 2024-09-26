@@ -4,7 +4,7 @@ import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
 import { ISO_MDL_7_JARM_AUTH_RESPONSE_JWT } from '../jarm-auth-response/jarm-auth-response.fixtures.js';
-import { jarmAuthResponseSend } from './jarm-auth-request.js';
+import { jarmAuthResponseSend } from './jarm-auth-response-send.js';
 
 void describe('Jarm Auth Request', async () => {
   await it(`response_type 'vp_token' response_mode 'direct_post.jwt'`, async () => {

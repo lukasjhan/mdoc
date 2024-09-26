@@ -7,7 +7,7 @@ import { setupServer } from 'msw/node';
 import {
   jarmAuthResponseCreate,
   jarmAuthResponseSend,
-} from '../jarm-auth-request/jarm-auth-request.js';
+} from '../jarm-auth-response-send/jarm-auth-response-send.js';
 import type { JarmDirectPostJwtAuthResponseValidationContext } from './c-jarm-auth-response.js';
 import {
   EXAMPLE_RP_P256_PRIVATE_KEY_JWK,
@@ -95,7 +95,7 @@ void describe('Jarm Auth Response', () => {
     server.listen();
 
     const response = await jarmAuthResponseSend({
-      authResponse: authResponse,
+      authResponse,
       authRequestParams,
     });
 

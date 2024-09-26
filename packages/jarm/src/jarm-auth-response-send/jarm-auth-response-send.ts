@@ -21,7 +21,7 @@ import {
   validateResponseMode,
 } from '../v-response-mode-registry.js';
 import type { ResponseTypeOut } from '../v-response-type-registry.js';
-import type { JarmSendAuthRequestContext as JarmAuthRequestCreateContext } from './c-jarm-auth-request.js';
+import type { JarmAuthResponseCreateContext } from './c-jarm-auth-response-send.js';
 
 export type JarmAuthResponseCreate = {
   authResponseParams: JwtPayload;
@@ -51,7 +51,7 @@ export type JarmAuthResponseCreate = {
 
 export const jarmAuthResponseCreate = async (
   input: JarmAuthResponseCreate,
-  ctx: JarmAuthRequestCreateContext
+  ctx: JarmAuthResponseCreateContext
 ) => {
   const { type, authResponseParams, signatureParams, encryptionParams } = input;
 
