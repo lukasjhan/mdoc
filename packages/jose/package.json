@@ -21,12 +21,12 @@
     },
     "./u-jose-test": {
       "require": {
-        "types": "./dist/u-jose-test.d.cts",
-        "default": "./dist/u-jose-test.cjs"
+        "types": "./dist/u-jose-test-context.d.cts",
+        "default": "./dist/u-jose-test-context.cjs"
       },
       "import": {
-        "types": "./dist/u-jose-test.d.mts",
-        "default": "./dist/u-jose-test.mjs"
+        "types": "./dist/u-jose-test-context.d.mts",
+        "default": "./dist/u-jose-test-context.mjs"
       }
     }
   },

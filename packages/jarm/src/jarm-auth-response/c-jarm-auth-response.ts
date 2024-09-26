@@ -41,7 +41,10 @@ export type OAuthAuthRequestGetParamsOut = v.InferOutput<
 >;
 
 export interface JarmDirectPostJwtAuthResponseValidationContext
-  extends PickDeep<JoseContext, 'jose.jwe.decryptJwt' | 'jose.jws.verifyJwt'> {
+  extends PickDeep<
+    JoseContext,
+    'jose.jwe.decryptCompact' | 'jose.jws.verifyJwt'
+  > {
   openid4vp: {
     authRequest: {
       getParams: (

@@ -4,6 +4,13 @@ import {
   NOT_IMPLEMENTED,
 } from '@protokoll/core';
 
+import type {
+  JwtPayload,
+  vJoseJweEncryptJwt,
+  vJoseJwsSignJwt,
+} from '@protokoll/jose';
+
+import type * as v from 'valibot';
 import { JarmError } from '../e-jarm.js';
 import type {
   JarmResponseMode,
@@ -14,8 +21,67 @@ import {
   validateResponseMode,
 } from '../v-response-mode-registry.js';
 import type { ResponseTypeOut } from '../v-response-type-registry.js';
+import type { JarmSendAuthRequestContext as JarmAuthRequestCreateContext } from './c-jarm-auth-request.js';
 
-interface SendJarmAuthRequestInput {
+export type JarmAuthResponseCreate = {
+  authResponseParams: JwtPayload;
+} & (
+  | {
+      type: 'signed';
+      signatureParams: Omit<v.InferInput<typeof vJoseJwsSignJwt>, 'payload'>;
+      encryptionParams?: never;
+    }
+  | {
+      type: 'encrypted';
+      signatureParams?: never;
+      encryptionParams: Omit<
+        v.InferInput<typeof vJoseJweEncryptJwt>,
+        'payload'
+      >;
+    }
+  | {
+      type: 'signed encrypted';
+      signatureParams: Omit<v.InferInput<typeof vJoseJwsSignJwt>, 'payload'>;
+      encryptionParams: Omit<
+        v.InferInput<typeof vJoseJweEncryptJwt>,
+        'payload'
+      >;
+    }
+);
+
+export const jarmAuthResponseCreate = async (
+  input: JarmAuthResponseCreate,
+  ctx: JarmAuthRequestCreateContext
+) => {
+  const { type, authResponseParams, signatureParams, encryptionParams } = input;
+
+  if (type === 'encrypted') {
+    const { jwe } = await ctx.jose.jwe.encryptJwt({
+      ...encryptionParams,
+      payload: authResponseParams,
+    });
+    return { authResponse: jwe };
+  } else if (type === 'signed') {
+    const { jws } = await ctx.jose.jws.signJwt({
+      ...signatureParams,
+      payload: authResponseParams,
+    });
+    return { authResponse: jws };
+  } else {
+    const { jws } = await ctx.jose.jws.signJwt({
+      ...signatureParams,
+      payload: authResponseParams,
+    });
+    const { jwe } = await ctx.jose.jwe.encryptCompact({
+      ...encryptionParams,
+      plaintext: jws,
+    });
+
+    return { authResponse: jwe };
+  }
+};
+
+interface JarmAuthResponseSend {
   authRequestParams: {
     response_mode?: JarmResponseMode | Openid4vpJarmResponseMode;
     response_type: ResponseTypeOut;
@@ -28,15 +94,13 @@ interface SendJarmAuthRequestInput {
       }
   );
 
-  authResponseParams: {
-    response: string;
-  };
+  authResponse: string;
 }
 
-export const sendJarmAuthRequest = async (
-  input: SendJarmAuthRequestInput
+export const jarmAuthResponseSend = async (
+  input: JarmAuthResponseSend
 ): Promise<Response> => {
-  const { authRequestParams, authResponseParams } = input;
+  const { authRequestParams, authResponse } = input;
 
   const responseEndpoint =
     'response_uri' in authRequestParams
@@ -55,11 +119,11 @@ export const sendJarmAuthRequest = async (
 
   switch (responseMode) {
     case 'direct_post.jwt':
-      return handleDirectPostJwt(responseEndpoint, authResponseParams.response);
+      return handleDirectPostJwt(responseEndpoint, authResponse);
     case 'query.jwt':
-      return handleQueryJwt(responseEndpoint, authResponseParams.response);
+      return handleQueryJwt(responseEndpoint, authResponse);
     case 'fragment.jwt':
-      return handleFragmentJwt(responseEndpoint, authResponseParams.response);
+      return handleFragmentJwt(responseEndpoint, authResponse);
     case 'form_post.jwt':
       return NOT_IMPLEMENTED({
         message: 'form_post.jwt',

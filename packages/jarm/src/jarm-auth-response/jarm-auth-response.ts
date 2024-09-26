@@ -5,7 +5,6 @@ import {
   decodeProtectedHeader,
   isJwe,
   isJws,
-  joseJwksExtract,
 } from '@protokoll/jose';
 
 import {
@@ -56,7 +55,10 @@ const decryptJarmAuthResponse = async (
   }
 
   const { jwk } = await ctx.wallet.getJwk({ kid: responseProtectedHeader.kid });
-  const { plaintext } = await ctx.jose.jwe.decryptJwt({ jwe: response, jwk });
+  const { plaintext } = await ctx.jose.jwe.decryptCompact({
+    jwe: response,
+    jwk,
+  });
 
   return plaintext;
 };
@@ -72,21 +74,23 @@ export const validateJarmDirectPostJwtResponse = async (
 ) => {
   const { response } = input;
 
-  if (!isJws(response) && !isJwe(response)) {
+  const responseIsEncrypted = isJwe(response);
+  const decryptedResponse = responseIsEncrypted
+    ? await decryptJarmAuthResponse(input, ctx)
+    : response;
+
+  const responseIsSigned = isJws(decryptedResponse);
+  if (!responseIsEncrypted && !responseIsSigned) {
     throw new JarmAuthResponseValidationError({
       message:
         'Jarm Auth Response must be either encrypted, signed, or signed and encrypted.',
     });
   }
 
-  const decryptedResponse = isJwe(response)
-    ? await decryptJarmAuthResponse(input, ctx)
-    : response;
-
   let authResponseParams: JarmDirectPostJwtResponseParams;
   let authRequestParams: AuthRequestParams;
 
-  if (isJws(decryptedResponse)) {
+  if (responseIsSigned) {
     const jwsProtectedHeader = decodeProtectedHeader(decryptedResponse);
     const jwsPayload = decodeJwt(decryptedResponse);
 
@@ -100,17 +104,8 @@ export const validateJarmDirectPostJwtResponse = async (
       });
     }
 
-    const jwks = await joseJwksExtract(authRequestParams.client_metadata);
-    const jwk = jwks?.keys.find(key => key.kid === jwsProtectedHeader.kid);
-
-    if (!jwk) {
-      throw new JarmAuthResponseValidationError({
-        message:
-          'Could not determine the signature verification JWK from the client_metadata for the Jarm Response.',
-      });
-    }
-
-    await ctx.jose.jws.verifyJwt({ jws: response, jwk });
+    const { jwk } = await ctx.wallet.getJwk({ kid: jwsProtectedHeader.kid });
+    await ctx.jose.jws.verifyJwt({ jws: decryptedResponse, jwk });
   } else {
     const jsonResponse: unknown = JSON.parse(decryptedResponse);
     authResponseParams = parseJarmAuthResponseParams(jsonResponse);
@@ -123,5 +118,14 @@ export const validateJarmDirectPostJwtResponse = async (
     authResponseParams,
   });
 
-  return { authRequestParams, authResponseParams };
+  let type: 'signed encrypted' | 'encrypted' | 'signed';
+  if (responseIsSigned && responseIsEncrypted) type = 'signed encrypted';
+  else if (responseIsEncrypted) type = 'encrypted';
+  else type = 'signed';
+
+  return {
+    authRequestParams,
+    authResponseParams,
+    type,
+  };
 };
