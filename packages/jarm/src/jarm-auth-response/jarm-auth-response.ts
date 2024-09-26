@@ -18,8 +18,8 @@ import type {
 } from './c-jarm-auth-response.js';
 import { vJarmAuthResponseErrorParams } from './v-jarm-auth-response-params.js';
 import {
+  jarmAuthResponseDirectPostValidateParams,
   vJarmDirectPostJwtParams,
-  validateJarmDirectPostJwtAuthResponseParams,
 } from './v-jarm-direct-post-jwt-auth-response-params.js';
 
 export interface JarmDirectPostJwtAuthResponseValidation {
@@ -68,7 +68,7 @@ const decryptJarmAuthResponse = async (
  * * The decryption key should be resolvable using the the protected header's 'kid' field
  * * The signature verification jwk should be resolvable using the jws protected header's 'kid' field and the payload's 'iss' field.
  */
-export const validateJarmDirectPostJwtResponse = async (
+export const jarmAuthResponseDirectPostJwtValidate = async (
   input: JarmDirectPostJwtAuthResponseValidation,
   ctx: JarmDirectPostJwtAuthResponseValidationContext
 ) => {
@@ -113,7 +113,7 @@ export const validateJarmDirectPostJwtResponse = async (
       await ctx.openid4vp.authRequest.getParams(authResponseParams));
   }
 
-  validateJarmDirectPostJwtAuthResponseParams({
+  jarmAuthResponseDirectPostValidateParams({
     authRequestParams,
     authResponseParams,
   });

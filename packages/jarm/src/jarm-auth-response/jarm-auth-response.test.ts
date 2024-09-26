@@ -16,9 +16,8 @@ import {
   ISO_MDL_7_JAR_AUTH_REQUEST_PARAMS,
   ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
   ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
-  ISO_MDL_7_JARM_AUTHORIZATION_RESPONSE_JWT_HEADER,
 } from './jarm-auth-response.fixtures.js';
-import { validateJarmDirectPostJwtResponse } from './jarm-auth-response.js';
+import { jarmAuthResponseDirectPostJwtValidate } from './jarm-auth-response.js';
 
 const jarmAuthResponseDirectPostJwtValidationContext: JarmDirectPostJwtAuthResponseValidationContext =
   {
@@ -57,10 +56,10 @@ void describe('Jarm Auth Response', () => {
         type: 'encrypted',
         encryptionParams: {
           jwk: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK,
-          protectedHeader: ISO_MDL_7_JARM_AUTHORIZATION_RESPONSE_JWT_HEADER,
-          keyManagementParameters: {
-            apu: ISO_MDL_7_JARM_AUTHORIZATION_RESPONSE_JWT_HEADER.apu,
-            apv: ISO_MDL_7_JARM_AUTHORIZATION_RESPONSE_JWT_HEADER.apv,
+          protectedHeader: {
+            alg: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK.alg,
+            kid: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK.kid,
+            enc: 'A256GCM',
           },
         },
         authResponseParams: ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
@@ -77,7 +76,7 @@ void describe('Jarm Auth Response', () => {
         const receivedAuthResponse = await request.text();
         assert.equal(receivedAuthResponse, authResponse);
 
-        const validatedResponse = await validateJarmDirectPostJwtResponse(
+        const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
           { response: authResponse },
           jarmAuthResponseDirectPostJwtValidationContext
         );
@@ -134,7 +133,7 @@ void describe('Jarm Auth Response', () => {
         const receivedAuthResponse = await request.text();
         assert.equal(receivedAuthResponse, authResponse);
 
-        const validatedResponse = await validateJarmDirectPostJwtResponse(
+        const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
           { response: receivedAuthResponse },
           jarmAuthResponseDirectPostJwtValidationContext
         );
@@ -179,10 +178,10 @@ void describe('Jarm Auth Response', () => {
         },
         encryptionParams: {
           jwk: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK,
-          protectedHeader: ISO_MDL_7_JARM_AUTHORIZATION_RESPONSE_JWT_HEADER,
-          keyManagementParameters: {
-            apu: ISO_MDL_7_JARM_AUTHORIZATION_RESPONSE_JWT_HEADER.apu,
-            apv: ISO_MDL_7_JARM_AUTHORIZATION_RESPONSE_JWT_HEADER.apv,
+          protectedHeader: {
+            alg: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK.alg,
+            kid: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK.kid,
+            enc: 'A256GCM',
           },
         },
         authResponseParams: ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
@@ -199,7 +198,7 @@ void describe('Jarm Auth Response', () => {
         const receivedAuthResponse = await request.text();
         assert.equal(receivedAuthResponse, authResponse);
 
-        const validatedResponse = await validateJarmDirectPostJwtResponse(
+        const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
           { response: receivedAuthResponse },
           jarmAuthResponseDirectPostJwtValidationContext
         );
@@ -227,7 +226,7 @@ void describe('Jarm Auth Response', () => {
 
   void it(`'ISO_MDL_7_JARM_AUTH_RESPONSE' can be validated`, async () => {
     const { authRequestParams, authResponseParams } =
-      await validateJarmDirectPostJwtResponse(
+      await jarmAuthResponseDirectPostJwtValidate(
         { response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT },
         jarmAuthResponseDirectPostJwtValidationContext
       );
