@@ -1,5 +1,14 @@
 # @protokoll/jarm
 
+## 0.2.11
+
+### Patch Changes
+
+- feat: jarm alpha
+- Updated dependencies
+  - @protokoll/core@0.2.11
+  - @protokoll/jose@0.2.11
+
 ## 0.2.10
 
 ### Patch Changes
