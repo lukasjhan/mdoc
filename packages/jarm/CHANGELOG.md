@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.16
+
+### Patch Changes
+
+- fix: correctly send auth-response
+  - @protokoll/core@0.2.16
+  - @protokoll/jose@0.2.16
+
 ## 0.2.15
 
 ### Patch Changes
