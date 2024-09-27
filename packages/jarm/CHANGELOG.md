@@ -1,5 +1,14 @@
 # @protokoll/jarm
 
+## 0.2.15
+
+### Patch Changes
+
+- 7c6bd01: feat: add jwkUse param
+- feat: add jwkUse param
+  - @protokoll/core@0.2.15
+  - @protokoll/jose@0.2.15
+
 ## 0.2.14
 
 ### Patch Changes
