@@ -59,13 +59,9 @@ const decryptJarmAuthResponse = async (
     });
   }
 
-  const { jwk } = await ctx.wallet.getJwk({
-    jwkUse: 'jarm-auth-response-decryption',
-    kid: responseProtectedHeader.kid,
-  });
   const { plaintext } = await ctx.jose.jwe.decryptCompact({
     jwe: response,
-    jwk,
+    jwk: { kid: responseProtectedHeader.kid, kty: 'auto' },
   });
 
   return plaintext;
@@ -113,12 +109,10 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
       });
     }
 
-    const { jwk } = await ctx.wallet.getJwk({
-      jwkUse: 'jarm-auth-response-verification',
-      kid: jwsProtectedHeader.kid,
-      iss: responseParams.iss,
+    await ctx.jose.jws.verifyJwt({
+      jws: decryptedResponse,
+      jwk: { kid: jwsProtectedHeader.kid, kty: 'auto' },
     });
-    await ctx.jose.jws.verifyJwt({ jws: decryptedResponse, jwk });
     authResponseParams = responseParams;
   } else {
     const jsonResponse: unknown = JSON.parse(decryptedResponse);

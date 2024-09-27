@@ -2,7 +2,7 @@ import * as v from 'valibot';
 
 import type { MaybePromise, PickDeep } from '@protokoll/core';
 
-import type { JoseContext, Jwk } from '@protokoll/jose';
+import type { JoseContext } from '@protokoll/jose';
 import {
   vJarmResponseMode,
   vOpenid4vpJarmResponseMode,
@@ -51,19 +51,5 @@ export interface JarmDirectPostJwtAuthResponseValidationContext
         input: JarmAuthResponseParams | JarmDirectPostJwtResponseParams
       ) => MaybePromise<OAuthAuthRequestGetParamsOut>;
     };
-  };
-  wallet: {
-    getJwk: <
-      T extends
-        | 'jarm-auth-response-decryption'
-        | 'jarm-auth-response-verification',
-    >(
-      input: {
-        jwkUse: T;
-        kid: string;
-      } & (T extends 'jarm-auth-response-verification'
-        ? { iss: string }
-        : Record<string, unknown>)
-    ) => MaybePromise<{ jwk: Jwk }>;
   };
 }

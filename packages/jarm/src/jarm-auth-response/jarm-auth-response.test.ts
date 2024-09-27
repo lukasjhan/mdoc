@@ -2,8 +2,10 @@ import { http, HttpResponse } from 'msw';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
+import type { Jwk } from '@protokoll/jose';
 import { joseContext } from '@protokoll/jose/dist/src/u-jose-test-context.js';
 import { setupServer } from 'msw/node';
+import type { JarmAuthResponseCreateContext } from '../jarm-auth-response-send/c-jarm-auth-response-send.js';
 import {
   jarmAuthResponseCreate,
   jarmAuthResponseSend,
@@ -19,6 +21,45 @@ import {
 } from './jarm-auth-response.fixtures.js';
 import { jarmAuthResponseDirectPostJwtValidate } from './jarm-auth-response.js';
 
+const jarmAuthResponseCreateContext: JarmAuthResponseCreateContext = {
+  jose: {
+    jwe: {
+      encryptJwt: joseContext.jose.jwe.encryptJwt,
+      encryptCompact: joseContext.jose.jwe.encryptCompact,
+    },
+    jws: { signJwt: joseContext.jose.jws.signJwt },
+  },
+};
+
+export const decryptCompact: typeof joseContext.jose.jwe.decryptCompact =
+  async input => {
+    const { jwe, jwk: jwkToResolve } = input;
+    let jwk: Jwk;
+    if (
+      jwkToResolve.kty === 'auto' &&
+      jwkToResolve.kid === ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK.kid
+    ) {
+      jwk = ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK;
+    } else {
+      throw new Error('Received an invalid jwk.');
+    }
+    return await joseContext.jose.jwe.decryptCompact({ jwe, jwk });
+  };
+
+export const verifyJwt: typeof joseContext.jose.jws.verifyJwt = async input => {
+  const { jws, jwk: jwkToResolve } = input;
+  let jwk: Jwk;
+  if (
+    jwkToResolve.kty === 'auto' &&
+    jwkToResolve.kid === EXAMPLE_RP_P256_PRIVATE_KEY_JWK.kid
+  ) {
+    jwk = EXAMPLE_RP_P256_PRIVATE_KEY_JWK;
+  } else {
+    throw new Error('Received an invalid jwk.');
+  }
+  return await joseContext.jose.jws.verifyJwt({ jws, jwk });
+};
+
 const jarmAuthResponseDirectPostJwtValidationContext: JarmDirectPostJwtAuthResponseValidationContext =
   {
     openid4vp: {
@@ -28,19 +69,7 @@ const jarmAuthResponseDirectPostJwtValidationContext: JarmDirectPostJwtAuthRespo
         }),
       },
     },
-    ...joseContext,
-    wallet: {
-      getJwk: input => {
-        if (input.kid === ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK.kid) {
-          return { jwk: ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK };
-        } else if (input.kid === EXAMPLE_RP_P256_PRIVATE_KEY_JWK.kid) {
-          const { d, ...publicKeyJwk } = EXAMPLE_RP_P256_PRIVATE_KEY_JWK;
-          return { jwk: publicKeyJwk };
-        } else {
-          throw new Error('Received jwk with invalid kid.');
-        }
-      },
-    },
+    jose: { jwe: { decryptCompact }, jws: { verifyJwt } },
   };
 
 void describe('Jarm Auth Response', () => {
@@ -64,7 +93,7 @@ void describe('Jarm Auth Response', () => {
         },
         authResponseParams: ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
       },
-      { ...joseContext }
+      jarmAuthResponseCreateContext
     );
 
     const handlers = [
@@ -128,7 +157,7 @@ void describe('Jarm Auth Response', () => {
           ...ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
         },
       },
-      { ...joseContext }
+      jarmAuthResponseCreateContext
     );
 
     const handlers = [
@@ -195,7 +224,7 @@ void describe('Jarm Auth Response', () => {
           ...ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
         },
       },
-      { ...joseContext }
+      jarmAuthResponseCreateContext
     );
 
     const handlers = [
