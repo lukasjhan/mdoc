@@ -2,4 +2,4 @@
 '@protokoll/jarm': patch
 ---
 
-feat: add jwkUse param
+fix: correctly send auth-response
