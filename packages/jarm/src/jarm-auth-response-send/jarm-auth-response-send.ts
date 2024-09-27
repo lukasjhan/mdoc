@@ -136,7 +136,7 @@ async function handleDirectPostJwt(responseEndpoint: URL, responseJwt: string) {
   const response = await fetch(responseEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: responseJwt,
+    body: `response=${responseJwt}`,
   });
 
   return response;

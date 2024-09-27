@@ -13,8 +13,9 @@ void describe('Jarm Auth Request', async () => {
         const contentType = request.headers.get('Content-Type');
         assert.equal(contentType, 'application/x-www-form-urlencoded');
 
-        const text = await request.text();
-        assert.equal(text, ISO_MDL_7_JARM_AUTH_RESPONSE_JWT);
+        const searchParams = new URLSearchParams(await request.text());
+        const response = searchParams.get('response');
+        assert.equal(response, ISO_MDL_7_JARM_AUTH_RESPONSE_JWT);
         return HttpResponse.json({});
       }),
     ];

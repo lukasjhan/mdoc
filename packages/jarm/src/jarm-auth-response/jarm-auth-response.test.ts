@@ -73,11 +73,13 @@ void describe('Jarm Auth Response', () => {
         assert.equal(contentType, 'application/x-www-form-urlencoded');
 
         // we receive the response we sent
-        const receivedAuthResponse = await request.text();
-        assert.equal(receivedAuthResponse, authResponse);
+        const searchParams = new URLSearchParams(await request.text());
+        const response = searchParams.get('response');
+        assert(response);
+        assert.equal(response, authResponse);
 
         const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
-          { response: authResponse },
+          { response },
           jarmAuthResponseDirectPostJwtValidationContext
         );
 
@@ -135,11 +137,13 @@ void describe('Jarm Auth Response', () => {
         assert.equal(contentType, 'application/x-www-form-urlencoded');
 
         // we receive the response we sent
-        const receivedAuthResponse = await request.text();
-        assert.equal(receivedAuthResponse, authResponse);
+        const searchParams = new URLSearchParams(await request.text());
+        const response = searchParams.get('response');
+        assert(response);
+        assert.equal(response, authResponse);
 
         const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
-          { response: receivedAuthResponse },
+          { response },
           jarmAuthResponseDirectPostJwtValidationContext
         );
 
@@ -200,11 +204,13 @@ void describe('Jarm Auth Response', () => {
         assert.equal(contentType, 'application/x-www-form-urlencoded');
 
         // we receive the response we sent
-        const receivedAuthResponse = await request.text();
-        assert.equal(receivedAuthResponse, authResponse);
+        const searchParams = new URLSearchParams(await request.text());
+        const response = searchParams.get('response');
+        assert(response);
+        assert.equal(response, authResponse);
 
         const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
-          { response: receivedAuthResponse },
+          { response },
           jarmAuthResponseDirectPostJwtValidationContext
         );
         assert.deepEqual(validatedResponse.type, 'signed encrypted');
