@@ -1,7 +1,6 @@
 import * as v from 'valibot';
 
-import { emptyArrayToUndefined } from '@protokoll/core';
-import { vCompactJwsHeaderParameters } from '../jws/v-jws.js';
+import { vCompactJwsHeader } from '../jws/v-jws.js';
 
 export const vJwtPayload = v.looseObject({
   iss: v.pipe(
@@ -17,12 +16,7 @@ export const vJwtPayload = v.looseObject({
     )
   ),
   aud: v.pipe(
-    v.optional(
-      v.union([
-        v.string(),
-        v.pipe(v.array(v.string()), v.transform(emptyArrayToUndefined)),
-      ])
-    ),
+    v.optional(v.union([v.string(), v.array(v.string())])),
     v.description(
       'JWT Audience {@see @link https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3 RFC7519#section-4.1.3}'
     )
@@ -55,8 +49,8 @@ export const vJwtPayload = v.looseObject({
 
 export type JwtPayload = v.InferInput<typeof vJwtPayload>;
 
-export const vJwtHeaderParameters = v.object({
-  ...vCompactJwsHeaderParameters.entries,
+export const vJwtHeader = v.object({
+  ...vCompactJwsHeader.entries,
   b64: v.optional(v.literal(true)),
 });
-export type JwtHeaderParameters = v.InferInput<typeof vJwtHeaderParameters>;
+export type JwtHeader = v.InferInput<typeof vJwtHeader>;

@@ -15,9 +15,9 @@ import {
   EXAMPLE_RP_P256_PRIVATE_KEY_JWK,
   ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK,
   ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK,
-  ISO_MDL_7_JAR_AUTH_REQUEST_PARAMS,
+  ISO_MDL_7_JAR_AUTH_REQUEST,
+  ISO_MDL_7_JARM_AUTH_RESPONSE,
   ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
-  ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
 } from './jarm-auth-response.fixtures.js';
 import { jarmAuthResponseDirectPostJwtValidate } from './jarm-auth-response.js';
 
@@ -64,8 +64,8 @@ const jarmAuthResponseDirectPostJwtValidationContext: JarmDirectPostJwtAuthRespo
   {
     openid4vp: {
       authRequest: {
-        getParams: () => ({
-          authRequestParams: ISO_MDL_7_JAR_AUTH_REQUEST_PARAMS,
+        get: () => ({
+          authRequest: ISO_MDL_7_JAR_AUTH_REQUEST,
         }),
       },
     },
@@ -74,7 +74,7 @@ const jarmAuthResponseDirectPostJwtValidationContext: JarmDirectPostJwtAuthRespo
 
 void describe('Jarm Auth Response', () => {
   void it(`Create jarmAuthResponse, send JarmAuthRequest, validate JarmAuthResponse (encrypted)`, async () => {
-    const authRequestParams = {
+    const authRequest = {
       response_type: 'vp_token',
       response_uri: 'https://example-relying-party.com',
       response_mode: 'direct_post.jwt',
@@ -83,7 +83,7 @@ void describe('Jarm Auth Response', () => {
     const { authResponse } = await jarmAuthResponseCreate(
       {
         type: 'encrypted',
-        encryptionParams: {
+        jweEncryptJwtInput: {
           jwk: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK,
           protectedHeader: {
             alg: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK.alg,
@@ -91,7 +91,7 @@ void describe('Jarm Auth Response', () => {
             enc: 'A256GCM',
           },
         },
-        authResponseParams: ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
+        authResponse: ISO_MDL_7_JARM_AUTH_RESPONSE,
       },
       jarmAuthResponseCreateContext
     );
@@ -113,8 +113,8 @@ void describe('Jarm Auth Response', () => {
         );
 
         assert.deepEqual(
-          ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
-          validatedResponse.authResponseParams
+          ISO_MDL_7_JARM_AUTH_RESPONSE,
+          validatedResponse.authResponse
         );
 
         assert.deepEqual(validatedResponse.type, 'encrypted');
@@ -126,7 +126,7 @@ void describe('Jarm Auth Response', () => {
 
     const response = await jarmAuthResponseSend({
       authResponse,
-      authRequestParams,
+      authRequest,
     });
 
     server.close();
@@ -134,7 +134,7 @@ void describe('Jarm Auth Response', () => {
   });
 
   void it(`Create jarmAuthResponse, send JarmAuthRequest, validate JarmAuthResponse (signed)`, async () => {
-    const authRequestParams = {
+    const authRequest = {
       response_type: 'vp_token',
       response_uri: 'https://example-relying-party.com',
       response_mode: 'direct_post.jwt',
@@ -143,18 +143,18 @@ void describe('Jarm Auth Response', () => {
     const { authResponse } = await jarmAuthResponseCreate(
       {
         type: 'signed',
-        signatureParams: {
+        jwsSignJwtInput: {
           jwk: EXAMPLE_RP_P256_PRIVATE_KEY_JWK,
           protectedHeader: {
             alg: EXAMPLE_RP_P256_PRIVATE_KEY_JWK.alg,
             kid: EXAMPLE_RP_P256_PRIVATE_KEY_JWK.kid,
           },
         },
-        authResponseParams: {
+        authResponse: {
           iss: 'https://example-issuer.com',
           aud: 'https://example-relying-party.com',
           exp: 9999999999,
-          ...ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
+          ...ISO_MDL_7_JARM_AUTH_RESPONSE,
         },
       },
       jarmAuthResponseCreateContext
@@ -185,7 +185,7 @@ void describe('Jarm Auth Response', () => {
 
     const response = await jarmAuthResponseSend({
       authResponse: authResponse,
-      authRequestParams,
+      authRequest,
     });
 
     server.close();
@@ -193,7 +193,7 @@ void describe('Jarm Auth Response', () => {
   });
 
   void it(`Create jarmAuthResponse, send JarmAuthRequest, validate JarmAuthResponse (signed and encrypted)`, async () => {
-    const authRequestParams = {
+    const authRequest = {
       response_type: 'vp_token',
       response_uri: 'https://example-relying-party.com',
       response_mode: 'direct_post.jwt',
@@ -202,14 +202,14 @@ void describe('Jarm Auth Response', () => {
     const { authResponse } = await jarmAuthResponseCreate(
       {
         type: 'signed encrypted',
-        signatureParams: {
+        jwsSignJwtInput: {
           jwk: EXAMPLE_RP_P256_PRIVATE_KEY_JWK,
           protectedHeader: {
             alg: EXAMPLE_RP_P256_PRIVATE_KEY_JWK.alg,
             kid: EXAMPLE_RP_P256_PRIVATE_KEY_JWK.kid,
           },
         },
-        encryptionParams: {
+        jweEncryptCompactInput: {
           jwk: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK,
           protectedHeader: {
             alg: ISO_MDL_7_EPHEMERAL_READER_PUBLIC_KEY_JWK.alg,
@@ -217,11 +217,11 @@ void describe('Jarm Auth Response', () => {
             enc: 'A256GCM',
           },
         },
-        authResponseParams: {
+        authResponse: {
           iss: 'https://example-issuer.com',
           aud: 'https://example-relying-party.com',
           exp: 9999999999,
-          ...ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
+          ...ISO_MDL_7_JARM_AUTH_RESPONSE,
         },
       },
       jarmAuthResponseCreateContext
@@ -252,7 +252,7 @@ void describe('Jarm Auth Response', () => {
 
     const response = await jarmAuthResponseSend({
       authResponse: authResponse,
-      authRequestParams,
+      authRequest: authRequest,
     });
 
     server.close();
@@ -260,16 +260,13 @@ void describe('Jarm Auth Response', () => {
   });
 
   void it(`'ISO_MDL_7_JARM_AUTH_RESPONSE' can be validated`, async () => {
-    const { authRequestParams, authResponseParams } =
+    const { authRequest, authResponse } =
       await jarmAuthResponseDirectPostJwtValidate(
         { response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT },
         jarmAuthResponseDirectPostJwtValidationContext
       );
 
-    assert.deepEqual(
-      ISO_MDL_7_JARM_AUTH_RESPONSE_PARAMETERS,
-      authResponseParams
-    );
-    assert.deepEqual(authRequestParams, authRequestParams);
+    assert.deepEqual(ISO_MDL_7_JARM_AUTH_RESPONSE, authResponse);
+    assert.deepEqual(authRequest, authRequest);
   });
 });

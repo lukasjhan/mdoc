@@ -1,11 +1,6 @@
 import * as v from 'valibot';
-import { vJweHeaderParameters } from './jwe/v-jwe.js';
-import { vJwsHeaderParameters } from './jws/v-jws.js';
+import { vJweHeader } from './jwe/v-jwe.js';
+import { vJwsHeader } from './jws/v-jws.js';
 
-export const vJoseProtectedHeaderParameters = v.intersect([
-  vJwsHeaderParameters,
-  vJweHeaderParameters,
-]);
-export type JoseProtectedHeaderParameters = v.InferInput<
-  typeof vJoseProtectedHeaderParameters
->;
+export const vJoseProtectedHeader = v.intersect([vJwsHeader, vJweHeader]);
+export type JoseProtectedHeader = v.InferInput<typeof vJoseProtectedHeader>;

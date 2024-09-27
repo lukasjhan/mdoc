@@ -11,16 +11,16 @@ import {
   JarmAuthResponseValidationError,
   JarmReceivedErrorResponse,
 } from '../e-jarm.js';
-import type { JarmDirectPostJwtResponseParams } from '../index.js';
+import type { JarmDirectPostJwtResponse } from '../index.js';
 import type {
-  AuthRequestParams,
+  AuthRequest,
   JarmDirectPostJwtAuthResponseValidationContext,
 } from './c-jarm-auth-response.js';
-import { vJarmAuthResponseErrorParams } from './v-jarm-auth-response-params.js';
+import { vJarmAuthResponseError } from './v-jarm-auth-response.js';
 import {
-  jarmAuthResponseDirectPostValidateParams,
-  vJarmDirectPostJwtParams,
-} from './v-jarm-direct-post-jwt-auth-response-params.js';
+  jarmAuthResponseEncryptionOnlyValidate,
+  vJarmEncrytedOnlyAuthResponse,
+} from './v-jarm-direct-post-jwt-auth-response.js';
 
 export interface JarmDirectPostJwtAuthResponseValidation {
   /**
@@ -29,21 +29,21 @@ export interface JarmDirectPostJwtAuthResponseValidation {
   response: string;
 }
 
-const parseJarmAuthResponseParams = <
+const parseJarmAuthResponse = <
   Schema extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>,
 >(
   schema: Schema,
-  responseParams: unknown
+  response: unknown
 ) => {
-  if (v.is(vJarmAuthResponseErrorParams, responseParams)) {
-    const errorResponseJson = JSON.stringify(responseParams, undefined, 2);
+  if (v.is(vJarmAuthResponseError, response)) {
+    const errorResponseJson = JSON.stringify(response, undefined, 2);
     throw new JarmReceivedErrorResponse({
       code: 'PARSE_ERROR',
       message: `Received error response from authorization server. '${errorResponseJson}'`,
     });
   }
 
-  return v.parse(schema, responseParams);
+  return v.parse(schema, response);
 };
 
 const decryptJarmAuthResponse = async (
@@ -91,17 +91,20 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
     });
   }
 
-  let authResponseParams: JarmDirectPostJwtResponseParams;
-  let authRequestParams: AuthRequestParams;
+  let authResponse: JarmDirectPostJwtResponse;
+  let authRequest: AuthRequest;
 
   if (responseIsSigned) {
     const jwsProtectedHeader = decodeProtectedHeader(decryptedResponse);
     const jwsPayload = decodeJwt(decryptedResponse);
 
-    const schema = v.required(vJarmDirectPostJwtParams, ['iss', 'aud', 'exp']);
-    const responseParams = parseJarmAuthResponseParams(schema, jwsPayload);
-    ({ authRequestParams } =
-      await ctx.openid4vp.authRequest.getParams(responseParams));
+    const schema = v.required(vJarmEncrytedOnlyAuthResponse, [
+      'iss',
+      'aud',
+      'exp',
+    ]);
+    const response = parseJarmAuthResponse(schema, jwsPayload);
+    ({ authRequest } = await ctx.openid4vp.authRequest.get(response));
 
     if (!jwsProtectedHeader.kid) {
       throw new JarmAuthResponseValidationError({
@@ -113,20 +116,19 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
       jws: decryptedResponse,
       jwk: { kid: jwsProtectedHeader.kid, kty: 'auto' },
     });
-    authResponseParams = responseParams;
+    authResponse = response;
   } else {
     const jsonResponse: unknown = JSON.parse(decryptedResponse);
-    authResponseParams = parseJarmAuthResponseParams(
-      vJarmDirectPostJwtParams,
+    authResponse = parseJarmAuthResponse(
+      vJarmEncrytedOnlyAuthResponse,
       jsonResponse
     );
-    ({ authRequestParams } =
-      await ctx.openid4vp.authRequest.getParams(authResponseParams));
+    ({ authRequest } = await ctx.openid4vp.authRequest.get(authResponse));
   }
 
-  jarmAuthResponseDirectPostValidateParams({
-    authRequestParams,
-    authResponseParams,
+  jarmAuthResponseEncryptionOnlyValidate({
+    authRequest: authRequest,
+    authResponse: authResponse,
   });
 
   let type: 'signed encrypted' | 'encrypted' | 'signed';
@@ -134,9 +136,5 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
   else if (responseIsEncrypted) type = 'encrypted';
   else type = 'signed';
 
-  return {
-    authRequestParams,
-    authResponseParams,
-    type,
-  };
+  return { authRequest, authResponse, type };
 };

@@ -3,77 +3,75 @@ import {
   appendQueryParams,
   NOT_IMPLEMENTED,
 } from '@protokoll/core';
+import * as v from 'valibot';
 
-import type {
-  JwtPayload,
-  vJoseJweEncryptJwt,
-  vJoseJwsSignJwt,
+import {
+  vJoseJweEncryptCompactInput,
+  vJoseJweEncryptJwtInput,
+  vJoseJwsSignJwtInput,
+  vJwe,
+  vJws,
 } from '@protokoll/jose';
 
-import type * as v from 'valibot';
 import { JarmError } from '../e-jarm.js';
-import type {
-  JarmResponseMode,
-  Openid4vpJarmResponseMode,
-} from '../v-response-mode-registry.js';
+import { vJarmAuthResponse } from '../jarm-auth-response/v-jarm-auth-response';
+import { vJarmEncrytedOnlyAuthResponse as vJarmEncryptedOnlyAuthResponse } from '../jarm-auth-response/v-jarm-direct-post-jwt-auth-response.js';
 import {
   getJarmDefaultResponseMode,
   validateResponseMode,
+  vJarmResponseMode,
+  vOpenid4vpJarmResponseMode,
 } from '../v-response-mode-registry.js';
-import type { ResponseTypeOut } from '../v-response-type-registry.js';
+import { vResponseType } from '../v-response-type-registry.js';
 import type { JarmAuthResponseCreateContext } from './c-jarm-auth-response-send.js';
 
-export type JarmAuthResponseCreateInput = {
-  authResponseParams: JwtPayload;
-} & (
-  | {
-      type: 'signed';
-      signatureParams: Omit<v.InferInput<typeof vJoseJwsSignJwt>, 'payload'>;
-      encryptionParams?: never;
-    }
-  | {
-      type: 'encrypted';
-      signatureParams?: never;
-      encryptionParams: Omit<
-        v.InferInput<typeof vJoseJweEncryptJwt>,
-        'payload'
-      >;
-    }
-  | {
-      type: 'signed encrypted';
-      signatureParams: Omit<v.InferInput<typeof vJoseJwsSignJwt>, 'payload'>;
-      encryptionParams: Omit<
-        v.InferInput<typeof vJoseJweEncryptJwt>,
-        'payload'
-      >;
-    }
-);
+export const vJarmAuthResponseCreateInput = v.variant('type', [
+  v.object({
+    type: v.literal('signed'),
+    authResponse: vJarmAuthResponse,
+    jwsSignJwtInput: v.omit(vJoseJwsSignJwtInput, ['payload']),
+  }),
+  v.object({
+    type: v.literal('encrypted'),
+    authResponse: vJarmEncryptedOnlyAuthResponse,
+    jweEncryptJwtInput: v.omit(vJoseJweEncryptJwtInput, ['payload']),
+  }),
+  v.object({
+    type: v.literal('signed encrypted'),
+    authResponse: vJarmAuthResponse,
+    jwsSignJwtInput: v.omit(vJoseJwsSignJwtInput, ['payload']),
+    jweEncryptCompactInput: v.omit(vJoseJweEncryptCompactInput, ['plaintext']),
+  }),
+]);
+
+export type JarmAuthResponseCreateInput = v.InferOutput<
+  typeof vJarmAuthResponseCreateInput
+>;
 
 export const jarmAuthResponseCreate = async (
   input: JarmAuthResponseCreateInput,
   ctx: JarmAuthResponseCreateContext
 ) => {
-  const { type, authResponseParams, signatureParams, encryptionParams } = input;
-
-  if (type === 'encrypted') {
+  const { type, authResponse } = input;
+  if (input.type === 'encrypted') {
     const { jwe } = await ctx.jose.jwe.encryptJwt({
-      ...encryptionParams,
-      payload: authResponseParams,
+      ...input.jweEncryptJwtInput,
+      payload: authResponse,
     });
     return { authResponse: jwe };
   } else if (type === 'signed') {
     const { jws } = await ctx.jose.jws.signJwt({
-      ...signatureParams,
-      payload: authResponseParams,
+      ...input.jwsSignJwtInput,
+      payload: authResponse,
     });
     return { authResponse: jws };
   } else {
     const { jws } = await ctx.jose.jws.signJwt({
-      ...signatureParams,
-      payload: authResponseParams,
+      ...input.jwsSignJwtInput,
+      payload: authResponse,
     });
     const { jwe } = await ctx.jose.jwe.encryptCompact({
-      ...encryptionParams,
+      ...input.jweEncryptCompactInput,
       plaintext: jws,
     });
 
@@ -81,39 +79,48 @@ export const jarmAuthResponseCreate = async (
   }
 };
 
-interface JarmAuthResponseSend {
-  authRequestParams: {
-    response_mode?: JarmResponseMode | Openid4vpJarmResponseMode;
-    response_type: ResponseTypeOut;
-  } & (
-    | {
-        response_uri: string;
-      }
-    | {
-        redirect_uri: string;
-      }
-  );
-
-  authResponse: string;
-}
+export const vJarmAuthResponseSendInput = v.object({
+  authRequest: v.intersect([
+    v.object({
+      response_mode: v.optional(
+        v.union([vJarmResponseMode, vOpenid4vpJarmResponseMode])
+      ),
+      response_type: vResponseType,
+    }),
+    v.union([
+      v.looseObject({
+        response_uri: v.string(),
+        redirect_uri: v.optional(v.never()),
+      }),
+      v.looseObject({
+        redirect_uri: v.string(),
+        response_uri: v.optional(v.never()),
+      }),
+    ]),
+  ]),
+  authResponse: v.union([vJwe, vJws]),
+});
+export type JarmAuthResponseSendInput = v.InferOutput<
+  typeof vJarmAuthResponseSendInput
+>;
 
 export const jarmAuthResponseSend = async (
-  input: JarmAuthResponseSend
+  input: JarmAuthResponseSendInput
 ): Promise<Response> => {
-  const { authRequestParams, authResponse } = input;
+  const { authRequest, authResponse } = input;
 
-  const responseEndpoint =
-    'response_uri' in authRequestParams
-      ? new URL(authRequestParams.response_uri)
-      : new URL(authRequestParams.redirect_uri);
+  const responseEndpoint = authRequest.response_uri
+    ? new URL(authRequest.response_uri)
+    : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      new URL(authRequest.redirect_uri!);
 
   const responseMode =
-    authRequestParams.response_mode && authRequestParams.response_mode !== 'jwt'
-      ? authRequestParams.response_mode
-      : getJarmDefaultResponseMode(authRequestParams);
+    authRequest.response_mode && authRequest.response_mode !== 'jwt'
+      ? authRequest.response_mode
+      : getJarmDefaultResponseMode(authRequest);
 
   validateResponseMode({
-    response_type: authRequestParams.response_type,
+    response_type: authRequest.response_type,
     response_mode: responseMode,
   });
 

@@ -1,9 +1,9 @@
 import * as v from 'valibot';
 
-import { vJoseHeaderParameters } from '../v-jose-protected-header.js';
+import { vJoseHeader } from '../v-jose-protected-header.js';
 
-export const vJwsHeaderParameters = v.looseObject({
-  ...vJoseHeaderParameters.entries,
+export const vJwsHeader = v.looseObject({
+  ...vJoseHeader.entries,
   alg: v.pipe(
     v.optional(v.string()),
     v.description('JWS "alg" (Algorithm) Header Parameter.')
@@ -19,12 +19,10 @@ export const vJwsHeaderParameters = v.looseObject({
     v.description('JWS "crit" (Critical) Header Parameter.')
   ),
 });
-export type JwsHeaderParameters = v.InferInput<typeof vJwsHeaderParameters>;
+export type JwsHeader = v.InferInput<typeof vJwsHeader>;
 
-export const vCompactJwsHeaderParameters = v.object({
-  ...vJwsHeaderParameters.entries,
+export const vCompactJwsHeader = v.object({
+  ...vJwsHeader.entries,
   alg: v.string(),
 });
-export type CompactJwsHeaderParameters = v.InferInput<
-  typeof vCompactJwsHeaderParameters
->;
+export type CompactJwsHeader = v.InferInput<typeof vCompactJwsHeader>;

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-const vJarmClientMetadataParamsBase = v.object({
+const vJarmClientMetadataBase = v.object({
   authorization_signed_response_alg: v.pipe(
     v.optional(v.string(), 'RS256'),
     v.description(
@@ -15,12 +15,12 @@ const vJarmClientMetadataParamsBase = v.object({
 /**
  * Clients may register their public encryption keys using the jwks_uri or jwks metadata parameters.
  */
-export const vJarmClientMetadataParams = v.union([
+export const vJarmClientMetadata = v.union([
   v.object({
-    ...vJarmClientMetadataParamsBase.entries,
+    ...vJarmClientMetadataBase.entries,
   }),
   v.object({
-    ...vJarmClientMetadataParamsBase.entries,
+    ...vJarmClientMetadataBase.entries,
 
     authorization_encrypted_response_alg: v.pipe(
       v.string(),
@@ -38,6 +38,4 @@ export const vJarmClientMetadataParams = v.union([
   }),
 ]);
 
-export type JarmClientMetadataParams = v.InferInput<
-  typeof vJarmClientMetadataParams
->;
+export type JarmClientMetadata = v.InferInput<typeof vJarmClientMetadata>;

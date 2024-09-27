@@ -23,7 +23,7 @@ void describe('Jarm Auth Request', async () => {
     server.listen();
 
     const response = await jarmAuthResponseSend({
-      authRequestParams: {
+      authRequest: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
         response_mode: 'direct_post.jwt',
@@ -49,7 +49,7 @@ void describe('Jarm Auth Request', async () => {
     server.listen();
 
     const response = await jarmAuthResponseSend({
-      authRequestParams: {
+      authRequest: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
         response_mode: 'jwt',
@@ -75,7 +75,7 @@ void describe('Jarm Auth Request', async () => {
     server.listen();
 
     const response = await jarmAuthResponseSend({
-      authRequestParams: {
+      authRequest: {
         response_type: 'vp_token',
         response_uri: 'https://example-relying-party.com',
         response_mode: 'query.jwt',

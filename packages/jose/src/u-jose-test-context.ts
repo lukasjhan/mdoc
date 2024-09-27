@@ -37,7 +37,7 @@ const decryptCompact: JoseJweDecryptCompact = async input => {
 };
 
 const encryptJwt: JoseJweEncryptJwt = async input => {
-  const { payload, protectedHeader, jwk, alg, keyManagementParameters } = input;
+  const { payload, protectedHeader, jwk, alg, keyManagement } = input;
   const encode = TextEncoder.prototype.encode.bind(new TextEncoder());
   const recipientPublicKey = await jose.importJWK(jwk, alg);
 
@@ -45,10 +45,10 @@ const encryptJwt: JoseJweEncryptJwt = async input => {
     protectedHeader
   );
 
-  if (keyManagementParameters) {
+  if (keyManagement) {
     joseEncryptJwt.setKeyManagementParameters({
-      apu: encode(keyManagementParameters.apu),
-      apv: encode(keyManagementParameters.apv),
+      apu: encode(keyManagement.apu),
+      apv: encode(keyManagement.apv),
     });
   }
 
@@ -57,8 +57,7 @@ const encryptJwt: JoseJweEncryptJwt = async input => {
 };
 
 const encryptCompact: JoseJweEncryptCompact = async input => {
-  const { plaintext, protectedHeader, jwk, alg, keyManagementParameters } =
-    input;
+  const { plaintext, protectedHeader, jwk, alg, keyManagement } = input;
   const encode = TextEncoder.prototype.encode.bind(new TextEncoder());
   const recipientPublicKey = await jose.importJWK(jwk, alg);
 
@@ -66,10 +65,10 @@ const encryptCompact: JoseJweEncryptCompact = async input => {
     encode(plaintext)
   ).setProtectedHeader(protectedHeader);
 
-  if (keyManagementParameters) {
+  if (keyManagement) {
     joseEncryptJwt.setKeyManagementParameters({
-      apu: encode(keyManagementParameters.apu),
-      apv: encode(keyManagementParameters.apv),
+      apu: encode(keyManagement.apu),
+      apv: encode(keyManagement.apv),
     });
   }
 

@@ -1,9 +1,9 @@
 import * as v from 'valibot';
 
-import { checkExp } from '@protokoll/jose';
+import { checkExp, vJwtPayload } from '@protokoll/jose';
 import { JarmAuthResponseValidationError } from '../e-jarm.js';
 
-export const vJarmAuthResponseErrorParams = v.looseObject({
+export const vJarmAuthResponseError = v.looseObject({
   error: v.string(),
   state: v.optional(v.string()),
 
@@ -22,53 +22,41 @@ export const vJarmAuthResponseErrorParams = v.looseObject({
   ),
 });
 
-export const vJarmAuthResponseParams = v.looseObject({
+export const vJarmAuthResponse = v.looseObject({
+  /**
+   * iss: The issuer URL of the authorization server that created the response
+   * aud: The client_id of the client the response is intended for
+   */
+  ...v.required(vJwtPayload, ['iss', 'aud', 'exp']).entries,
   state: v.optional(v.string()), // TODO: extend AuthResponseParams instead
-
-  /**
-   * The issuer URL of the authorization server that created the response
-   */
-  iss: v.string(),
-
-  /**
-   * The client_id of the client the response is intended for
-   */
-  exp: v.number(),
-
-  /**
-   * Expiration of the JWT
-   */
-  aud: v.string(),
 });
 
-export type JarmAuthResponseParams = v.InferInput<
-  typeof vJarmAuthResponseParams
->;
+export type JarmAuthResponse = v.InferInput<typeof vJarmAuthResponse>;
 
-export const validateJarmAuthResponseParams = (input: {
-  authRequestParams: { client_id: string; state?: string };
-  authResponseParams: JarmAuthResponseParams;
+export const validateJarmAuthResponse = (input: {
+  authRequest: { client_id: string; state?: string };
+  authResponse: JarmAuthResponse;
 }) => {
-  const { authRequestParams, authResponseParams } = input;
+  const { authRequest, authResponse } = input;
   // 2. The client obtains the state parameter from the JWT and checks its binding to the user agent. If the check fails, the client MUST abort processing and refuse the response.
-  if (authRequestParams.state !== authResponseParams.state) {
+  if (authRequest.state !== authResponse.state) {
     throw new JarmAuthResponseValidationError({
-      message: `State missmatch in jarm-auth-response. Expected '${authRequestParams.state}' received '${authRequestParams.state}'.`,
+      message: `State missmatch in jarm-auth-response. Expected '${authRequest.state}' received '${authRequest.state}'.`,
     });
   }
 
   // 4. The client obtains the aud element from the JWT and checks whether it matches the client id the client used to identify itself in the corresponding authorization request. If the check fails, the client MUST abort processing and refuse the response.
-  if (authRequestParams.client_id !== authResponseParams.client_id) {
+  if (authRequest.client_id !== authResponse.aud) {
     throw new JarmAuthResponseValidationError({
-      message: `Invalid audience in jarm-auth-response. Expected '${authRequestParams.client_id}' received '${authResponseParams.aud}'.`,
+      message: `Invalid audience in jarm-auth-response. Expected '${authRequest.client_id}' received '${JSON.stringify(authResponse.aud)}'.`,
     });
   }
 
   // 5. The client checks the JWT's exp element to determine if the JWT is still valid. If the check fails, the client MUST abort processing and refuse the response.
   // 120 seconds clock skew
-  if (checkExp({ exp: authResponseParams.exp })) {
+  if (checkExp({ exp: authResponse.exp })) {
     throw new JarmAuthResponseValidationError({
-      message: `The '${authRequestParams.state}' and the jarm-auth-response.`,
+      message: `The '${authRequest.state}' and the jarm-auth-response.`,
     });
   }
 };

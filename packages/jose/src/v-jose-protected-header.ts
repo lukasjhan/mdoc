@@ -2,7 +2,7 @@ import * as v from 'valibot';
 
 import { vJwk } from './jwk/v-jwk.js';
 
-export const vJoseHeaderParameters = v.looseObject({
+export const vJoseHeader = v.looseObject({
   kid: v.pipe(
     v.optional(v.string()),
     v.description('"kid" (Key ID) Header Parameter.')
@@ -38,4 +38,4 @@ export const vJoseHeaderParameters = v.looseObject({
     v.description('"cty" (Content Type) Header Parameter.')
   ),
 });
-export type JoseHeaderParameters = v.InferInput<typeof vJoseHeaderParameters>;
+export type JoseHeader = v.InferInput<typeof vJoseHeader>;

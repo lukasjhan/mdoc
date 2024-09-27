@@ -1,10 +1,10 @@
 import * as v from 'valibot';
 
 import { vCritOption } from '../jwt/v-jwt-claimset.js';
-import { vJoseHeaderParameters } from '../v-jose-protected-header.js';
+import { vJoseHeader } from '../v-jose-protected-header.js';
 
-export const vJweHeaderParameters = v.looseObject({
-  ...vJoseHeaderParameters.entries,
+export const vJweHeader = v.looseObject({
+  ...vJoseHeader.entries,
   alg: v.pipe(
     v.optional(v.string()),
     v.description('JWE "alg" (Algorithm) Header Parameter.')
@@ -24,17 +24,15 @@ export const vJweHeaderParameters = v.looseObject({
     )
   ),
 });
-export type JweHeaderParameters = v.InferInput<typeof vJweHeaderParameters>;
+export type JweHeader = v.InferInput<typeof vJweHeader>;
 
 /** Recognized Compact JWE Header Parameters, any other Header Members may also be present. */
-export const vCompactJweHeaderParameters = v.looseObject({
-  ...vJweHeaderParameters.entries,
+export const vCompactJweHeader = v.looseObject({
+  ...vJweHeader.entries,
   alg: v.string(),
   enc: v.string(),
 });
-export type CompactJweHeaderParameters = v.InferInput<
-  typeof vCompactJweHeaderParameters
->;
+export type CompactJweHeader = v.InferInput<typeof vCompactJweHeader>;
 
 export const vDecryptOptions = v.looseObject({
   ...vCritOption.entries,

@@ -1,5 +1,5 @@
-export const uriEncodeObject = (params: Record<string, unknown>) => {
-  return Object.entries(params)
+export const uriEncodeObject = (obj: Record<string, unknown>) => {
+  return Object.entries(obj)
     .map(
       ([key, val]) =>
         `${key}=${encodeURIComponent(typeof val === 'string' || typeof val === 'boolean' || typeof val === 'number' ? val : encodeURIComponent(JSON.stringify(val as Record<string, unknown>)))}`

@@ -1,11 +1,9 @@
 import type { JwtPayload } from 'jwt-decode';
 import { jwtDecode } from 'jwt-decode';
 
-import type { JoseProtectedHeaderParameters } from '../v-jose.js';
+import type { JoseProtectedHeader } from '../v-jose.js';
 
-export const decodeProtectedHeader = (
-  jwt: string
-): JoseProtectedHeaderParameters => {
+export const decodeProtectedHeader = (jwt: string): JoseProtectedHeader => {
   return jwtDecode(jwt, { header: true });
 };
 
