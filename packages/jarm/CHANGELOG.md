@@ -1,5 +1,13 @@
 # @protokoll/jarm
 
+## 0.2.17
+
+### Patch Changes
+
+- f8ff796: fix: remove wallet abstraction
+  - @protokoll/core@0.2.17
+  - @protokoll/jose@0.2.17
+
 ## 0.2.16
 
 ### Patch Changes
