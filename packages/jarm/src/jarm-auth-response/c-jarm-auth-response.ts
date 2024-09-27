@@ -53,6 +53,17 @@ export interface JarmDirectPostJwtAuthResponseValidationContext
     };
   };
   wallet: {
-    getJwk: (input: { kid: string }) => MaybePromise<{ jwk: Jwk }>;
+    getJwk: <
+      T extends
+        | 'jarm-auth-response-decryption'
+        | 'jarm-auth-response-verification',
+    >(
+      input: {
+        jwkUse: T;
+        kid: string;
+      } & (T extends 'jarm-auth-response-verification'
+        ? { iss: string }
+        : Record<string, unknown>)
+    ) => MaybePromise<{ jwk: Jwk }>;
   };
 }

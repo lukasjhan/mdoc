@@ -29,7 +29,12 @@ export interface JarmDirectPostJwtAuthResponseValidation {
   response: string;
 }
 
-const parseJarmAuthResponseParams = (responseParams: unknown) => {
+const parseJarmAuthResponseParams = <
+  Schema extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>,
+>(
+  schema: Schema,
+  responseParams: unknown
+) => {
   if (v.is(vJarmAuthResponseErrorParams, responseParams)) {
     const errorResponseJson = JSON.stringify(responseParams, undefined, 2);
     throw new JarmReceivedErrorResponse({
@@ -38,7 +43,7 @@ const parseJarmAuthResponseParams = (responseParams: unknown) => {
     });
   }
 
-  return v.parse(vJarmDirectPostJwtParams, responseParams);
+  return v.parse(schema, responseParams);
 };
 
 const decryptJarmAuthResponse = async (
@@ -54,7 +59,10 @@ const decryptJarmAuthResponse = async (
     });
   }
 
-  const { jwk } = await ctx.wallet.getJwk({ kid: responseProtectedHeader.kid });
+  const { jwk } = await ctx.wallet.getJwk({
+    jwkUse: 'jarm-auth-response-decryption',
+    kid: responseProtectedHeader.kid,
+  });
   const { plaintext } = await ctx.jose.jwe.decryptCompact({
     jwe: response,
     jwk,
@@ -94,9 +102,10 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
     const jwsProtectedHeader = decodeProtectedHeader(decryptedResponse);
     const jwsPayload = decodeJwt(decryptedResponse);
 
-    authResponseParams = parseJarmAuthResponseParams(jwsPayload);
+    const schema = v.required(vJarmDirectPostJwtParams, ['iss', 'aud', 'exp']);
+    const responseParams = parseJarmAuthResponseParams(schema, jwsPayload);
     ({ authRequestParams } =
-      await ctx.openid4vp.authRequest.getParams(authResponseParams));
+      await ctx.openid4vp.authRequest.getParams(responseParams));
 
     if (!jwsProtectedHeader.kid) {
       throw new JarmAuthResponseValidationError({
@@ -104,11 +113,19 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
       });
     }
 
-    const { jwk } = await ctx.wallet.getJwk({ kid: jwsProtectedHeader.kid });
+    const { jwk } = await ctx.wallet.getJwk({
+      jwkUse: 'jarm-auth-response-verification',
+      kid: jwsProtectedHeader.kid,
+      iss: responseParams.iss,
+    });
     await ctx.jose.jws.verifyJwt({ jws: decryptedResponse, jwk });
+    authResponseParams = responseParams;
   } else {
     const jsonResponse: unknown = JSON.parse(decryptedResponse);
-    authResponseParams = parseJarmAuthResponseParams(jsonResponse);
+    authResponseParams = parseJarmAuthResponseParams(
+      vJarmDirectPostJwtParams,
+      jsonResponse
+    );
     ({ authRequestParams } =
       await ctx.openid4vp.authRequest.getParams(authResponseParams));
   }

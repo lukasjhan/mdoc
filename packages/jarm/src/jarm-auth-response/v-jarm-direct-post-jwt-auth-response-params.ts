@@ -5,6 +5,8 @@ import { vJarmAuthResponseParams } from './v-jarm-auth-response-params.js';
 
 export const vJarmDirectPostJwtParams = v.looseObject({
   ...v.omit(vJarmAuthResponseParams, ['iss', 'aud', 'exp']).entries,
+  ...v.partial(v.pick(vJarmAuthResponseParams, ['iss', 'aud', 'exp'])).entries,
+
   vp_token: v.string(),
   presentation_submission: v.unknown(),
   nonce: v.optional(v.string()),

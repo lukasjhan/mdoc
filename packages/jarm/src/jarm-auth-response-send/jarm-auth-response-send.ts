@@ -23,7 +23,7 @@ import {
 import type { ResponseTypeOut } from '../v-response-type-registry.js';
 import type { JarmAuthResponseCreateContext } from './c-jarm-auth-response-send.js';
 
-export type JarmAuthResponseCreate = {
+export type JarmAuthResponseCreateInput = {
   authResponseParams: JwtPayload;
 } & (
   | {
@@ -50,7 +50,7 @@ export type JarmAuthResponseCreate = {
 );
 
 export const jarmAuthResponseCreate = async (
-  input: JarmAuthResponseCreate,
+  input: JarmAuthResponseCreateInput,
   ctx: JarmAuthResponseCreateContext
 ) => {
   const { type, authResponseParams, signatureParams, encryptionParams } = input;
