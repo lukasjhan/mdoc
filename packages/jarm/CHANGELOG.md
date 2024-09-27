@@ -1,5 +1,16 @@
 # @protokoll/jarm
 
+## 0.2.14
+
+### Patch Changes
+
+- 39e65fa: fix: ci
+- 92942a5: fix: remove pkgroll
+- Updated dependencies [39e65fa]
+- Updated dependencies [92942a5]
+  - @protokoll/core@0.2.14
+  - @protokoll/jose@0.2.14
+
 ## 0.2.13
 
 ### Patch Changes

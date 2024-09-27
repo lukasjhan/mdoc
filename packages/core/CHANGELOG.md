@@ -1,5 +1,12 @@
 # @protokoll/core
 
+## 0.2.14
+
+### Patch Changes
+
+- 39e65fa: fix: ci
+- 92942a5: fix: remove pkgroll
+
 ## 0.2.13
 
 ## 0.2.12
