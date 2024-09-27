@@ -1,5 +1,9 @@
 {
   "extends": "@protokoll/tsconfig/base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  },
   "include": ["."],
   "exclude": ["node_modules"]
 }

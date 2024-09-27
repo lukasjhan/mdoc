@@ -12,7 +12,8 @@
     "moduleDetection": "force",
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    "verbatimModuleSyntax": true,
+    /**TODO: enable again */
+    "verbatimModuleSyntax": false,
     "outDir": "${configDir}/dist",
 
     /** Keep TSC performant in monorepos */
@@ -31,8 +32,9 @@
     "strictPropertyInitialization": true,
 
     /** Transpile using Typescript */
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    /** TODO: Fix this later */
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "sourceMap": true
   },
   "exclude": ["node_modules", "build", "dist", ".next", ".expo"]

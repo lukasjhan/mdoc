@@ -5,35 +5,13 @@
   "private": false,
   "version": "0.2.13",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
-  "exports": {
-    ".": {
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
-    },
-    "./u-jose-test": {
-      "require": {
-        "types": "./dist/u-jose-test-context.d.cts",
-        "default": "./dist/u-jose-test-context.cjs"
-      },
-      "import": {
-        "types": "./dist/u-jose-test-context.d.mts",
-        "default": "./dist/u-jose-test-context.mjs"
-      }
-    }
-  },
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "license": "MIT",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
-    "build": "pkgroll",
+    "build": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -52,7 +30,6 @@
     "eslint": "catalog:",
     "jose": "catalog:",
     "msw": "catalog:",
-    "pkgroll": "catalog:",
     "prettier": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"

@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
-import { joseContext } from '@protokoll/jose/u-jose-test';
+import { joseContext } from '@protokoll/jose/dist/src/u-jose-test-context.js';
 import { setupServer } from 'msw/node';
 import {
   jarmAuthResponseCreate,
