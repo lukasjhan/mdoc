@@ -4,7 +4,6 @@
   "author": "Auer Martin",
   "version": "0.2.13",
   "private": false,
-  "type": "module",
   "files": [
     "dist"
   ],

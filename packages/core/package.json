@@ -4,7 +4,6 @@
   "author": "Martin Auer",
   "version": "0.2.13",
   "private": false,
-  "type": "module",
   "main": "./dist/src/index.js",
   "module": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",

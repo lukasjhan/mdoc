@@ -7,7 +7,7 @@ export const vJarmDirectPostJwtParams = v.looseObject({
   ...v.omit(vJarmAuthResponseParams, ['iss', 'aud', 'exp']).entries,
   vp_token: v.string(),
   presentation_submission: v.unknown(),
-  nonce: v.string(),
+  nonce: v.optional(v.string()),
 });
 
 export type JarmDirectPostJwtResponseParams = v.InferInput<
