@@ -1,5 +1,11 @@
 # @protokoll/jose
 
+## 0.2.17
+
+### Patch Changes
+
+- @protokoll/core@0.2.17
+
 ## 0.2.16
 
 ### Patch Changes
