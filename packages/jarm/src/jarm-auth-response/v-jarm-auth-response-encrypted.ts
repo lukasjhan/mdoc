@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import { JarmAuthResponseValidationError } from '../e-jarm.js';
 import { vJarmAuthResponse } from './v-jarm-auth-response.js';
 
-export const vJarmEncrytedOnlyAuthResponse = v.looseObject({
+export const vJarmAuthResponseEncrypted = v.looseObject({
   ...v.omit(vJarmAuthResponse, ['iss', 'aud', 'exp']).entries,
   ...v.partial(v.pick(vJarmAuthResponse, ['iss', 'aud', 'exp'])).entries,
 
@@ -12,13 +12,13 @@ export const vJarmEncrytedOnlyAuthResponse = v.looseObject({
   nonce: v.optional(v.string()),
 });
 
-export type JarmDirectPostJwtResponse = v.InferInput<
-  typeof vJarmEncrytedOnlyAuthResponse
+export type JarmAuthResponseEncrypted = v.InferInput<
+  typeof vJarmAuthResponseEncrypted
 >;
 
-export const jarmAuthResponseEncryptionOnlyValidate = (input: {
+export const jarmAuthResponseEncryptedValidate = (input: {
   authRequest: { state?: string };
-  authResponse: JarmDirectPostJwtResponse;
+  authResponse: JarmAuthResponseEncrypted;
 }) => {
   const { authRequest, authResponse } = input;
 

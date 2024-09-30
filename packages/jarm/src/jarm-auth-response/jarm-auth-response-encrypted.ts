@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 
+import type { JoseContext } from '@protokoll/jose';
 import {
   decodeJwt,
   decodeProtectedHeader,
@@ -7,26 +8,50 @@ import {
   isJws,
 } from '@protokoll/jose';
 
+import type { MaybePromise, PickDeep } from '@protokoll/core';
 import {
   JarmAuthResponseValidationError,
   JarmReceivedErrorResponse,
 } from '../e-jarm.js';
-import type { JarmDirectPostJwtResponse } from '../index.js';
-import type {
-  AuthRequest,
-  JarmDirectPostJwtAuthResponseValidationContext,
-} from './c-jarm-auth-response.js';
-import { vJarmAuthResponseError } from './v-jarm-auth-response.js';
+import type { JarmAuthResponse, JarmAuthResponseEncrypted } from '../index.js';
+import type { OAuthAuthRequestGetParamsOut } from '../v-auth-request.js';
+import { vAuthRequest } from '../v-auth-request.js';
 import {
-  jarmAuthResponseEncryptionOnlyValidate,
-  vJarmEncrytedOnlyAuthResponse,
-} from './v-jarm-direct-post-jwt-auth-response.js';
+  jarmAuthResponseEncryptedValidate,
+  vJarmAuthResponseEncrypted,
+  vJarmAuthResponseEncrypted as vJarmEncryptedOnlyAuthResponse,
+} from './v-jarm-auth-response-encrypted.js';
+import { vJarmAuthResponseError } from './v-jarm-auth-response.js';
 
-export interface JarmDirectPostJwtAuthResponseValidation {
-  /**
-   * The JARM response parameter conveyed either as url query param, fragment param, or application/x-www-form-urlencoded in the body of a post request
-   */
-  response: string;
+export namespace JarmAuthResponseEncryptedHandle {
+  export const vInput = v.object({
+    /**
+     * The JARM response parameter conveyed either as url query param, fragment param, or application/x-www-form-urlencoded in the body of a post request
+     */
+    response: v.string(),
+  });
+  export type Input = v.InferOutput<typeof vInput>;
+
+  export const vOut = v.object({
+    authRequest: vAuthRequest,
+    authResponse: vJarmAuthResponseEncrypted,
+    type: v.picklist(['signed encrypted', 'encrypted', 'signed']),
+  });
+  export type Out = v.InferOutput<typeof vOut>;
+
+  export interface Context
+    extends PickDeep<
+      JoseContext,
+      'jose.jwe.decryptCompact' | 'jose.jws.verifyJwt'
+    > {
+    openid4vp: {
+      authRequest: {
+        get: (
+          input: JarmAuthResponse | JarmAuthResponseEncrypted
+        ) => MaybePromise<OAuthAuthRequestGetParamsOut>;
+      };
+    };
+  }
 }
 
 const parseJarmAuthResponse = <
@@ -48,7 +73,7 @@ const parseJarmAuthResponse = <
 
 const decryptJarmAuthResponse = async (
   input: { response: string },
-  ctx: JarmDirectPostJwtAuthResponseValidationContext
+  ctx: JarmAuthResponseEncryptedHandle.Context
 ) => {
   const { response } = input;
 
@@ -72,10 +97,10 @@ const decryptJarmAuthResponse = async (
  * * The decryption key should be resolvable using the the protected header's 'kid' field
  * * The signature verification jwk should be resolvable using the jws protected header's 'kid' field and the payload's 'iss' field.
  */
-export const jarmAuthResponseDirectPostJwtValidate = async (
-  input: JarmDirectPostJwtAuthResponseValidation,
-  ctx: JarmDirectPostJwtAuthResponseValidationContext
-) => {
+export const jarmAuthResponseEncryptedHandle = async (
+  input: JarmAuthResponseEncryptedHandle.Input,
+  ctx: JarmAuthResponseEncryptedHandle.Context
+): Promise<JarmAuthResponseEncryptedHandle.Out> => {
   const { response } = input;
 
   const responseIsEncrypted = isJwe(response);
@@ -91,14 +116,13 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
     });
   }
 
-  let authResponse: JarmDirectPostJwtResponse;
-  let authRequest: AuthRequest;
+  let authResponse: JarmAuthResponseEncrypted;
+  let authRequest: v.InferOutput<typeof vAuthRequest>;
 
   if (responseIsSigned) {
     const jwsProtectedHeader = decodeProtectedHeader(decryptedResponse);
     const jwsPayload = decodeJwt(decryptedResponse);
-
-    const schema = v.required(vJarmEncrytedOnlyAuthResponse, [
+    const schema = v.required(vJarmEncryptedOnlyAuthResponse, [
       'iss',
       'aud',
       'exp',
@@ -120,16 +144,13 @@ export const jarmAuthResponseDirectPostJwtValidate = async (
   } else {
     const jsonResponse: unknown = JSON.parse(decryptedResponse);
     authResponse = parseJarmAuthResponse(
-      vJarmEncrytedOnlyAuthResponse,
+      vJarmEncryptedOnlyAuthResponse,
       jsonResponse
     );
     ({ authRequest } = await ctx.openid4vp.authRequest.get(authResponse));
   }
 
-  jarmAuthResponseEncryptionOnlyValidate({
-    authRequest: authRequest,
-    authResponse: authResponse,
-  });
+  jarmAuthResponseEncryptedValidate({ authRequest, authResponse });
 
   let type: 'signed encrypted' | 'encrypted' | 'signed';
   if (responseIsSigned && responseIsEncrypted) type = 'signed encrypted';

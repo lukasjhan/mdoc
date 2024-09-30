@@ -4,18 +4,22 @@ import type { MaybePromise } from '@protokoll/core';
 
 import { vJwk } from './v-jwk.js';
 
-export const vJoseJwkCalculateThumbprintUriInput = v.object({
-  jwk: vJwk,
-  digestAlgorithm: v.picklist(['sha256', 'sha384', 'sha512']),
-});
+export namespace JoseJwkCalculateThumbprintUri {
+  export const vInput = v.object({
+    jwk: vJwk,
+    digestAlgorithm: v.picklist(['sha256', 'sha384', 'sha512']),
+  });
+  export type Input = v.InferInput<typeof vInput>;
 
-export const vJoseJwkCalculateThumbprintUriOut = v.object({
-  jwkThumbprintUri: v.string(),
-});
+  export const vOut = v.object({
+    jwkThumbprintUri: v.string(),
+  });
+  export type Out = v.InferOutput<typeof vOut>;
+}
 
 export type JoseJwkCalculateThumbprintUri = (
-  input: v.InferInput<typeof vJoseJwkCalculateThumbprintUriInput>
-) => MaybePromise<v.InferOutput<typeof vJoseJwkCalculateThumbprintUriOut>>;
+  input: JoseJwkCalculateThumbprintUri.Input
+) => MaybePromise<JoseJwkCalculateThumbprintUri.Out>;
 
 export interface JoseJwkContext {
   jose: {

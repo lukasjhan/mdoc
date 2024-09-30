@@ -59,7 +59,7 @@ export default tseslint.config(
     rules: {
       ...turboPlugin.configs.recommended.rules,
       ...drizzlePlugin.configs.recommended.rules,
-
+      '@typescript-eslint/no-namespace': ['off', {}],
       'drizzle/enforce-delete-with-where': [
         'error',
         { drizzleObjectName: 'db' },

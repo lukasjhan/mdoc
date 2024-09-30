@@ -1,15 +1,9 @@
 import * as v from 'valibot';
-
-import type { MaybePromise, PickDeep } from '@protokoll/core';
-
-import type { JoseContext } from '@protokoll/jose';
 import {
   vJarmResponseMode,
   vOpenid4vpJarmResponseMode,
-} from '../v-response-mode-registry.js';
-import { vResponseType } from '../v-response-type-registry.js';
-import type { JarmAuthResponse } from './v-jarm-auth-response.js';
-import type { JarmDirectPostJwtResponse } from './v-jarm-direct-post-jwt-auth-response.js';
+} from './v-response-mode-registry';
+import { vResponseType } from './v-response-type-registry';
 
 export const vAuthRequest = v.looseObject({
   state: v.optional(v.string()),
@@ -41,17 +35,3 @@ export const vOAuthAuthRequestGetParamsOut = v.object({
 export type OAuthAuthRequestGetParamsOut = v.InferOutput<
   typeof vOAuthAuthRequestGetParamsOut
 >;
-
-export interface JarmDirectPostJwtAuthResponseValidationContext
-  extends PickDeep<
-    JoseContext,
-    'jose.jwe.decryptCompact' | 'jose.jws.verifyJwt'
-  > {
-  openid4vp: {
-    authRequest: {
-      get: (
-        input: JarmAuthResponse | JarmDirectPostJwtResponse
-      ) => MaybePromise<OAuthAuthRequestGetParamsOut>;
-    };
-  };
-}

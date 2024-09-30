@@ -2,15 +2,15 @@ import { http, HttpResponse } from 'msw';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
-import type { Jwk } from '@protokoll/jose';
+import type { JoseJweDecryptCompact, Jwk } from '@protokoll/jose';
 import { joseContext } from '@protokoll/jose/dist/src/u-jose-test-context.js';
 import { setupServer } from 'msw/node';
-import type { JarmAuthResponseCreateContext } from '../jarm-auth-response-send/c-jarm-auth-response-send.js';
-import {
-  jarmAuthResponseCreate,
-  jarmAuthResponseSend,
-} from '../jarm-auth-response-send/jarm-auth-response-send.js';
-import type { JarmDirectPostJwtAuthResponseValidationContext } from './c-jarm-auth-response.js';
+import type { JoseJwsVerifyJwt } from '../../../jose/dist/src/jws/c-jws';
+import type { JarmAuthResponseCreate } from '../jarm-auth-response-create/index.js';
+import { jarmAuthResponseCreate } from '../jarm-auth-response-create/index.js';
+import { jarmAuthResponseSend } from '../jarm-auth-response-send/jarm-auth-response-send.js';
+import type { JarmAuthResponseEncryptedHandle } from './jarm-auth-response-encrypted.js';
+import { jarmAuthResponseEncryptedHandle } from './jarm-auth-response-encrypted.js';
 import {
   EXAMPLE_RP_P256_PRIVATE_KEY_JWK,
   ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK,
@@ -19,9 +19,8 @@ import {
   ISO_MDL_7_JARM_AUTH_RESPONSE,
   ISO_MDL_7_JARM_AUTH_RESPONSE_JWT,
 } from './jarm-auth-response.fixtures.js';
-import { jarmAuthResponseDirectPostJwtValidate } from './jarm-auth-response.js';
 
-const jarmAuthResponseCreateContext: JarmAuthResponseCreateContext = {
+const jarmAuthResponseCreateContext: JarmAuthResponseCreate.Context = {
   jose: {
     jwe: {
       encryptJwt: joseContext.jose.jwe.encryptJwt,
@@ -31,22 +30,21 @@ const jarmAuthResponseCreateContext: JarmAuthResponseCreateContext = {
   },
 };
 
-export const decryptCompact: typeof joseContext.jose.jwe.decryptCompact =
-  async input => {
-    const { jwe, jwk: jwkToResolve } = input;
-    let jwk: Jwk;
-    if (
-      jwkToResolve.kty === 'auto' &&
-      jwkToResolve.kid === ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK.kid
-    ) {
-      jwk = ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK;
-    } else {
-      throw new Error('Received an invalid jwk.');
-    }
-    return await joseContext.jose.jwe.decryptCompact({ jwe, jwk });
-  };
+export const decryptCompact: JoseJweDecryptCompact = async input => {
+  const { jwe, jwk: jwkToResolve } = input;
+  let jwk: Jwk;
+  if (
+    jwkToResolve.kty === 'auto' &&
+    jwkToResolve.kid === ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK.kid
+  ) {
+    jwk = ISO_MDL_7_EPHEMERAL_READER_PRIVATE_KEY_JWK;
+  } else {
+    throw new Error('Received an invalid jwk.');
+  }
+  return await joseContext.jose.jwe.decryptCompact({ jwe, jwk });
+};
 
-export const verifyJwt: typeof joseContext.jose.jws.verifyJwt = async input => {
+export const verifyJwt: JoseJwsVerifyJwt = async input => {
   const { jws, jwk: jwkToResolve } = input;
   let jwk: Jwk;
   if (
@@ -60,7 +58,7 @@ export const verifyJwt: typeof joseContext.jose.jws.verifyJwt = async input => {
   return await joseContext.jose.jws.verifyJwt({ jws, jwk });
 };
 
-const jarmAuthResponseDirectPostJwtValidationContext: JarmDirectPostJwtAuthResponseValidationContext =
+const jarmAuthResponseEncryptedHandleContext: JarmAuthResponseEncryptedHandle.Context =
   {
     openid4vp: {
       authRequest: {
@@ -107,9 +105,9 @@ void describe('Jarm Auth Response', () => {
         assert(response);
         assert.equal(response, authResponse);
 
-        const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
+        const validatedResponse = await jarmAuthResponseEncryptedHandle(
           { response },
-          jarmAuthResponseDirectPostJwtValidationContext
+          jarmAuthResponseEncryptedHandleContext
         );
 
         assert.deepEqual(
@@ -171,9 +169,9 @@ void describe('Jarm Auth Response', () => {
         assert(response);
         assert.equal(response, authResponse);
 
-        const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
+        const validatedResponse = await jarmAuthResponseEncryptedHandle(
           { response },
-          jarmAuthResponseDirectPostJwtValidationContext
+          jarmAuthResponseEncryptedHandleContext
         );
 
         assert.deepEqual(validatedResponse.type, 'signed');
@@ -238,9 +236,9 @@ void describe('Jarm Auth Response', () => {
         assert(response);
         assert.equal(response, authResponse);
 
-        const validatedResponse = await jarmAuthResponseDirectPostJwtValidate(
+        const validatedResponse = await jarmAuthResponseEncryptedHandle(
           { response },
-          jarmAuthResponseDirectPostJwtValidationContext
+          jarmAuthResponseEncryptedHandleContext
         );
         assert.deepEqual(validatedResponse.type, 'signed encrypted');
 
@@ -260,11 +258,10 @@ void describe('Jarm Auth Response', () => {
   });
 
   void it(`'ISO_MDL_7_JARM_AUTH_RESPONSE' can be validated`, async () => {
-    const { authRequest, authResponse } =
-      await jarmAuthResponseDirectPostJwtValidate(
-        { response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT },
-        jarmAuthResponseDirectPostJwtValidationContext
-      );
+    const { authRequest, authResponse } = await jarmAuthResponseEncryptedHandle(
+      { response: ISO_MDL_7_JARM_AUTH_RESPONSE_JWT },
+      jarmAuthResponseEncryptedHandleContext
+    );
 
     assert.deepEqual(ISO_MDL_7_JARM_AUTH_RESPONSE, authResponse);
     assert.deepEqual(authRequest, authRequest);

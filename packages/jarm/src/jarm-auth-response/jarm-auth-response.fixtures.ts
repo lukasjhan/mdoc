@@ -1,4 +1,4 @@
-import type { AuthRequest } from './c-jarm-auth-response.js';
+import type { AuthRequest } from '../v-auth-request';
 
 // ISO-compliant driving licence — Part 7: Mobile driving licence (mDL) add-on functions
 export const ISO_MDL_7_EPHEMERAL_MDOC_PUBLIC_KEY_JWK = {

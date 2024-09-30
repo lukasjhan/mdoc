@@ -11,51 +11,75 @@ import {
 } from '../jwt/index.js';
 import { vCompactJwsHeader } from './v-jws.js';
 
-export const vJoseJwsSignCompactInput = v.object({
-  payload: v.string(),
-  protectedHeader: vCompactJwsHeader,
-  jwk: vJwk,
-});
-export const vJoseJwsSignCompactOut = v.object({ jws: v.string() });
+export namespace JoseJwsSignCompact {
+  export const vInput = v.object({
+    payload: v.string(),
+    protectedHeader: vCompactJwsHeader,
+    jwk: vJwk,
+  });
+  export type Input = v.InferInput<typeof vInput>;
+
+  export const vOut = v.object({
+    jws: v.string(),
+  });
+  export type Out = v.InferOutput<typeof vOut>;
+}
 export type JoseJwsSignCompact = (
-  input: v.InferInput<typeof vJoseJwsSignCompactInput>
-) => MaybePromise<v.InferOutput<typeof vJoseJwsSignCompactOut>>;
+  input: JoseJwsSignCompact.Input
+) => MaybePromise<JoseJwsSignCompact.Out>;
 
-export const vJoseJwsVerifyCompactInput = v.object({
-  jws: v.string(),
-  jwk: vJwk,
-  options: v.optional(vVerifyOptions),
-});
-export const vJoseJwsVerifyCompactOut = v.object({
-  payload: v.string(),
-  protectedHeader: vCompactJwsHeader,
-});
+export namespace JoseJwsVerifyCompact {
+  export const vInput = v.object({
+    jws: v.string(),
+    jwk: vJwk,
+    options: v.optional(vVerifyOptions),
+  });
+  export type Input = v.InferInput<typeof vInput>;
+
+  export const vOut = v.object({
+    payload: v.string(),
+    protectedHeader: vCompactJwsHeader,
+  });
+  export type Out = v.InferOutput<typeof vOut>;
+}
+
 export type JoseJwsVerifyCompact = (
-  input: v.InferInput<typeof vJoseJwsVerifyCompactInput>
-) => MaybePromise<v.InferOutput<typeof vJoseJwsVerifyCompactOut>>;
+  input: JoseJwsVerifyCompact.Input
+) => MaybePromise<JoseJwsVerifyCompact.Out>;
 
-export const vJoseJwsSignJwtInput = v.object({
-  payload: vJwtPayload,
-  protectedHeader: vJwtHeader,
-  jwk: vJwk,
-});
-export const vJoseJwsSignJwtOut = v.object({ jws: v.string() });
+export namespace JoseJwsSignJwt {
+  export const vInput = v.object({
+    payload: vJwtPayload,
+    protectedHeader: vJwtHeader,
+    jwk: vJwk,
+  });
+  export type Input = v.InferInput<typeof vInput>;
+
+  export const vOut = v.object({ jws: v.string() });
+  export type Out = v.InferOutput<typeof vOut>;
+}
+
 export type JoseJwsSignJwt = (
-  input: v.InferInput<typeof vJoseJwsSignJwtInput>
-) => MaybePromise<v.InferOutput<typeof vJoseJwsSignJwtOut>>;
+  input: JoseJwsSignJwt.Input
+) => MaybePromise<JoseJwsSignJwt.Out>;
 
-export const vJoseJwsVerifyJwtInput = v.object({
-  jws: v.string(),
-  jwk: vJwk,
-  options: v.optional(vJwtVerifyOptions),
-});
-export const vJoseJwsVerifyJwtOut = v.object({
-  payload: vJwtPayload,
-  protectedHeader: vJwtHeader,
-});
+export namespace JoseJwsVerifyJwt {
+  export const vInput = v.object({
+    jws: v.string(),
+    jwk: vJwk,
+    options: v.optional(vJwtVerifyOptions),
+  });
+  export type Input = v.InferInput<typeof vInput>;
+  export const vOut = v.object({
+    payload: vJwtPayload,
+    protectedHeader: vJwtHeader,
+  });
+  export type Out = v.InferOutput<typeof vOut>;
+}
+
 export type JoseJwsVerifyJwt = (
-  input: v.InferInput<typeof vJoseJwsVerifyJwtInput>
-) => MaybePromise<v.InferInput<typeof vJoseJwsVerifyJwtOut>>;
+  input: JoseJwsVerifyJwt.Input
+) => MaybePromise<JoseJwsVerifyJwt.Out>;
 
 export interface JoseJwsContext {
   jose: {
