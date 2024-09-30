@@ -7,7 +7,9 @@
   "main": "./dist/src/index.js",
   "module": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
-  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
     "build": "tsc",
@@ -33,5 +35,10 @@
     "tsx": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@protokoll/prettier-config"
+  "prettier": "@protokoll/prettier-config",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/protokoll/packages/jose"
+  }
 }

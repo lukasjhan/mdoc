@@ -1,6 +1,6 @@
 /** @typedef {import("prettier").Config} PrettierConfig */
 
-/** @type { PrettierConfig } */
+/** @type { PrettierConfig  } */
 const config = {
   plugins: ['prettier-plugin-organize-imports'],
   // https://github.com/nodejs/nodejs.org/

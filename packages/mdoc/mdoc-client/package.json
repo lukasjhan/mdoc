@@ -1,0 +1,59 @@
+{
+  "name": "@protokoll/mdoc-client",
+  "description": "Protokoll Mdoc and MDL client",
+  "author": "Martin Auer",
+  "version": "0.2.1",
+  "private": false,
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules dist",
+    "build": "tsc",
+    "format": "prettier --check . --ignore-path ../../../.gitignore",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "cbor-x": "^1.5.4",
+    "compare-versions": "^6.0.0"
+  },
+  "devDependencies": {
+    "@jfromaniello/typedmap": "^1.4.0",
+    "@protokoll/eslint-config": "workspace:*",
+    "@protokoll/prettier-config": "workspace:*",
+    "@protokoll/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "jose": "^5.6.3",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@protokoll/prettier-config",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/protokoll/packages/mdoc/mdoc-client"
+  },
+  "keywords": [
+    "auth0",
+    "mdl",
+    "iso-18013-5",
+    "iso-18013-7",
+    "m-doc",
+    "m-doc-cbor",
+    "m-doc-cbor-parser",
+    "m-doc-cbor-validator",
+    "m-doc-cbor-encoder",
+    "m-doc-cbor-decoder",
+    "m-doc-cbor-iso-18013-5",
+    "m-doc-cbor-iso-18013-5-parser",
+    "m-doc-cbor-iso-18013-5-validator",
+    "m-doc-cbor-iso-18013-5-encoder",
+    "m-doc-cbor-iso-18013-5-decoder"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "name": "@protokoll/mdoc-node",
+  "description": "Protokoll Mdoc and MDL node implementation",
+  "author": "Martin Auer",
+  "version": "0.2.1",
+  "private": false,
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules dist",
+    "build": "tsc",
+    "format": "prettier --check . --ignore-path ../../../.gitignore",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@auth0/cose": "^1.0.2",
+    "@noble/curves": "^1.2.0",
+    "@panva/hkdf": "^1.1.1",
+    "@peculiar/x509": "^1.12.2",
+    "@protokoll/mdoc-client": "workspace:*",
+    "buffer": "^6.0.3",
+    "cbor-x": "^1.5.4",
+    "compare-versions": "^6.0.0",
+    "jose": "^5.6.3",
+    "pkijs": "^3.2.4",
+    "uncrypto": "^0.1.3"
+  },
+  "devDependencies": {
+    "@protokoll/eslint-config": "workspace:*",
+    "@protokoll/prettier-config": "workspace:*",
+    "@protokoll/tsconfig": "workspace:*",
+    "@types/jest": "^29.5.4",
+    "@types/node": "catalog:",
+    "arraybuffer-equal": "^1.0.4",
+    "buffer-tag": "^1.0.2",
+    "eslint": "catalog:",
+    "jest": "^29.6.3",
+    "jest-snapshot": "^29.7.0",
+    "prettier": "catalog:",
+    "ts-jest": "^29.1.1",
+    "ts-loader": "^9.4.4",
+    "typescript": "catalog:"
+  },
+  "prettier": "@protokoll/prettier-config",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/protokoll/packages/mdoc/mdoc-node"
+  },
+  "keywords": [
+    "auth0",
+    "mdl",
+    "iso-18013-5",
+    "iso-18013-7",
+    "m-doc",
+    "m-doc-cbor",
+    "m-doc-cbor-parser",
+    "m-doc-cbor-validator",
+    "m-doc-cbor-encoder",
+    "m-doc-cbor-decoder",
+    "m-doc-cbor-iso-18013-5",
+    "m-doc-cbor-iso-18013-5-parser",
+    "m-doc-cbor-iso-18013-5-validator",
+    "m-doc-cbor-iso-18013-5-encoder",
+    "m-doc-cbor-iso-18013-5-decoder"
+  ]
+}
