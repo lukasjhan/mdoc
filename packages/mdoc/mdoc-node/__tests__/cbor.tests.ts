@@ -6,6 +6,7 @@ import {
   cborEncode,
   DataItem,
 } from '@protokoll/mdoc-client';
+import { cborDecodeUnknown } from '@protokoll/mdoc-client';
 
 describe('cbor', () => {
   it('should properly decode a nested map', () => {
@@ -20,7 +21,7 @@ describe('cbor', () => {
 
   it('should properly encoded and decoded maps', () => {
     const encoded = cborEncode(DataItem.fromData({ foo: 'baz' }));
-    const decoded = cborDecode(encoded);
+    const decoded = cborDecodeUnknown(encoded);
     const reEncode = cborEncode(decoded);
     expect(areEqual(reEncode, encoded)).toBeTruthy();
   });

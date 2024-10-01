@@ -1,14 +1,15 @@
+import type {
+  DeviceSignedDocument} from '@protokoll/mdoc-client';
 import {
   DataItem,
   DeviceResponse,
-  DeviceSignedDocument,
   Document,
   MDoc,
   Verifier,
   cborEncode,
   parse,
 } from '@protokoll/mdoc-client';
-import * as jose from 'jose';
+import type * as jose from 'jose';
 import { mdocContext } from '../mdoc-test-context.js';
 import {
   DEVICE_JWK,

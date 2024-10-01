@@ -2,8 +2,8 @@ import * as v from 'valibot';
 import {
   vJarmResponseMode,
   vOpenid4vpJarmResponseMode,
-} from './v-response-mode-registry';
-import { vResponseType } from './v-response-type-registry';
+} from './v-response-mode-registry.js';
+import { vResponseType } from './v-response-type-registry.js';
 
 export const vAuthRequest = v.looseObject({
   state: v.optional(v.string()),

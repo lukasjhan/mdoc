@@ -559,7 +559,7 @@ export class Verifier {
         : undefined,
       issuerSignature: {
         // TODO
-        alg: document.issuerSigned.issuerAuth.algName as string,
+        alg: document.issuerSigned.issuerAuth.algName!,
         isValid: dr
           .filter(check => check.category === 'ISSUER_AUTH')
           .every(check => check.status === 'PASSED'),

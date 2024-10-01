@@ -2,7 +2,7 @@ import { Mac0, Sign1 } from '@auth0/cose';
 import { p256 } from '@noble/curves/p256';
 import { hkdf } from '@panva/hkdf';
 import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
-import { MdocContext, X509Context } from '@protokoll/mdoc-client';
+import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import * as jose from 'jose';
 import { importX509 } from 'jose';
 import crypto from 'node:crypto';
@@ -134,7 +134,7 @@ export const mdocContext: MdocContext = {
 
       // The chain is reversed here as the `x5c` header (the expected input),
       // has the leaf certificate as the first entry, while the `x509` library expects this as the last
-      let parsedChain = chain
+      const parsedChain = chain
         .map(c => new X509Certificate(new Uint8Array(c.rawData)))
         .reverse();
 

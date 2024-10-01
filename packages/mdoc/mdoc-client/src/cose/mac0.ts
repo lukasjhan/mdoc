@@ -1,19 +1,21 @@
 import type { MdocContext } from '../c-mdoc.js';
 import { addExtension, cborEncode } from '../cbor/index.js';
 import { COSEBase } from './cose-base.js';
+import type {
+  MacAlgorithms} from './headers.js';
 import {
   Headers,
   MacAlgorithmNames,
-  MacAlgorithms,
   MacProtectedHeaders,
-  type SupportedMacAlg,
-  UnprotectedHeaders,
+  
+  UnprotectedHeaders
 } from './headers.js';
-export type VerifyOptions = {
+import type {SupportedMacAlg} from './headers.js';
+export interface VerifyOptions {
   externalAAD?: Uint8Array;
   detachedPayload?: Uint8Array;
   algorithms?: MacAlgorithms[];
-};
+}
 
 export class Mac0 extends COSEBase {
   constructor(

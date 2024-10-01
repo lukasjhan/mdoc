@@ -1,11 +1,12 @@
 import { COSEBase } from './cose-base.js';
-import { AlgorithmNames, Algorithms, Headers } from './headers.js';
+import type { Algorithms} from './headers.js';
+import { AlgorithmNames, Headers } from './headers.js';
 
-export type VerifyOptions = {
+export interface VerifyOptions {
   externalAAD?: Uint8Array;
   detachedPayload?: Uint8Array;
   algorithms?: Algorithms[];
-};
+}
 
 export class SignatureBase extends COSEBase {
   constructor(

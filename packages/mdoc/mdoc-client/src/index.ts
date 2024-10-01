@@ -1,5 +1,10 @@
 export * from './c-mdoc.js';
-export { DataItem, cborDecode, cborEncode } from './cbor/index.js';
+export {
+  DataItem,
+  cborDecode,
+  cborDecodeUnknown,
+  cborEncode,
+} from './cbor/index.js';
 export { COSEKey, COSEKeyToRAW } from './cose/key/cose-key.js';
 export { DeviceResponse } from './mdoc/model/device-response.js';
 export { DeviceSignedDocument } from './mdoc/model/device-signed-document.js';

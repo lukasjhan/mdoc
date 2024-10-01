@@ -16,8 +16,7 @@
     "build": "tsc",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "cbor-x": "^1.5.4",
