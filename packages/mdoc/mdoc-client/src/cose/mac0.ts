@@ -100,7 +100,7 @@ export class Mac0 extends COSEBase {
     );
   }
 
-  public getRawSigningData(payload: Uint8Array, key: Uint8Array) {
+  public getRawSigningData() {
     const alg = this.alg;
     if (!alg) {
       throw new CoseError({
@@ -112,14 +112,10 @@ export class Mac0 extends COSEBase {
     const toBeSigned = Mac0.createMAC0(
       cborEncode(ProtectedHeaders.wrap(this.protectedHeaders).esMap),
       new Uint8Array(),
-      payload
+      this.payload
     );
 
-    return {
-      payload: toBeSigned,
-      key,
-      alg,
-    };
+    return { payload: toBeSigned, alg };
   }
 
   public getRawVerificationData(options?: VerifyOptions) {

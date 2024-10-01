@@ -74,7 +74,7 @@ export class Sign1 extends SignatureBase {
     );
   }
 
-  public getRawSigningData(payload: Uint8Array, key: Uint8Array) {
+  public getRawSigningData() {
     const alg = this.alg;
     if (!alg) {
       throw new CoseError({
@@ -86,12 +86,11 @@ export class Sign1 extends SignatureBase {
     const toBeSigned = Sign1.Signature1(
       cborEncode(ProtectedHeaders.wrap(this.protectedHeaders).esMap),
       new Uint8Array(),
-      payload
+      this.payload
     );
 
     return {
       payload: toBeSigned,
-      key,
       alg,
     };
   }

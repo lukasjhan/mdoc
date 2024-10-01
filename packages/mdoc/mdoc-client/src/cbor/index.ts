@@ -9,7 +9,7 @@ const encoderDefaults: Options = {
   tagUint8Array: false,
   useRecords: false,
   mapsAsObjects: false,
-  // @ts-ignore
+  // @ts-expect-error keep this for now
   useTag259ForMaps: false,
 };
 
@@ -20,8 +20,8 @@ addExtension({
     const str = instance.toISOString().split('T')[0];
     return encode(str);
   },
-  decode: (val: any): object => {
-    return new Date(val);
+  decode: (val: unknown): object => {
+    return new Date(val as string);
   },
 });
 

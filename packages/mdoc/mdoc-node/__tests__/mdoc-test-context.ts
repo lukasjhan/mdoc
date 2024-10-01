@@ -1,42 +1,61 @@
 import { Mac0, Sign1 } from '@auth0/cose';
-import { p256 } from '@noble/curves/p256';
-import { hkdf } from '@panva/hkdf';
 import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import * as jose from 'jose';
 import { importX509 } from 'jose';
 import crypto from 'node:crypto';
-import * as webcrypto from 'uncrypto';
-import { subtle } from 'uncrypto';
 
 export const mdocContext: MdocContext = {
   crypto: {
-    digest: ({ digestAlgorithm, bytes }) => {
-      return subtle.digest(digestAlgorithm, bytes);
+    digest: async ({ digestAlgorithm, bytes }) => {
+      const digest = await crypto.subtle.digest(digestAlgorithm, bytes);
+      return new Uint8Array(digest);
     },
     random: (length: number) => {
-      return webcrypto.getRandomValues(new Uint8Array(length));
+      return crypto.getRandomValues(new Uint8Array(length));
     },
     calculateEphemeralMacKeyJwk: async input => {
       const { privateKey, publicKey, sessionTranscriptBytes } = input;
 
-      const ikm = p256
-        .getSharedSecret(
-          Buffer.from(privateKey).toString('hex'),
-          Buffer.from(publicKey).toString('hex'),
-          true
-        )
-        .slice(1);
+      // Generate shared secret
+      const ecdh = crypto.createECDH('prime256v1');
+      ecdh.setPrivateKey(privateKey);
+      const sharedSecret = ecdh.computeSecret(publicKey);
+      const ikm = sharedSecret.slice(1); // Remove the first byte as in the original code
+
       const salt = new Uint8Array(
-        await subtle.digest('SHA-256', sessionTranscriptBytes)
+        await crypto.subtle.digest('SHA-256', sessionTranscriptBytes)
       );
       const info = Buffer.from('EMacKey', 'utf-8');
-      const result = await hkdf('sha256', ikm, salt, info, 32);
+
+      // Create HKDF params
+      const hkdfParams = {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: salt,
+        info: info,
+      };
+
+      // Import the IKM as a CryptoKey
+      const ikmKey = await crypto.subtle.importKey(
+        'raw',
+        ikm,
+        { name: 'HKDF' },
+        false,
+        ['deriveBits']
+      );
+
+      // Perform HKDF using deriveBits
+      const derivedBits = await crypto.subtle.deriveBits(
+        hkdfParams,
+        ikmKey,
+        256 // 32 bytes * 8 bits/byte = 256 bits
+      );
 
       // Convert the key material to a CryptoKey
       const cryptoKey = await crypto.subtle.importKey(
         'raw',
-        result,
+        derivedBits,
         { name: 'HMAC', hash: 'SHA-256' },
         true,
         ['sign', 'verify']
@@ -97,9 +116,7 @@ export const mdocContext: MdocContext = {
       verify: async input => {
         try {
           const { sign1, jwk, options } = input;
-          console.log('herer', jwk);
           const key = await jose.importJWK(jwk);
-          console.log('done');
           const _sign1 = new Sign1(
             sign1.protectedHeaders,
             sign1.unprotectedHeaders,

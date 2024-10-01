@@ -201,7 +201,7 @@ export class Document {
    */
   async sign(
     params: {
-      issuerPrivateKey: jose.JWK | Uint8Array;
+      issuerPrivateKey: jose.JWK;
       issuerCertificate: string | Uint8Array;
       alg: SupportedAlgs;
       kid?: string | Uint8Array;
