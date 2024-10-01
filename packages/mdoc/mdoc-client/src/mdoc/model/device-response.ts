@@ -329,7 +329,7 @@ export class DeviceResponse {
     const requestedFields = id.constraints.fields;
     const nameSpaces: Record<string, any> = {};
     for await (const field of requestedFields) {
-      const result = await this.prepareDigest(field.path, document);
+      const result = this.prepareDigest(field.path, document);
       if (!result) {
         // TODO: Do we add an entry to DocumentErrors if not found?
         console.log(`No matching field found for ${field.path}`);
@@ -344,10 +344,10 @@ export class DeviceResponse {
     return nameSpaces;
   }
 
-  private async prepareDigest(
+  private prepareDigest(
     paths: string[],
     document: IssuerSignedDocument
-  ): Promise<{ nameSpace: string; digest: IssuerSignedItem } | null> {
+  ): { nameSpace: string; digest: IssuerSignedItem } | null {
     /**
      * path looks like this: "$['org.iso.18013.5.1']['family_name']"
      * the regex creates two groups with contents between "['" and "']"
@@ -366,7 +366,7 @@ export class DeviceResponse {
         );
 
       const nsAttrs: IssuerSignedItem[] =
-        document.issuerSigned.nameSpaces[nameSpace] || [];
+        document.issuerSigned.nameSpaces[nameSpace] ?? [];
       const digest = nsAttrs.find(
         d => d.elementIdentifier === elementIdentifier
       );

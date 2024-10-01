@@ -8,8 +8,10 @@ import {
 import { concat, uint8ArrayToString } from '../../u-buffer.js';
 import { Algorithms } from '../headers.js';
 import { Curve } from './curve.js';
-import { JWKKeyOps, JWKKeyOpsToCOSE, KeyOps } from './key-ops.js';
-import { JWKKeyType, KeyType } from './kty.js';
+import type { KeyOps } from './key-ops.js';
+import { JWKKeyOps, JWKKeyOpsToCOSE } from './key-ops.js';
+import type { KeyType } from './kty.js';
+import { JWKKeyType } from './kty.js';
 import {
   COSEKeyParam,
   JWKParam,
@@ -20,7 +22,7 @@ import {
 const toArray = (v: unknown | unknown[]) => (Array.isArray(v) ? v : [v]);
 
 function normalize(input: string | Uint8Array): string {
-  let encoded = input;
+  const encoded = input;
   if (encoded instanceof Uint8Array) {
     return uint8ArrayToString(encoded);
   } else {
@@ -107,7 +109,7 @@ export class COSEKey extends TypedMap<
     const kty = jwk.kty;
     for (const [key, value] of Object.entries(jwk)) {
       const jwkKey =
-        KTYSpecificJWKParamsRev[kty!]?.get(key) ||
+        KTYSpecificJWKParamsRev[kty]?.get(key) ??
         (JWKParam[key as keyof typeof JWKParam] as number);
       const formatter = JWKToCOSEValue.get(key);
       if (jwkKey && formatter) {
@@ -124,14 +126,12 @@ export class COSEKey extends TypedMap<
    * @returns {JWK} - The JWK representation of the COSEKey.
    */
   toJWK(): JWK {
-    const kty = JWKKeyType[this.get(COSEKeyParam.KeyType) as number] as string;
+    const kty = JWKKeyType[this.get(COSEKeyParam.KeyType) as number]!;
     const result: JWK = { kty };
 
     for (const [key, value] of this) {
-      const jwkKey =
-        KTYSpecificJWKParams[kty as string]?.get(key) ??
-        (JWKParam[key] as string);
-      const parser = JWKFromCOSEValue.get(jwkKey as string);
+      const jwkKey = KTYSpecificJWKParams[kty]?.get(key) ?? JWKParam[key]!;
+      const parser = JWKFromCOSEValue.get(jwkKey);
       if (parser && jwkKey) {
         const parsed = parser(value);
         // @ts-expect-error JWK has no index signature

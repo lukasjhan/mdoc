@@ -16,10 +16,10 @@
     "build": "tsc",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@protokoll/core": "workspace:*",
     "cbor-x": "^1.5.4",
     "compare-versions": "^6.0.0",
     "valibot": "catalog:"

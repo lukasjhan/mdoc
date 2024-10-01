@@ -1,4 +1,4 @@
-import type { AuthRequest } from '../v-auth-request';
+import type { AuthRequest } from '../v-auth-request.js';
 
 // ISO-compliant driving licence — Part 7: Mobile driving licence (mDL) add-on functions
 export const ISO_MDL_7_EPHEMERAL_MDOC_PUBLIC_KEY_JWK = {

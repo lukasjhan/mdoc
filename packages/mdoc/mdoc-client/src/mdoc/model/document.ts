@@ -28,7 +28,7 @@ const DEFAULT_NS = 'org.iso.18013.5.1';
 const getAgeInYears = (birth: string): number => {
   const birthDate = new Date(birth);
   birthDate.setHours(0, 0, 0, 0);
-  // @ts-ignore
+  // @ts-expect-error this works
   const ageDifMs = Date.now() - birthDate;
   const ageDate = new Date(ageDifMs);
   return Math.abs(ageDate.getUTCFullYear() - 1970);

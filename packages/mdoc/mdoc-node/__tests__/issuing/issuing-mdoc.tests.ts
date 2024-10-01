@@ -1,13 +1,15 @@
+import type {
+  DeviceSignedDocument,
+  IssuerSignedDocument,
+} from '@protokoll/mdoc-client';
 import {
   COSEKey,
-  DeviceSignedDocument,
   Document,
-  IssuerSignedDocument,
   MDoc,
   Verifier,
   parse,
 } from '@protokoll/mdoc-client';
-import * as jose from 'jose';
+import type * as jose from 'jose';
 import { mdocContext } from '../mdoc-test-context.js';
 import {
   DEVICE_JWK,
@@ -95,7 +97,7 @@ describe('issuing an MDOC', () => {
 
   it('should include the namespace and attributes', () => {
     const attrValues = parsedDocument.getIssuerNameSpace('org.iso.18013.5.1');
-    // @ts-ignore
+    // @ts-expect error this will work
     const currentAge =
       new Date(Date.now() - new Date('2007-03-25').getTime()).getFullYear() -
       1970;

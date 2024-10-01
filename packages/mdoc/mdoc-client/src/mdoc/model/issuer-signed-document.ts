@@ -15,16 +15,17 @@ export class IssuerSignedDocument {
   /**
    * Create the structure for encoding a document.
    *
-   * @returns {Map<string, any>} - The document as a map
+   * @returns {Map<string, unknown>} - The document as a map
    */
-  prepare(): Map<string, any> {
+  prepare(): Map<string, unknown> {
     const nameSpaces = new Map(
       Object.entries(this.issuerSigned.nameSpaces).map(([nameSpace, items]) => {
-        return [nameSpace, items.map(item => item.dataItem)];
+        return [nameSpace, items.map(item => item.dataItem)] as const;
       })
     );
 
-    const docMap = new Map<string, any>(
+    // TODO: ERRORS MISSING
+    const docMap = new Map(
       Object.entries({
         docType: this.docType,
         issuerSigned: {
@@ -40,9 +41,9 @@ export class IssuerSignedDocument {
    * Helper method to get the values in a namespace as a JS object.
    *
    * @param {string} namespace - The namespace to add.
-   * @returns {Record<string, any>} - The values in the namespace as an object
+   * @returns {Record<string, unknown>} - The values in the namespace as an object
    */
-  getIssuerNameSpace(namespace: string): Record<string, any> | undefined {
+  getIssuerNameSpace(namespace: string): Record<string, unknown> | undefined {
     const nameSpace = this.issuerSigned.nameSpaces[namespace];
     if (!nameSpace) return undefined;
     return Object.fromEntries(

@@ -2,10 +2,13 @@ import { http, HttpResponse } from 'msw';
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 
-import type { JoseJweDecryptCompact, Jwk } from '@protokoll/jose';
+import type {
+  JoseJweDecryptCompact,
+  JoseJwsVerifyJwt,
+  Jwk,
+} from '@protokoll/jose';
 import { joseContext } from '@protokoll/jose/dist/src/u-jose-test-context.js';
 import { setupServer } from 'msw/node';
-import type { JoseJwsVerifyJwt } from '../../../jose/dist/src/jws/c-jws';
 import type { JarmAuthResponseCreate } from '../jarm-auth-response-create/index.js';
 import { jarmAuthResponseCreate } from '../jarm-auth-response-create/index.js';
 import { jarmAuthResponseSend } from '../jarm-auth-response-send/jarm-auth-response-send.js';

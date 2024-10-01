@@ -1,9 +1,10 @@
+import type {
+  DeviceSignedDocument} from '@protokoll/mdoc-client';
 import {
   COSEKey,
   COSEKeyToRAW,
   DataItem,
   DeviceResponse,
-  DeviceSignedDocument,
   Document,
   MDoc,
   Verifier,

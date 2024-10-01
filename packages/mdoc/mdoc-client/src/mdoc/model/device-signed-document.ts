@@ -17,7 +17,7 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
     super(docType, issuerSigned);
   }
 
-  override prepare(): Map<string, any> {
+  override prepare(): Map<string, unknown> {
     const doc = super.prepare();
     const deviceSignature =
       this.deviceSigned.deviceAuth.deviceSignature?.getContentForEncoding();
@@ -34,6 +34,7 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
     doc.set('deviceSigned', {
       ...this.deviceSigned,
       nameSpaces: DataItem.fromData(this.deviceSigned.nameSpaces),
+      // TODO: ERRORS MISSING
       deviceAuth: {
         ...this.deviceSigned.deviceAuth,
         deviceSignature,
@@ -47,9 +48,9 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
    * Helper method to get the values in a namespace as a JS object.
    *
    * @param {string} namespace - The namespace to add.
-   * @returns {Record<string, any>} - The values in the namespace as an object
+   * @returns {Record<string, unknown>} - The values in the namespace as an object
    */
-  getDeviceNameSpace(namespace: string): Record<string, any> | undefined {
+  getDeviceNameSpace(namespace: string): Record<string, unknown> | undefined {
     return this.deviceSigned.nameSpaces[namespace];
   }
 }

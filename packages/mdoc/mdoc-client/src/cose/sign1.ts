@@ -1,7 +1,8 @@
 import type { MdocContext } from '../c-mdoc.js';
 import { addExtension, cborEncode } from '../cbor/index.js';
 import { ProtectedHeaders, UnprotectedHeaders } from './headers.js';
-import { SignatureBase, type VerifyOptions } from './signature-base.js';
+import { SignatureBase  } from './signature-base.js';
+import type {VerifyOptions} from './signature-base.js';
 
 export class Sign1 extends SignatureBase {
   constructor(

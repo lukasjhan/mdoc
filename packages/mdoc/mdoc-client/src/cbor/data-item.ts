@@ -1,7 +1,7 @@
 import { addExtension } from 'cbor-x';
 import { cborDecode, cborEncode } from './index.js';
 
-export type DataItemParams<T = any> =
+export type DataItemParams<T = unknown> =
   | {
       data: T;
       buffer: Uint8Array;
@@ -20,7 +20,7 @@ export type DataItemParams<T = any> =
  * https://github.com/kriszyp/cbor-x/issues/83
  *
  */
-export class DataItem<T = any> {
+export class DataItem<T = unknown> {
   #data?: T;
   #buffer: Uint8Array;
 
@@ -54,7 +54,7 @@ export class DataItem<T = any> {
 addExtension({
   Class: DataItem,
   tag: 24,
-  encode: (instance: DataItem<any>, encode) => {
+  encode: (instance: DataItem<unknown>, encode) => {
     return encode(instance.buffer);
   },
   decode: (buffer: Uint8Array): object => {

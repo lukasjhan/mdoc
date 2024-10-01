@@ -185,6 +185,9 @@ importers:
 
   packages/mdoc/mdoc-client:
     dependencies:
+      '@protokoll/core':
+        specifier: workspace:*
+        version: link:../../core
       cbor-x:
         specifier: ^1.5.4
         version: 1.6.0

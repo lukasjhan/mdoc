@@ -1,7 +1,7 @@
 import type { MdocContext, X509Context } from '../../c-mdoc.js';
 import { DataItem } from '../../cbor/data-item.js';
 import { cborDecode } from '../../cbor/index.js';
-import { ProtectedHeaders, UnprotectedHeaders } from '../../cose/headers.js';
+import type { ProtectedHeaders, UnprotectedHeaders } from '../../cose/headers.js';
 import { Sign1 } from '../../cose/sign1.js';
 import type { MSO } from './types.js';
 

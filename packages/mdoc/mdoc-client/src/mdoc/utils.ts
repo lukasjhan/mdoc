@@ -32,6 +32,7 @@ export const calculateDeviceAutenticationBytes = (
   return result;
 };
 
+// todo
 export function fromPEM(pem: string): Uint8Array {
   const base64 = pem
     .replace(/-{5}(BEGIN|END) .*-{5}/gm, '')

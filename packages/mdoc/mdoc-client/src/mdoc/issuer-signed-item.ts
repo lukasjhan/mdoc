@@ -1,6 +1,6 @@
 import type { MdocContext, X509Context } from '../c-mdoc.js';
 import { DataItem } from '../cbor/data-item.js';
-import { cborEncode } from '../cbor/index.js';
+import { cborEncode } from '../cbor/index';
 import { areEqual } from '../u-buffer.js';
 import type IssuerAuth from './model/issuer-auth.js';
 import type { DigestAlgorithm } from './model/types.js';
@@ -48,7 +48,7 @@ export class IssuerSignedItem {
     return this.decodedData.get('elementIdentifier') as string;
   }
 
-  public get elementValue(): any {
+  public get elementValue(): unknown {
     return this.decodedData.get('elementValue');
   }
 
@@ -108,7 +108,7 @@ export class IssuerSignedItem {
   public static create(
     digestID: number,
     elementIdentifier: string,
-    elementValue: any,
+    elementValue: unknown,
     ctx: { crypto: MdocContext['crypto'] }
   ): IssuerSignedItem {
     const random = ctx.crypto.random(32);

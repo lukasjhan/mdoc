@@ -1,5 +1,5 @@
 import type { JWK } from 'jose';
-import {
+import type {
   MacProtectedHeaders,
   ProtectedHeaders,
   UnprotectedHeaders,
@@ -10,10 +10,10 @@ import type { DigestAlgorithm } from './mdoc/model/types.js';
 
 export type MaybePromise<TType> = Promise<TType> | TType;
 
-export type X509Context = {
+export interface X509Context {
   getIssuerName: (input: {
     certificate: Uint8Array;
-  }) => Exclude<unknown, null | undefined> | undefined;
+  }) => NonNullable<unknown> | undefined;
   getIssuerNameField: (input: {
     certificate: Uint8Array;
     field: string;
@@ -37,9 +37,9 @@ export type X509Context = {
     notBefore: Date;
     notAfter: Date;
   }>;
-};
+}
 
-export type MdocContext = {
+export interface MdocContext {
   crypto: {
     random: (length: number) => Promise<Uint8Array>;
     digest: (input: {
@@ -116,4 +116,4 @@ export type MdocContext = {
   };
 
   x509: X509Context;
-};
+}

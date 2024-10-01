@@ -161,7 +161,7 @@ export class Verifier {
     const { deviceAuth, nameSpaces } = document.deviceSigned;
     const { docType } = document;
     const { deviceKeyInfo } = document.issuerSigned.issuerAuth.decodedPayload;
-    const { deviceKey: deviceKeyCoseKey } = deviceKeyInfo || {};
+    const { deviceKey: deviceKeyCoseKey } = deviceKeyInfo ?? {};
 
     // Prevent cloning of the mdoc and mitigate man in the middle attacks
     if (!deviceAuth.deviceMac && !deviceAuth.deviceSignature) {
@@ -559,7 +559,7 @@ export class Verifier {
         : undefined,
       issuerSignature: {
         // TODO
-        alg: document.issuerSigned.issuerAuth.algName as string,
+        alg: document.issuerSigned.issuerAuth.algName!,
         isValid: dr
           .filter(check => check.category === 'ISSUER_AUTH')
           .every(check => check.status === 'PASSED'),

@@ -36,7 +36,7 @@ describe('diagnostic info', () => {
     );
   });
 
-  it('should return the version', async () => {
+  it('should return the version', () => {
     expect(diagnosticInfo).toMatchSnapshot();
   });
 

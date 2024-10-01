@@ -2,7 +2,7 @@ import { Mac0, Sign1 } from '@auth0/cose';
 import { p256 } from '@noble/curves/p256';
 import { hkdf } from '@panva/hkdf';
 import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
-import { MdocContext, X509Context } from '@protokoll/mdoc-client';
+import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import * as jose from 'jose';
 import { importX509 } from 'jose';
 import crypto from 'node:crypto';
@@ -19,7 +19,7 @@ export const mdocContext: MdocContext = {
     digest: ({ digestAlgorithm, bytes }) => {
       return subtle.digest(digestAlgorithm, bytes);
     },
-    random: async (length: number) => {
+    random: (length: number) => {
       return webcrypto.getRandomValues(new Uint8Array(length));
     },
     calculateEphemeralMacKey: async input => {
@@ -134,7 +134,7 @@ export const mdocContext: MdocContext = {
 
       // The chain is reversed here as the `x5c` header (the expected input),
       // has the leaf certificate as the first entry, while the `x509` library expects this as the last
-      let parsedChain = chain
+      const parsedChain = chain
         .map(c => new X509Certificate(new Uint8Array(c.rawData)))
         .reverse();
 
@@ -165,7 +165,7 @@ export const mdocContext: MdocContext = {
         ).toString('hex'),
       };
     },
-    getCertificateValidityData: async (input: { certificate: Uint8Array }) => {
+    getCertificateValidityData: (input: { certificate: Uint8Array }) => {
       const certificate = new X509Certificate(input.certificate);
       return {
         notBefore: certificate.notBefore,

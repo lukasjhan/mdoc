@@ -30,6 +30,7 @@ export class MDoc {
   }
 
   encode() {
+    // TODO: ERROR MISSING
     return cborEncode({
       version: this.version,
       documents: this.documents.map(doc => doc.prepare()),
