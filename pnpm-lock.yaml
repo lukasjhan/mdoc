@@ -191,6 +191,9 @@ importers:
       compare-versions:
         specifier: ^6.0.0
         version: 6.1.1
+      valibot:
+        specifier: 'catalog:'
+        version: 0.37.0(typescript@5.5.4)
     devDependencies:
       '@jfromaniello/typedmap':
         specifier: ^1.4.0

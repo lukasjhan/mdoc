@@ -27,7 +27,7 @@ export class DataItem<T = any> {
   constructor(params: DataItemParams<T>) {
     if (!('data' in params) && !('buffer' in params)) {
       throw new Error(
-        'DataItem must be initialized with either data or buffer'
+        'DataItem must be initialized with either the data or a buffer'
       );
     }
 
@@ -43,9 +43,6 @@ export class DataItem<T = any> {
   }
 
   public get buffer(): Uint8Array {
-    if (!this.#buffer) {
-      this.#buffer = cborEncode(this.#data, { useFloat32: 0 });
-    }
     return this.#buffer;
   }
 

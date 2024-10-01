@@ -57,3 +57,5 @@ export const vSpaceSeparatedString = v.pipe(
   v.string(),
   v.transform(val => val.split(' '))
 );
+
+export const vUint8Array = v.instance(Uint8Array);

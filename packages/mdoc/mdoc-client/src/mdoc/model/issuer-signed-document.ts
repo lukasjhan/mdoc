@@ -18,18 +18,21 @@ export class IssuerSignedDocument {
    * @returns {Map<string, any>} - The document as a map
    */
   prepare(): Map<string, any> {
-    const docMap = new Map<string, any>();
-    docMap.set('docType', this.docType);
-    docMap.set('issuerSigned', {
-      nameSpaces: new Map(
-        Object.entries(this.issuerSigned.nameSpaces).map(
-          ([nameSpace, items]) => {
-            return [nameSpace, items.map(item => item.dataItem)];
-          }
-        )
-      ),
-      issuerAuth: this.issuerSigned.issuerAuth.getContentForEncoding(),
-    });
+    const nameSpaces = new Map(
+      Object.entries(this.issuerSigned.nameSpaces).map(([nameSpace, items]) => {
+        return [nameSpace, items.map(item => item.dataItem)];
+      })
+    );
+
+    const docMap = new Map<string, any>(
+      Object.entries({
+        docType: this.docType,
+        issuerSigned: {
+          nameSpaces,
+          issuerAuth: this.issuerSigned.issuerAuth.getContentForEncoding(),
+        },
+      })
+    );
     return docMap;
   }
 

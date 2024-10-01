@@ -33,8 +33,8 @@
 
     /** Transpile using Typescript */
     /** TODO: Fix this later */
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "sourceMap": true
   },
   "exclude": ["node_modules", "build", "dist", ".next", ".expo"]
