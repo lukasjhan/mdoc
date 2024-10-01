@@ -1,10 +1,6 @@
 import type { JWK } from 'jose';
-import type {
-  MacProtectedHeaders,
-  ProtectedHeaders,
-  UnprotectedHeaders,
-} from './cose/headers.js';
-import type { VerifyOptions as Mac0VerifyOpts } from './cose/mac0.js';
+import type { Mac0, VerifyOptions } from './cose/mac0.js';
+import type { Sign1 } from './cose/sign1.js';
 import type { VerifyOptions as Sign1VerifyOpts } from './cose/signature-base.js';
 import type { DigestAlgorithm } from './mdoc/model/types.js';
 
@@ -21,7 +17,7 @@ export interface X509Context {
   getPublicKey: (input: {
     certificate: Uint8Array;
     alg: string;
-  }) => MaybePromise<Uint8Array>;
+  }) => MaybePromise<JWK>;
   validateCertificateChain: (input: {
     certificates: [string, ...string[]];
   }) => MaybePromise<void>;
@@ -58,59 +54,30 @@ export interface MdocContext {
      * @param {Uint8Array} sessionTranscriptBytes - The session transcript bytes
      * @returns {Uint8Array} - The ephemeral mac key
      */
-    calculateEphemeralMacKey: (input: {
+    calculateEphemeralMacKeyJwk: (input: {
       privateKey: Uint8Array;
       publicKey: Uint8Array;
       sessionTranscriptBytes: Uint8Array;
-    }) => MaybePromise<Uint8Array>;
-  };
-  jose: {
-    importJwk: (jwk: JWK) => Promise<Uint8Array>;
+    }) => MaybePromise<JWK>;
   };
   cose: {
     sign1: {
-      sign: (input: {
-        protectedHeaders:
-          | ProtectedHeaders
-          | ConstructorParameters<typeof ProtectedHeaders>[0];
-        unprotectedHeaders:
-          | UnprotectedHeaders
-          | ConstructorParameters<typeof UnprotectedHeaders>[0]
-          | undefined;
-        payload: Uint8Array;
-        key: Uint8Array;
-      }) => MaybePromise<Uint8Array>;
+      sign: (input: { sign1: Sign1; jwk: JWK }) => MaybePromise<Uint8Array>;
 
       verify(input: {
-        key: Uint8Array;
-        options: Sign1VerifyOpts | undefined;
-        protectedHeaders: Map<number, unknown>;
-        unprotectedHeaders: Map<number, unknown>;
-        payload: Uint8Array;
-        signature: Uint8Array;
+        jwk: JWK;
+        options?: Sign1VerifyOpts | undefined;
+        sign1: Sign1;
       }): MaybePromise<boolean>;
     };
 
     mac0: {
-      sign: (input: {
-        protectedHeaders:
-          | MacProtectedHeaders
-          | ConstructorParameters<typeof MacProtectedHeaders>[0];
-        unprotectedHeaders:
-          | UnprotectedHeaders
-          | ConstructorParameters<typeof UnprotectedHeaders>[0]
-          | undefined;
-        payload: Uint8Array;
-        key: Uint8Array;
-      }) => MaybePromise<Uint8Array>;
+      sign: (input: { jwk: JWK; mac0: Mac0 }) => MaybePromise<Uint8Array>;
 
       verify(input: {
-        key: Uint8Array;
-        options: Mac0VerifyOpts | undefined;
-        protectedHeaders: Map<number, unknown>;
-        unprotectedHeaders: Map<number, unknown>;
-        payload: Uint8Array;
-        tag: Uint8Array;
+        mac0: Mac0;
+        jwk: JWK;
+        options: VerifyOptions;
       }): MaybePromise<boolean>;
     };
   };

@@ -1,17 +1,22 @@
-import type { MdocContext } from '../c-mdoc.js';
 import { addExtension, cborEncode } from '../cbor/index.js';
-import { ProtectedHeaders, UnprotectedHeaders } from './headers.js';
-import { SignatureBase  } from './signature-base.js';
-import type {VerifyOptions} from './signature-base.js';
+import { CoseError } from './e-cose.js';
+import {
+  AlgorithmNames,
+  Headers,
+  ProtectedHeaders,
+  UnprotectedHeaders,
+} from './headers.js';
+import type { VerifyOptions } from './signature-base.js';
+import { SignatureBase } from './signature-base.js';
 
 export class Sign1 extends SignatureBase {
   constructor(
     protectedHeaders: Map<number, unknown> | Uint8Array,
     unprotectedHeaders: Map<number, unknown>,
     public readonly payload: Uint8Array,
-    signature: Uint8Array
+    _signature?: Uint8Array
   ) {
-    super(protectedHeaders, unprotectedHeaders, signature);
+    super(protectedHeaders, unprotectedHeaders, _signature);
   }
 
   public getContentForEncoding() {
@@ -23,57 +28,82 @@ export class Sign1 extends SignatureBase {
     ];
   }
 
-  /**
-   *
-   * Verifies the signature of this instance using the given key.
-   *
-   * @param key {KeyLike | Uint8Array | COSEVerifyGetKey} - The key to verify the signature with.
-   * @param options {VerifyOptions} - Verify options
-   * @param options.algorithms {Algorithms[]} - List of allowed algorithms
-   * @param options.externalAAD {Uint8Array} - External Additional Associated Data
-   * @param options.detachedPayload {Uint8Array} - The detached payload to verify the signature with.
-   * @returns {Promise<void>}
-   */
-  public async verify(
-    key: Uint8Array,
-    options: VerifyOptions | undefined,
-    ctx: { cose: Pick<MdocContext['cose'], 'sign1'> }
-  ): Promise<boolean> {
-    return await ctx.cose.sign1.verify({
-      key,
-      payload: this.payload,
-      protectedHeaders: this.protectedHeaders,
-      unprotectedHeaders: this.unprotectedHeaders,
-      signature: this.signature,
-      options,
-    });
+  private static Signature1(
+    protectedHeaders: Uint8Array,
+    applicationHeaders: Uint8Array,
+    payload: Uint8Array
+  ) {
+    return cborEncode([
+      'Signature1',
+      protectedHeaders,
+      applicationHeaders,
+      payload,
+    ]);
   }
 
-  static async sign(
-    protectedHeaders: ProtectedHeaders,
-    unprotectedHeaders: UnprotectedHeaders | undefined,
+  public static create(
+    protectedHeaders:
+      | ProtectedHeaders
+      | ConstructorParameters<typeof ProtectedHeaders>[0],
+    unprotectedHeaders:
+      | UnprotectedHeaders
+      | ConstructorParameters<typeof UnprotectedHeaders>[0]
+      | undefined,
     payload: Uint8Array,
-    key: Uint8Array,
-    ctx: { cose: Pick<MdocContext['cose'], 'sign1'> }
+    signature?: Uint8Array
   ) {
     const wProtectedHeaders = ProtectedHeaders.wrap(protectedHeaders);
-    const encodedProtectedHeaders = cborEncode(wProtectedHeaders.esMap);
-    const unprotectedHeadersMap =
-      UnprotectedHeaders.wrap(unprotectedHeaders).esMap;
+    const sig1AlgName = wProtectedHeaders.get(Headers.Algorithm);
+    const alg = sig1AlgName ? AlgorithmNames.get(sig1AlgName) : undefined;
 
-    const signature = await ctx.cose.sign1.sign({
-      key,
-      payload,
-      protectedHeaders,
-      unprotectedHeaders,
-    });
+    if (!alg) {
+      throw new CoseError({
+        code: 'COSE_INVALID_ALG',
+        message: `The [${Headers.Algorithm}] (Algorithm) header must be set.`,
+      });
+    }
+
+    const encodedProtectedHeaders = cborEncode(wProtectedHeaders.esMap);
+    const wUnprotectedHeaders = UnprotectedHeaders.wrap(unprotectedHeaders);
 
     return new Sign1(
       encodedProtectedHeaders,
-      unprotectedHeadersMap,
+      wUnprotectedHeaders.esMap as Map<number, unknown>,
       payload,
       signature
     );
+  }
+
+  public getRawSigningData(payload: Uint8Array, key: Uint8Array) {
+    const alg = this.alg;
+    if (!alg) {
+      throw new CoseError({
+        code: 'COSE_INVALID_ALG',
+        message: `Cannot get raw signing data. Alg is not defined`,
+      });
+    }
+
+    const toBeSigned = Sign1.Signature1(
+      cborEncode(ProtectedHeaders.wrap(this.protectedHeaders).esMap),
+      new Uint8Array(),
+      payload
+    );
+
+    return {
+      payload: toBeSigned,
+      key,
+      alg,
+    };
+  }
+
+  public getRawVerificationData(options?: VerifyOptions) {
+    const toBeSigned = Sign1.Signature1(
+      this.encodedProtectedHeaders ?? new Uint8Array(),
+      options?.externalAAD ?? new Uint8Array(),
+      options?.detachedPayload ?? this.payload
+    );
+
+    return this.internalGetRawVerificationData(toBeSigned);
   }
 
   static tag = 18;

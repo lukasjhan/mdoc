@@ -209,7 +209,6 @@ export class Document {
     ctx: {
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
-      jose: MdocContext['jose'];
     }
   ): Promise<IssuerSignedDocument> {
     if (!this.#issuerNameSpaces) {
@@ -225,8 +224,6 @@ export class Document {
       params.issuerPrivateKey instanceof Uint8Array
         ? COSEKey.import(params.issuerPrivateKey).toJWK()
         : params.issuerPrivateKey;
-
-    const issuerPrivateKey = await ctx.jose.importJwk(issuerPrivateKeyJWK);
 
     const valueDigests = new Map(
       await Promise.all(
@@ -273,13 +270,17 @@ export class Document {
 
     const unprotectedHeader = UnprotectedHeaders.from(headers);
 
-    const issuerAuth = await IssuerAuth.sign(
+    const issuerAuth = IssuerAuth.create(
       protectedHeader,
       unprotectedHeader,
-      payload,
-      issuerPrivateKey,
-      ctx
+      payload
     );
+
+    const signature = await ctx.cose.sign1.sign({
+      sign1: issuerAuth,
+      jwk: issuerPrivateKeyJWK,
+    });
+    issuerAuth.signature = signature;
 
     const issuerSigned = {
       issuerAuth,

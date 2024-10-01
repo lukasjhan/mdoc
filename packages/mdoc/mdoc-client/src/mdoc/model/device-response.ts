@@ -170,7 +170,6 @@ export class DeviceResponse {
   public async sign(ctx: {
     crypto: MdocContext['crypto'];
     cose: MdocContext['cose'];
-    jose: MdocContext['jose'];
   }): Promise<MDoc> {
     if (!this.pd)
       throw new Error(
@@ -190,7 +189,6 @@ export class DeviceResponse {
     ctx: {
       cose: MdocContext['cose'];
       crypto: MdocContext['crypto'];
-      jose: MdocContext['jose'];
     }
   ): Promise<DeviceSignedDocument> {
     const document = (this.mdoc.documents || []).find(d => d.docType === id.id);
@@ -218,7 +216,6 @@ export class DeviceResponse {
     ctx: {
       cose: MdocContext['cose'];
       crypto: MdocContext['crypto'];
-      jose: MdocContext['jose'];
     }
   ): Promise<DeviceSigned> {
     const sessionTranscript = [
@@ -266,7 +263,7 @@ export class DeviceResponse {
     const key = COSEKeyToRAW(this.devicePrivateKey);
     const { kid } = COSEKey.import(this.devicePrivateKey).toJWK();
 
-    const ephemeralMacKey = await ctx.crypto.calculateEphemeralMacKey({
+    const ephemeralMacKeyJwk = await ctx.crypto.calculateEphemeralMacKeyJwk({
       privateKey: key,
       publicKey: this.ephemeralPublicKey,
       sessionTranscriptBytes: cborEncode(DataItem.fromData(sessionTranscript)),
@@ -282,15 +279,16 @@ export class DeviceResponse {
       ? UnprotectedHeaders.from([[Headers.KeyID, stringToUint8Array(kid)]])
       : undefined;
 
-    const mac = await Mac0.create(
+    const mac0 = Mac0.create(
       protectedHeaders,
       unprotectedHeaders,
       deviceAuthenticationBytes,
-      ephemeralMacKey,
-      ctx
+      undefined
     );
 
-    return { deviceMac: mac };
+    const tag = await ctx.cose.mac0.sign({ mac0, jwk: ephemeralMacKeyJwk });
+    mac0.tag = tag;
+    return { deviceMac: mac0 };
   }
 
   private async getDeviceAuthSign(
@@ -298,7 +296,6 @@ export class DeviceResponse {
     ctx: {
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
-      jose: MdocContext['jose'];
     }
   ): Promise<DeviceAuth> {
     if (!this.devicePrivateKey) throw new Error('Missing devicePrivateKey');
@@ -312,14 +309,17 @@ export class DeviceResponse {
       ? UnprotectedHeaders.from([[Headers.KeyID, stringToUint8Array(kid)]])
       : undefined;
 
-    const deviceSignature = await Sign1.sign(
+    const sign1 = Sign1.create(
       ProtectedHeaders.from([[Headers.Algorithm, Algorithms[this.alg]]]),
       unprotectedHeaders,
-      cborData,
-      await ctx.jose.importJwk(COSEKey.import(this.devicePrivateKey).toJWK()),
-      ctx
+      cborData
     );
-    return { deviceSignature };
+
+    const jwk = COSEKey.import(this.devicePrivateKey).toJWK();
+    const signature = await ctx.cose.sign1.sign({ sign1, jwk });
+    sign1.signature = signature;
+
+    return { deviceSignature: sign1 };
   }
 
   private async prepareNamespaces(

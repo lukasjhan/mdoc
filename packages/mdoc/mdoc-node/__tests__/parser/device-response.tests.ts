@@ -1,24 +1,23 @@
 import type { MDoc } from '@protokoll/mdoc-client';
 import { parse } from '@protokoll/mdoc-client';
 import { hex } from 'buffer-tag';
-import type { KeyLike } from 'jose';
-import { importJWK } from 'jose';
+import type { JWK } from 'jose';
 import { mdocContext } from '../mdoc-test-context.js';
 
 describe('parse DeviceResponse Example 1', () => {
   describe('parse', () => {
     let parsed: MDoc;
 
-    let publicKey: KeyLike | Uint8Array;
+    let publicKeyJwk: JWK;
 
-    beforeAll(async () => {
-      publicKey = await importJWK({
+    beforeAll(() => {
+      publicKeyJwk = {
         alg: 'ES256',
         kty: 'EC',
         crv: 'P-256',
         x: 'HjeKz2TMyZU-kyocWZaE0NzG3927BtrEiQdHPPQy6lA',
         y: 'DFs6L1342jZlvA7rraXk1konYdLdiMNnKF4IjeInDnQ',
-      });
+      };
     });
 
     // this is a Mobile Driver License randomly generated for the purpose of this test
@@ -47,11 +46,11 @@ describe('parse DeviceResponse Example 1', () => {
     });
 
     it('should verify the issuerAuth', async () => {
-      const r = await parsed.documents[0]?.issuerSigned.issuerAuth.verify(
-        publicKey as any,
-        undefined,
-        mdocContext
-      );
+      const r = await mdocContext.cose.sign1.verify({
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
+        sign1: parsed.documents[0]?.issuerSigned.issuerAuth!,
+        jwk: publicKeyJwk,
+      });
       expect(r).toBeTruthy();
     });
 

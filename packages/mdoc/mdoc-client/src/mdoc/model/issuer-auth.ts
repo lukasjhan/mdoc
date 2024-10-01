@@ -1,7 +1,10 @@
-import type { MdocContext, X509Context } from '../../c-mdoc.js';
+import type { X509Context } from '../../c-mdoc.js';
 import { DataItem } from '../../cbor/data-item.js';
 import { cborDecode } from '../../cbor/index.js';
-import type { ProtectedHeaders, UnprotectedHeaders } from '../../cose/headers.js';
+import type {
+  ProtectedHeaders,
+  UnprotectedHeaders,
+} from '../../cose/headers.js';
 import { Sign1 } from '../../cose/sign1.js';
 import type { MSO } from './types.js';
 
@@ -17,7 +20,7 @@ export default class IssuerAuth extends Sign1 {
     protectedHeader: Map<number, unknown> | Uint8Array,
     unprotectedHeader: Map<number, unknown>,
     payload: Uint8Array,
-    signature: Uint8Array
+    signature?: Uint8Array
   ) {
     super(protectedHeader, unprotectedHeader, payload, signature);
   }
@@ -83,26 +86,17 @@ export default class IssuerAuth extends Sign1 {
     return stateOrProvince;
   }
 
-  static override async sign(
+  static override create(
     protectedHeaders: ProtectedHeaders,
     unprotectedHeaders: UnprotectedHeaders | undefined,
-    payload: Uint8Array,
-    key: Uint8Array,
-    ctx: { cose: MdocContext['cose']; crypto: MdocContext['crypto'] }
-  ): Promise<IssuerAuth> {
-    const sign1 = await Sign1.sign(
-      protectedHeaders,
-      unprotectedHeaders,
-      payload,
-      key,
-      ctx
-    );
+    payload: Uint8Array
+  ): IssuerAuth {
+    const sign1 = Sign1.create(protectedHeaders, unprotectedHeaders, payload);
 
     return new IssuerAuth(
       sign1.protectedHeaders,
       sign1.unprotectedHeaders,
-      sign1.payload,
-      sign1.signature
+      sign1.payload
     );
   }
 }

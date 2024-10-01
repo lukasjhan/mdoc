@@ -65,9 +65,10 @@ export function getCoseErrorFromUnknown(cause: unknown): CoseError {
 
 export type COSE_ERROR_CODE =
   | 'INTERNAL_SERVER_ERROR'
+  | 'COSE_UNSUPPORTED_MAC'
   | 'COSE_ALG_NOT_ALLOWED'
   | 'COSE_INVALID_SIGNATURE'
-  | 'COSE_INVALID_ALGORITHM'
+  | 'COSE_INVALID_ALG'
   | 'COSE_UNSUPPORTED_ALG';
 
 export class CoseError extends Error {

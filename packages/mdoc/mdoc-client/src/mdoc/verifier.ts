@@ -82,7 +82,7 @@ export class Verifier {
       }
     }
 
-    const verificationKey = certificate
+    const verificationJwk = certificate
       ? await ctx.x509.getPublicKey({
           certificate: certificate,
           alg: issuerAuth.algName,
@@ -90,8 +90,11 @@ export class Verifier {
       : undefined;
 
     const verificationResult =
-      verificationKey &&
-      (await issuerAuth.verify(verificationKey, undefined, ctx));
+      verificationJwk &&
+      (await ctx.cose.sign1.verify({
+        sign1: issuerAuth,
+        jwk: verificationJwk,
+      }));
 
     onCheck({
       status: verificationResult ? 'PASSED' : 'FAILED',
@@ -146,7 +149,6 @@ export class Verifier {
     ctx: {
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
-      jose: MdocContext['jose'];
     }
   ) {
     const onCheck = onCatCheck(options.onCheck, 'DEVICE_AUTH');
@@ -205,12 +207,15 @@ export class Verifier {
       try {
         const ds = deviceAuth.deviceSignature;
 
-        const verificationResult = await new Sign1(
+        const sign1 = new Sign1(
           ds.protectedHeaders,
           ds.unprotectedHeaders,
           deviceAuthenticationBytes,
           ds.signature
-        ).verify(await ctx.jose.importJwk(deviceKey.toJWK()), undefined, ctx);
+        );
+
+        const jwk = deviceKey.toJWK();
+        const verificationResult = await ctx.cose.sign1.verify({ sign1, jwk });
 
         onCheck({
           status: verificationResult ? 'PASSED' : 'FAILED',
@@ -254,20 +259,17 @@ export class Verifier {
 
     try {
       const deviceKeyRaw = COSEKeyToRAW(deviceKeyCoseKey);
-      const ephemeralMacKey = await ctx.crypto.calculateEphemeralMacKey({
+      const ephemeralMacKeyJwk = await ctx.crypto.calculateEphemeralMacKeyJwk({
         privateKey: options.ephemeralPrivateKey,
         publicKey: deviceKeyRaw,
         sessionTranscriptBytes: options.sessionTranscriptBytes,
       });
 
-      const isValid = await deviceAuth.deviceMac.verify(
-        ephemeralMacKey,
-        {
-          externalAAD: undefined,
-          detachedPayload: deviceAuthenticationBytes,
-        },
-        ctx
-      );
+      const isValid = await ctx.cose.mac0.verify({
+        mac0: deviceAuth.deviceMac,
+        jwk: ephemeralMacKeyJwk,
+        options: { detachedPayload: deviceAuthenticationBytes },
+      });
 
       onCheck({
         status: isValid ? 'PASSED' : 'FAILED',
@@ -406,7 +408,6 @@ export class Verifier {
       x509: X509Context;
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
-      jose: MdocContext['jose'];
     }
   ): Promise<MDoc> {
     const onCheck = buildCallback(options.onCheck);
@@ -467,7 +468,6 @@ export class Verifier {
       x509: X509Context;
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
-      jose: MdocContext['jose'];
     }
   ): Promise<DiagnosticInformation> {
     const dr: VerificationAssessment[] = [];

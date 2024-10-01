@@ -1,16 +1,15 @@
-import type { MdocContext } from '../c-mdoc.js';
 import { addExtension, cborEncode } from '../cbor/index.js';
 import { COSEBase } from './cose-base.js';
-import type {
-  MacAlgorithms} from './headers.js';
+import { CoseError } from './e-cose.js';
+import { ProtectedHeaders } from './headers';
+import type { MacAlgorithms, SupportedMacAlg } from './headers.js';
 import {
   Headers,
   MacAlgorithmNames,
   MacProtectedHeaders,
-  
-  UnprotectedHeaders
+  UnprotectedHeaders,
 } from './headers.js';
-import type {SupportedMacAlg} from './headers.js';
+import { validateAlgorithms } from './validate-algorithms.js';
 export interface VerifyOptions {
   externalAAD?: Uint8Array;
   detachedPayload?: Uint8Array;
@@ -22,9 +21,17 @@ export class Mac0 extends COSEBase {
     protectedHeaders: Map<number, unknown> | Uint8Array,
     unprotectedHeaders: Map<number, unknown>,
     public readonly payload: Uint8Array,
-    public tag: Uint8Array
+    private _tag?: Uint8Array
   ) {
     super(protectedHeaders, unprotectedHeaders);
+  }
+
+  private static createMAC0(
+    protectedHeaders: Uint8Array,
+    applicationHeaders: Uint8Array,
+    payload: Uint8Array
+  ) {
+    return cborEncode(['MAC0', protectedHeaders, applicationHeaders, payload]);
   }
 
   public getContentForEncoding() {
@@ -36,11 +43,20 @@ export class Mac0 extends COSEBase {
     ];
   }
 
+  public get tag() {
+    if (!this._tag) {
+      throw new Error('No signature present');
+    }
+
+    return this._tag;
+  }
+
+  public set tag(sig: Uint8Array) {
+    this._tag = sig;
+  }
+
   public get alg(): MacAlgorithms | undefined {
-    return (
-      (this.protectedHeaders.get(Headers.Algorithm) as MacAlgorithms) ||
-      (this.unprotectedHeaders.get(Headers.Algorithm) as MacAlgorithms)
-    );
+    return this.protectedHeaders.get(Headers.Algorithm) as MacAlgorithms;
   }
 
   public get algName(): SupportedMacAlg | undefined {
@@ -51,7 +67,7 @@ export class Mac0 extends COSEBase {
     return !!this.algName;
   }
 
-  static async create(
+  static create(
     protectedHeaders:
       | MacProtectedHeaders
       | ConstructorParameters<typeof MacProtectedHeaders>[0],
@@ -60,52 +76,81 @@ export class Mac0 extends COSEBase {
       | ConstructorParameters<typeof UnprotectedHeaders>[0]
       | undefined,
     payload: Uint8Array,
-    key: Uint8Array,
-    ctx: { cose: Pick<MdocContext['cose'], 'mac0'> }
+    signature?: Uint8Array
   ) {
     const wProtectedHeaders = MacProtectedHeaders.wrap(protectedHeaders);
-    const wUnprotectedHeaders = UnprotectedHeaders.wrap(unprotectedHeaders);
-    const encodedProtectedHeaders = cborEncode(wProtectedHeaders.esMap);
+    const mac0AlgName = wProtectedHeaders.get(Headers.Algorithm);
+    const alg = mac0AlgName ? MacAlgorithmNames.get(mac0AlgName) : undefined;
 
-    const tag = await ctx.cose.mac0.sign({
-      protectedHeaders,
-      unprotectedHeaders,
-      payload,
-      key,
-    });
+    if (!alg) {
+      throw new CoseError({
+        code: 'COSE_INVALID_ALG',
+        message: `The [${Headers.Algorithm}] (Algorithm) header must be set.`,
+      });
+    }
+
+    const encodedProtectedHeaders = cborEncode(wProtectedHeaders.esMap);
+    const wUnprotectedHeaders = UnprotectedHeaders.wrap(unprotectedHeaders);
 
     return new Mac0(
       encodedProtectedHeaders,
-      wUnprotectedHeaders.esMap,
+      wUnprotectedHeaders.esMap as Map<number, unknown>,
       payload,
-      tag
+      signature
     );
   }
 
-  /**
-   * Verifies the signature of this instance using the given key.
-   *
-   * @param {KeyLike | Uint8Array} key - The key to verify the signature with.
-   * @param {VerifyOptions} [options] - Verify options
-   * @param {MacAlgorithms[]} [options.algorithms] - List of allowed algorithms
-   * @param {Uint8Array} [options.externalAAD] - External Additional Associated Data
-   * @param {Uint8Array} [options.detachedPayload] - The detached payload to verify the signature with.
-   * @returns {Boolean} - The result of the signature verification.
-   */
-  public async verify(
-    key: Uint8Array,
-    options: VerifyOptions | undefined,
-    ctx: { cose: Pick<MdocContext['cose'], 'mac0'> }
-  ): Promise<boolean> {
-    const isValid = await ctx.cose.mac0.verify({
+  public getRawSigningData(payload: Uint8Array, key: Uint8Array) {
+    const alg = this.alg;
+    if (!alg) {
+      throw new CoseError({
+        code: 'COSE_INVALID_ALG',
+        message: `Cannot get raw signing data. Mac alg is not defined`,
+      });
+    }
+
+    const toBeSigned = Mac0.createMAC0(
+      cborEncode(ProtectedHeaders.wrap(this.protectedHeaders).esMap),
+      new Uint8Array(),
+      payload
+    );
+
+    return {
+      payload: toBeSigned,
       key,
-      protectedHeaders: this.protectedHeaders,
-      unprotectedHeaders: this.unprotectedHeaders,
-      payload: this.payload,
-      tag: this.tag,
-      options,
-    });
-    return isValid;
+      alg,
+    };
+  }
+
+  public getRawVerificationData(options?: VerifyOptions) {
+    const mac0Structure = Mac0.createMAC0(
+      this.encodedProtectedHeaders ?? new Uint8Array(),
+      options?.externalAAD ?? new Uint8Array(),
+      options?.detachedPayload ?? this.payload
+    );
+
+    if (!this.alg || !this.algName || !MacAlgorithmNames.has(this.alg)) {
+      throw new CoseError({
+        code: 'COSE_UNSUPPORTED_MAC',
+        message: `Unsupported MAC algorithm '${this.alg}'`,
+      });
+    }
+
+    const algorithms =
+      options && validateAlgorithms('algorithms', options.algorithms);
+
+    if (algorithms && !algorithms.has(this.alg)) {
+      throw new CoseError({
+        code: 'COSE_UNSUPPORTED_ALG',
+        message: `[${Headers.Algorithm}] (algorithm) Header Parameter not allowed`,
+      });
+    }
+
+    return {
+      algName: this.algName,
+      signature: this.tag,
+      mac0Structure: mac0Structure,
+    };
   }
 
   static tag = 17;

@@ -10,11 +10,6 @@ import * as webcrypto from 'uncrypto';
 import { subtle } from 'uncrypto';
 
 export const mdocContext: MdocContext = {
-  jose: {
-    importJwk: async jwk => {
-      return (await jose.importJWK(jwk)) as Uint8Array;
-    },
-  },
   crypto: {
     digest: ({ digestAlgorithm, bytes }) => {
       return subtle.digest(digestAlgorithm, bytes);
@@ -22,7 +17,7 @@ export const mdocContext: MdocContext = {
     random: (length: number) => {
       return webcrypto.getRandomValues(new Uint8Array(length));
     },
-    calculateEphemeralMacKey: async input => {
+    calculateEphemeralMacKeyJwk: async input => {
       const { privateKey, publicKey, sessionTranscriptBytes } = input;
 
       const ikm = p256
@@ -37,34 +32,49 @@ export const mdocContext: MdocContext = {
       );
       const info = Buffer.from('EMacKey', 'utf-8');
       const result = await hkdf('sha256', ikm, salt, info, 32);
-      return result;
+
+      // Convert the key material to a CryptoKey
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        result,
+        { name: 'HMAC', hash: 'SHA-256' },
+        true,
+        ['sign', 'verify']
+      );
+
+      // Export the CryptoKey as a JWK
+      const jwk = await crypto.subtle.exportKey('jwk', cryptoKey);
+
+      return jwk as jose.JWK;
     },
   },
 
   cose: {
     mac0: {
       sign: async input => {
-        const { protectedHeaders, unprotectedHeaders, payload, key } = input;
+        const { jwk, mac0 } = input;
+        const key = await jose.importJWK(jwk);
 
-        const mac0 = await Mac0.create(
-          protectedHeaders,
-          unprotectedHeaders,
-          payload,
+        const _mac0 = await Mac0.create(
+          mac0.protectedHeaders as any,
+          mac0.unprotectedHeaders as any,
+          mac0.payload,
           key
         );
 
-        return mac0.tag;
+        return _mac0.tag;
       },
       verify: async input => {
         try {
-          console.info('verify mac0');
-          const mac0 = new Mac0(
-            input.protectedHeaders,
-            input.unprotectedHeaders,
-            input.payload,
-            input.tag
+          const { mac0, jwk, options } = input;
+          const key = await jose.importJWK(jwk);
+          const _mac0 = new Mac0(
+            mac0.protectedHeaders,
+            mac0.unprotectedHeaders,
+            mac0.payload,
+            mac0.tag
           );
-          await mac0.verify(input.key, input.options);
+          await _mac0.verify(key, options);
           return true;
         } catch (errror) {
           return false;
@@ -73,26 +83,30 @@ export const mdocContext: MdocContext = {
     },
     sign1: {
       sign: async input => {
-        const { protectedHeaders, unprotectedHeaders, payload, key } = input;
+        const { sign1, jwk } = input;
+        const key = await jose.importJWK(jwk);
 
-        const result = await Sign1.sign(
-          protectedHeaders,
-          unprotectedHeaders,
-          payload,
+        const _sign1 = await Sign1.sign(
+          sign1.protectedHeaders as any,
+          sign1.unprotectedHeaders as any,
+          sign1.payload,
           key
         );
-        return result.signature;
+        return _sign1.signature;
       },
       verify: async input => {
         try {
-          console.info('verify sign1');
-          const sign1 = new Sign1(
-            input.protectedHeaders,
-            input.unprotectedHeaders,
-            input.payload,
-            input.signature
+          const { sign1, jwk, options } = input;
+          console.log('herer', jwk);
+          const key = await jose.importJWK(jwk);
+          console.log('done');
+          const _sign1 = new Sign1(
+            sign1.protectedHeaders,
+            sign1.unprotectedHeaders,
+            sign1.payload,
+            sign1.signature
           );
-          await sign1.verify(input.key, input.options);
+          await _sign1.verify(key, options);
           return true;
         } catch (errror) {
           return false;
@@ -113,7 +127,7 @@ export const mdocContext: MdocContext = {
     getPublicKey: async (input: { certificate: Uint8Array; alg: string }) => {
       const certificate = new X509Certificate(input.certificate);
       const key = await importX509(certificate.toString(), input.alg);
-      return key as any;
+      return jose.exportJWK(key);
     },
 
     validateCertificateChain: async (input: {
