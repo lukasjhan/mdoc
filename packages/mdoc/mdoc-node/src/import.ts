@@ -45,17 +45,19 @@ export interface PEMImportOptions {
  *   {@link https://github.com/panva/jose/issues/210 Algorithm Key Requirements}.
  */
 export async function importX509(
-  x509: string,
-  alg: string,
-  options?: PEMImportOptions
+  input: {
+    x509: string;
+    alg: string;
+  } & PEMImportOptions
 ): Promise<CryptoKey> {
+  const { x509 } = input;
   if (
     typeof x509 !== 'string' ||
     !x509.startsWith('-----BEGIN CERTIFICATE-----')
   ) {
     throw new TypeError('"x509" must be X.509 formatted string');
   }
-  return fromX509(x509, alg, options);
+  return fromX509({ ...input, pem: x509 });
 }
 
 /**
@@ -97,13 +99,20 @@ export async function importX509(
  *   in Web Crypto API runtimes. See
  *   {@link https://github.com/panva/jose/issues/210 Algorithm Key Requirements}.
  */
-export async function importJWK(jwk: JWK, alg?: string): Promise<CryptoKey> {
+export async function importJWK(input: {
+  jwk: JWK;
+  alg?: string;
+  crypto?: { subtle: SubtleCrypto };
+}): Promise<CryptoKey> {
+  // eslint-disable-next-line prefer-const
+  let { jwk, alg } = input;
   if (!isObject(jwk)) {
     throw new TypeError('JWK must be an object');
   }
 
   alg ||= jwk.alg;
 
+  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
   switch (jwk.kty) {
     case 'oct':
       if (typeof jwk.k !== 'string' || !jwk.k) {
@@ -113,7 +122,8 @@ export async function importJWK(jwk: JWK, alg?: string): Promise<CryptoKey> {
       if (!jwk.alg?.startsWith('HS')) {
         throw new Error('Invalid Key Input');
       }
-      return crypto.subtle.importKey(
+
+      return subtleCrypto.importKey(
         'jwk',
         jwk,
         { hash: `SHA-${jwk.alg.slice(-3)}`, name: 'HMAC' },
@@ -130,7 +140,7 @@ export async function importJWK(jwk: JWK, alg?: string): Promise<CryptoKey> {
       break;
     case 'EC':
     case 'OKP':
-      return jwkToKey({ ...jwk, alg });
+      return jwkToKey({ jwk: { ...jwk, alg }, crypto: input.crypto });
   }
 
   throw new Error('Unsupported "kty" (Key Type) Parameter value');

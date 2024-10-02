@@ -4,9 +4,11 @@ import formatPEM from './format-pem.js';
 import type { PEMImportOptions } from './import.js';
 
 export type PEMImportFunction = (
-  pem: string,
-  alg: string,
-  options?: PEMImportOptions
+  input: {
+    pem: string;
+    alg: string;
+    crypto?: { subtle: SubtleCrypto };
+  } & PEMImportOptions
 ) => MaybePromise<CryptoKey>;
 
 const findOid = (keyData: Uint8Array, oid: number[], from = 0): boolean => {
@@ -49,12 +51,15 @@ const getNamedCurve = (keyData: Uint8Array): string => {
 };
 
 const genericImport = async (
-  replace: RegExp,
-  keyFormat: 'spki' | 'pkcs8',
-  pem: string,
-  alg: string,
-  options?: PEMImportOptions
+  input: {
+    pem: string;
+    alg: string;
+    crypto?: { subtle: SubtleCrypto };
+    replace: RegExp;
+    keyFormat: 'spki' | 'pkcs8';
+  } & PEMImportOptions
 ) => {
+  const { pem, alg, keyFormat, replace, extractable } = input;
   let algorithm: RsaHashedImportParams | EcKeyAlgorithm | Algorithm;
   let keyUsages: KeyUsage[];
 
@@ -120,33 +125,30 @@ const genericImport = async (
       throw new Error('Invalid or unsupported "alg" (Algorithm) value');
   }
 
-  return crypto.subtle.importKey(
+  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  return subtleCrypto.importKey(
     keyFormat,
     keyData,
     algorithm,
-    options?.extractable ?? false,
+    extractable ?? false,
     keyUsages
   );
 };
 
-export const fromPKCS8: PEMImportFunction = (pem, alg, options?) => {
-  return genericImport(
-    /(?:-----(?:BEGIN|END) PRIVATE KEY-----|\s)/g,
-    'pkcs8',
-    pem,
-    alg,
-    options
-  );
+export const fromPKCS8: PEMImportFunction = input => {
+  return genericImport({
+    ...input,
+    keyFormat: 'pkcs8',
+    replace: /(?:-----(?:BEGIN|END) PRIVATE KEY-----|\s)/g,
+  });
 };
 
-export const fromSPKI: PEMImportFunction = (pem, alg, options?) => {
-  return genericImport(
-    /(?:-----(?:BEGIN|END) PUBLIC KEY-----|\s)/g,
-    'spki',
-    pem,
-    alg,
-    options
-  );
+export const fromSPKI: PEMImportFunction = input => {
+  return genericImport({
+    ...input,
+    keyFormat: 'spki',
+    replace: /(?:-----(?:BEGIN|END) PUBLIC KEY-----|\s)/g,
+  });
 };
 
 function getElement(seq: Uint8Array) {
@@ -243,12 +245,13 @@ function getSPKI(x509: string): string {
   return formatPEM(spkiFromX509(raw), 'PUBLIC KEY');
 }
 
-export const fromX509: PEMImportFunction = (pem, alg, options?) => {
+export const fromX509: PEMImportFunction = input => {
+  const { pem } = input;
   let spki: string;
   try {
     spki = getSPKI(pem);
   } catch (cause) {
     throw new Error('Failed to parse the X.509 certificate', { cause });
   }
-  return fromSPKI(spki, alg, options);
+  return fromSPKI({ ...input, pem: spki });
 };

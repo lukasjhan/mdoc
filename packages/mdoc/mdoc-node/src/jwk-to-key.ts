@@ -102,7 +102,11 @@ export function subtleMapping(jwk: JWK): {
   return { algorithm, keyUsages };
 }
 
-export const jwkToKey = async (jwk: JWK): Promise<CryptoKey> => {
+export const jwkToKey = async (input: {
+  jwk: JWK;
+  crypto?: { subtle: SubtleCrypto };
+}): Promise<CryptoKey> => {
+  const { jwk } = input;
   if (!jwk.alg) {
     throw new TypeError(
       '"alg" argument is required when "jwk.alg" is not present'
@@ -123,5 +127,7 @@ export const jwkToKey = async (jwk: JWK): Promise<CryptoKey> => {
   const keyData: JWK = { ...jwk };
   delete keyData.alg;
   delete keyData.use;
-  return crypto.subtle.importKey('jwk', keyData, ...rest);
+  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+
+  return subtleCrypto.importKey('jwk', keyData, ...rest);
 };

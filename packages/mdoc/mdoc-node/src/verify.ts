@@ -34,6 +34,6 @@ export const verifyWithJwk = async (input: {
   jwk.alg = jwk.alg ?? alg;
   if (!jwk.alg) throw new Error(`Missing 'alg' value in jwk.`);
 
-  const key = await importJWK(jwk);
+  const key = await importJWK({ jwk, alg, crypto: input.crypto });
   return verify({ key, alg: jwk.alg, signature, data, crypto: input.crypto });
 };

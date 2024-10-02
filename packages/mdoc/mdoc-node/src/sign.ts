@@ -31,8 +31,8 @@ export const signWithJwk = async (input: {
 }) => {
   const { jwk, alg, data } = input;
   jwk.alg = jwk.alg ?? alg;
-  const key = await importJWK(jwk);
   if (!jwk.alg) throw new Error(`Missing 'alg' value in jwk.`);
 
+  const key = await importJWK({ jwk, alg, crypto: input.crypto });
   return sign({ key, alg: jwk.alg, data, crypto: input.crypto });
 };

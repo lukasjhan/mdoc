@@ -81,7 +81,9 @@ export const mdocContext: MdocContext = {
     },
     getPublicKey: async (input: { certificate: Uint8Array; alg: string }) => {
       const certificate = new X509Certificate(input.certificate);
-      const key = await importX509(certificate.toString(), input.alg, {
+      const key = await importX509({
+        x509: certificate.toString(),
+        alg: input.alg,
         extractable: true,
       });
       return keyToJWK({ key });
