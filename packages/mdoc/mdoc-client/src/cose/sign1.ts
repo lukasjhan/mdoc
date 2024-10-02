@@ -75,7 +75,7 @@ export class Sign1 extends SignatureBase {
   }
 
   public getRawSigningData() {
-    const alg = this.alg;
+    const alg = this.algName;
     if (!alg) {
       throw new CoseError({
         code: 'COSE_INVALID_ALG',
@@ -90,7 +90,7 @@ export class Sign1 extends SignatureBase {
     );
 
     return {
-      payload: toBeSigned,
+      data: toBeSigned,
       alg,
     };
   }

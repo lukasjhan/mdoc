@@ -1,9 +1,27 @@
-import { Mac0, Sign1 } from '@auth0/cose';
+import { p256 } from '@noble/curves/p256';
+import { hkdf } from '@panva/hkdf';
 import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
+import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
+import { Buffer } from 'buffer';
+import type { JWK } from 'jose';
 import * as jose from 'jose';
 import { importX509 } from 'jose';
 import crypto from 'node:crypto';
+
+export const getAlgFromJwk = (jwk: JWK) => {
+  console.log(jwk);
+  return jwk.kty !== 'oct'
+    ? {
+        name: 'ECDSA',
+        namedCurve: 'P-256',
+        hash: 'SHA-256',
+      }
+    : {
+        name: 'HMAC',
+        hash: 'SHA-256',
+      };
+};
 
 export const mdocContext: MdocContext = {
   crypto: {
@@ -16,55 +34,26 @@ export const mdocContext: MdocContext = {
     },
     calculateEphemeralMacKeyJwk: async input => {
       const { privateKey, publicKey, sessionTranscriptBytes } = input;
-
-      // Generate shared secret
-      const ecdh = crypto.createECDH('prime256v1');
-      ecdh.setPrivateKey(privateKey);
-      const sharedSecret = ecdh.computeSecret(publicKey);
-      const ikm = sharedSecret.slice(1); // Remove the first byte as in the original code
-
+      const ikm = p256
+        .getSharedSecret(
+          Buffer.from(privateKey).toString('hex'),
+          Buffer.from(publicKey).toString('hex'),
+          true
+        )
+        .slice(1);
       const salt = new Uint8Array(
         await crypto.subtle.digest('SHA-256', sessionTranscriptBytes)
       );
       const info = Buffer.from('EMacKey', 'utf-8');
+      const result = await hkdf('sha256', ikm, salt, info, 32);
 
-      // Create HKDF params
-      const hkdfParams = {
-        name: 'HKDF',
-        hash: 'SHA-256',
-        salt: salt,
-        info: info,
+      return {
+        key_ops: ['sign', 'verify'],
+        ext: true,
+        kty: 'oct',
+        k: uint8ArrayToBase64Url(result),
+        alg: 'HS256',
       };
-
-      // Import the IKM as a CryptoKey
-      const ikmKey = await crypto.subtle.importKey(
-        'raw',
-        ikm,
-        { name: 'HKDF' },
-        false,
-        ['deriveBits']
-      );
-
-      // Perform HKDF using deriveBits
-      const derivedBits = await crypto.subtle.deriveBits(
-        hkdfParams,
-        ikmKey,
-        256 // 32 bytes * 8 bits/byte = 256 bits
-      );
-
-      // Convert the key material to a CryptoKey
-      const cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        derivedBits,
-        { name: 'HMAC', hash: 'SHA-256' },
-        true,
-        ['sign', 'verify']
-      );
-
-      // Export the CryptoKey as a JWK
-      const jwk = await crypto.subtle.exportKey('jwk', cryptoKey);
-
-      return jwk as jose.JWK;
     },
   },
 
@@ -72,62 +61,46 @@ export const mdocContext: MdocContext = {
     mac0: {
       sign: async input => {
         const { jwk, mac0 } = input;
-        const key = await jose.importJWK(jwk);
+        const alg = getAlgFromJwk(jwk);
+        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
+          'sign',
+        ]);
 
-        const _mac0 = await Mac0.create(
-          mac0.protectedHeaders as any,
-          mac0.unprotectedHeaders as any,
-          mac0.payload,
-          key
-        );
-
-        return _mac0.tag;
+        const { data } = mac0.getRawSigningData();
+        const signature = await crypto.subtle.sign(alg, key, data);
+        return new Uint8Array(signature);
       },
       verify: async input => {
-        try {
-          const { mac0, jwk, options } = input;
-          const key = await jose.importJWK(jwk);
-          const _mac0 = new Mac0(
-            mac0.protectedHeaders,
-            mac0.unprotectedHeaders,
-            mac0.payload,
-            mac0.tag
-          );
-          await _mac0.verify(key, options);
-          return true;
-        } catch (errror) {
-          return false;
-        }
+        const { mac0, jwk, options } = input;
+        const alg = getAlgFromJwk(jwk);
+        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
+          'verify',
+        ]);
+        const { mac0Structure, signature } =
+          mac0.getRawVerificationData(options);
+        return crypto.subtle.verify(alg, key, signature, mac0Structure);
       },
     },
     sign1: {
       sign: async input => {
         const { sign1, jwk } = input;
-        const key = await jose.importJWK(jwk);
+        const alg = getAlgFromJwk(jwk);
+        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
+          'sign',
+        ]);
 
-        const _sign1 = await Sign1.sign(
-          sign1.protectedHeaders as any,
-          sign1.unprotectedHeaders as any,
-          sign1.payload,
-          key
-        );
-        return _sign1.signature;
+        const { data } = sign1.getRawSigningData();
+        const signature = await crypto.subtle.sign(alg, key, data);
+        return new Uint8Array(signature);
       },
       verify: async input => {
-        try {
-          const { sign1, jwk, options } = input;
-          const key = await jose.importJWK(jwk);
-          const _sign1 = new Sign1(
-            sign1.protectedHeaders,
-            sign1.unprotectedHeaders,
-            sign1.payload,
-            sign1.signature
-          );
-          await _sign1.verify(key, options);
-          return true;
-        } catch (errror) {
-          return false;
-        }
+        const { sign1, jwk, options } = input;
+        const alg = getAlgFromJwk(jwk);
+        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
+          'verify',
+        ]);
+        const { payload, signature } = sign1.getRawVerificationData(options);
+        return crypto.subtle.verify(alg, key, signature, payload);
       },
     },
   },
@@ -192,7 +165,7 @@ export const mdocContext: MdocContext = {
         pem: certificate.toString(),
         serialNumber: certificate.serialNumber,
         thumbprint: Buffer.from(
-          await certificate.getThumbprint(crypto)
+          await certificate.getThumbprint(crypto as any)
         ).toString('hex'),
       };
     },

@@ -20,7 +20,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@auth0/cose": "^1.0.2",
+    "@noble/curves": "^1.6.0",
+    "@panva/hkdf": "^1.2.1",
     "@peculiar/x509": "^1.12.2",
     "@protokoll/mdoc-client": "workspace:*",
     "buffer": "^6.0.3",

@@ -101,8 +101,8 @@ export class Mac0 extends COSEBase {
   }
 
   public getRawSigningData() {
-    const alg = this.alg;
-    if (!alg) {
+    const algName = this.algName;
+    if (!algName) {
       throw new CoseError({
         code: 'COSE_INVALID_ALG',
         message: `Cannot get raw signing data. Mac alg is not defined`,
@@ -115,7 +115,7 @@ export class Mac0 extends COSEBase {
       this.payload
     );
 
-    return { payload: toBeSigned, alg };
+    return { data: toBeSigned, alg: algName };
   }
 
   public getRawVerificationData(options?: VerifyOptions) {
