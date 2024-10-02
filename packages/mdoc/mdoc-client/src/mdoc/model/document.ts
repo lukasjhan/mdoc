@@ -1,4 +1,4 @@
-import type * as jose from 'jose';
+import type { JWK } from 'jose';
 import type { MdocContext } from '../../c-mdoc.js';
 import { DataItem, cborDecode, cborEncode } from '../../cbor/index.js';
 import {
@@ -133,13 +133,9 @@ export class Document {
    * The device public key could be in JWK format or as COSE_Key format.
    *
    * @param params
-   * @param {jose.JWK | Uint8Array} params.devicePublicKey - The device public key.
+   * @param {JWK | Uint8Array} params.devicePublicKey - The device public key.
    */
-  addDeviceKeyInfo({
-    deviceKey,
-  }: {
-    deviceKey: jose.JWK | Uint8Array;
-  }): Document {
+  addDeviceKeyInfo({ deviceKey }: { deviceKey: JWK | Uint8Array }): Document {
     const deviceKeyCOSEKey =
       deviceKey instanceof Uint8Array
         ? deviceKey
@@ -193,7 +189,7 @@ export class Document {
    * Generate the issuer signature for the document.
    *
    * @param {Object} params - The parameters object
-   * @param {jose.JWK | Uint8Array} params.issuerPrivateKey - The issuer's private key either in JWK format or COSE_KEY format as buffer.
+   * @param {JWK | Uint8Array} params.issuerPrivateKey - The issuer's private key either in JWK format or COSE_KEY format as buffer.
    * @param {string | Uint8Array} params.issuerCertificate - The issuer's certificate in pem format or as a buffer.
    * @param {SupportedAlgs} params.alg - The algorhitm used for the MSO signature.
    * @param {string | Uint8Array} [params.kid] - The key id of the issuer's private key. default: issuerPrivateKey.kid
@@ -201,7 +197,7 @@ export class Document {
    */
   async sign(
     params: {
-      issuerPrivateKey: jose.JWK;
+      issuerPrivateKey: JWK;
       issuerCertificate: string | Uint8Array;
       alg: SupportedAlgs;
       kid?: string | Uint8Array;

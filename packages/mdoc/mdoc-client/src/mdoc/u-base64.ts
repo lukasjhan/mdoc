@@ -1,3 +1,9 @@
+// @ts-nocheck
+
+// https://base64.guru/standards/base64url
+export const BASE64_URL_REGEX =
+  /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/;
+
 /**
  * Avoid modifying this file. It's part of
  * https://github.com/supabase-community/base64url-js.  Submit all fixes on
@@ -22,26 +28,88 @@ const IGNORE_BASE64URL = ' \t\n\r='.split('');
  * used to skip the character, or if -1 used to error out.
  */
 const FROM_BASE64URL = (() => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const charMap: number[] = new Array(128);
 
   for (let i = 0; i < charMap.length; i += 1) {
     charMap[i] = -1;
   }
 
-  // eslint-disable-next-line @typescript-eslint/prefer-for-of
   for (let i = 0; i < IGNORE_BASE64URL.length; i += 1) {
-    // @ts-expect-error copy & paste
     charMap[IGNORE_BASE64URL[i].charCodeAt(0)] = -2;
   }
 
   for (let i = 0; i < TO_BASE64URL.length; i += 1) {
-    // @ts-expect-error copy & paste
     charMap[TO_BASE64URL[i].charCodeAt(0)] = i;
   }
 
   return charMap;
 })();
+
+/**
+ * Converts a byte to a Base64-URL string.
+ *
+ * @param byte The byte to convert, or null to flush at the end of the byte sequence.
+ * @param state The Base64 conversion state. Pass an initial value of `{ queue: 0, queuedBits: 0 }`.
+ * @param emit A function called with the next Base64 character when ready.
+ */
+export function byteToBase64URL(
+  byte: number | null,
+  state: { queue: number; queuedBits: number },
+  emit: (char: string) => void
+) {
+  if (byte !== null) {
+    state.queue = (state.queue << 8) | byte;
+    state.queuedBits += 8;
+
+    while (state.queuedBits >= 6) {
+      const pos = (state.queue >> (state.queuedBits - 6)) & 63;
+      emit(TO_BASE64URL[pos]);
+      state.queuedBits -= 6;
+    }
+  } else if (state.queuedBits > 0) {
+    state.queue = state.queue << (6 - state.queuedBits);
+    state.queuedBits = 6;
+
+    while (state.queuedBits >= 6) {
+      const pos = (state.queue >> (state.queuedBits - 6)) & 63;
+      emit(TO_BASE64URL[pos]);
+      state.queuedBits -= 6;
+    }
+  }
+}
+
+/**
+ * Converts a String char code (extracted using `string.charCodeAt(position)`) to a sequence of Base64-URL characters.
+ *
+ * @param charCode The char code of the JavaScript string.
+ * @param state The Base64 state. Pass an initial value of `{ queue: 0, queuedBits: 0 }`.
+ * @param emit A function called with the next byte.
+ */
+export function byteFromBase64URL(
+  charCode: number,
+  state: { queue: number; queuedBits: number },
+  emit: (byte: number) => void
+) {
+  const bits = FROM_BASE64URL[charCode];
+
+  if (bits > -1) {
+    // valid Base64-URL character
+    state.queue = (state.queue << 6) | bits;
+    state.queuedBits += 6;
+
+    while (state.queuedBits >= 8) {
+      emit((state.queue >> (state.queuedBits - 8)) & 0xff);
+      state.queuedBits -= 8;
+    }
+  } else if (bits === -2) {
+    // ignore spaces, tabs, newlines, =
+    return;
+  } else {
+    throw new Error(
+      `Invalid Base64-URL character "${String.fromCharCode(charCode)}"`
+    );
+  }
+}
 
 /**
  * Converts a JavaScript string (which may include any valid character) into a
@@ -53,34 +121,17 @@ const FROM_BASE64URL = (() => {
 export function stringToBase64URL(str: string) {
   const base64: string[] = [];
 
-  let queue = 0;
-  let queuedBits = 0;
-
-  const emitter = (byte: number) => {
-    queue = (queue << 8) | byte;
-    queuedBits += 8;
-
-    while (queuedBits >= 6) {
-      const pos = (queue >> (queuedBits - 6)) & 63;
-      // @ts-expect-error copy & paste
-      base64.push(TO_BASE64URL[pos]);
-      queuedBits -= 6;
-    }
+  const emitter = (char: string) => {
+    base64.push(char);
   };
 
-  stringToUTF8(str, emitter);
+  const state = { queue: 0, queuedBits: 0 };
 
-  if (queuedBits > 0) {
-    queue = queue << (6 - queuedBits);
-    queuedBits = 6;
+  stringToUTF8(str, (byte: number) => {
+    byteToBase64URL(byte, state, emitter);
+  });
 
-    while (queuedBits >= 6) {
-      const pos = (queue >> (queuedBits - 6)) & 63;
-      // @ts-expect-error copy & paste
-      base64.push(TO_BASE64URL[pos]);
-      queuedBits -= 6;
-    }
-  }
+  byteToBase64URL(null, state, emitter);
 
   return base64.join('');
 }
@@ -94,41 +145,23 @@ export function stringToBase64URL(str: string) {
 export function stringFromBase64URL(str: string) {
   const conv: string[] = [];
 
-  const emit = (codepoint: number) => {
+  const utf8Emit = (codepoint: number) => {
     conv.push(String.fromCodePoint(codepoint));
   };
 
-  const state = {
+  const utf8State = {
     utf8seq: 0,
     codepoint: 0,
   };
 
-  let queue = 0;
-  let queuedBits = 0;
+  const b64State = { queue: 0, queuedBits: 0 };
+
+  const byteEmit = (byte: number) => {
+    stringFromUTF8(byte, utf8State, utf8Emit);
+  };
 
   for (let i = 0; i < str.length; i += 1) {
-    const codepoint = str.charCodeAt(i);
-    const bits = FROM_BASE64URL[codepoint];
-
-    // @ts-expect-error copy & paste
-    if (bits > -1) {
-      // valid Base64-URL character
-      // @ts-expect-error copy & paste
-      queue = (queue << 6) | bits;
-      queuedBits += 6;
-
-      while (queuedBits >= 8) {
-        stringFromUTF8((queue >> (queuedBits - 8)) & 0xff, state, emit);
-        queuedBits -= 8;
-      }
-    } else if (bits === -2) {
-      // ignore spaces, tabs, newlines, =
-      continue;
-    } else {
-      throw new Error(
-        `Invalid Base64-URL character "${str.at(i)}" at position ${i}`
-      );
-    }
+    byteFromBase64URL(str.charCodeAt(i), b64State, byteEmit);
   }
 
   return conv.join('');
@@ -243,91 +276,63 @@ export function stringFromUTF8(
   }
 }
 
-/**
- * Converts a Uint8Array into a Base64-URL encoded string.
- * The bytes are not encoded as UTF-8 before encoding as Base64-URL.
- *
- * @param bytes The uint8Array to convert.
- */
-export function uint8ArrayToBase64Url(bytes: Uint8Array): string {
-  const base64: string[] = [];
+export function uint8ArrayToBase64Url(bytes: Uint8Array) {
+  const result: string[] = [];
+  const state = { queue: 0, queuedBits: 0 };
 
-  let queue = 0;
-  let queuedBits = 0;
-
-  const emitter = (byte: number) => {
-    queue = (queue << 8) | byte;
-    queuedBits += 8;
-
-    while (queuedBits >= 6) {
-      const pos = (queue >> (queuedBits - 6)) & 63;
-      // @ts-expect-error copy & paste
-      base64.push(TO_BASE64URL[pos]);
-      queuedBits -= 6;
-    }
+  const onChar = (char: string) => {
+    result.push(char);
   };
 
-  // Feed each byte to the emitter
-  bytes.forEach(emitter);
+  bytes.map(byte => byteToBase64URL(byte, state, onChar));
 
-  if (queuedBits > 0) {
-    queue = queue << (6 - queuedBits);
-    queuedBits = 6;
+  // always call with `null` after processing all bytes
+  byteToBase64URL(null, state, onChar);
 
-    while (queuedBits >= 6) {
-      const pos = (queue >> (queuedBits - 6)) & 63;
-      // @ts-expect-error copy & paste
-      base64.push(TO_BASE64URL[pos]);
-      queuedBits -= 6;
-    }
-  }
-
-  return base64.join('');
+  return result.join('');
 }
 
-/**
- * Converts a Base64-URL encoded string into a Uint8Array. The bytes are not
- * decoded as UTF-8 after decoding from Base64-URL.
- *
- * @param str The Base64-URL encoded string.
- */
-export function uint8ArrayFromBase64URL(base64url: string): Uint8Array {
-  const bytes: number[] = [];
+export function base64UrlToUint8Array(base64Url: string) {
+  const result: number[] = [];
+  const state = { queue: 0, queuedBits: 0 };
 
-  let queue = 0;
-  let queuedBits = 0;
-
-  const emit = (byte: number) => {
-    bytes.push(byte);
+  const onByte = (byte: number) => {
+    result.push(byte);
   };
 
-  for (let i = 0; i < base64url.length; i += 1) {
-    const char = base64url.charCodeAt(i);
-    const bits = FROM_BASE64URL[char];
-
-    // Ignore spaces, tabs, newlines, or '='
-    if (bits === -2) {
-      continue;
-    }
-
-    if (bits === -1) {
-      throw new Error(
-        `Invalid Base64-URL character "${base64url[i]}" at position ${i}`
-      );
-    }
-
-    // Accumulate the bits into the queue
-    // @ts-expect-error should work
-    queue = (queue << 6) | bits;
-    queuedBits += 6;
-
-    // If we have 8 or more bits, emit a byte
-    if (queuedBits >= 8) {
-      emit((queue >> (queuedBits - 8)) & 0xff);
-      queuedBits -= 8;
-    }
+  for (let i = 0; i < base64Url.length; i += 1) {
+    byteFromBase64URL(base64Url.charCodeAt(i), state, onByte);
   }
 
-  // Return the byte array as Uint8Array
-  return new Uint8Array(bytes);
+  return new Uint8Array(result);
+}
+
+export function base64UrlToBase64(base64Url: string): string {
+  // Step 1: Replace Base64URL specific characters
+  let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+  // Step 2: Add padding if necessary
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+
+  return base64;
+}
+
+export function base64ToBase64Url(base64: string): string {
+  // Step 1: Replace Base64 specific characters
+  let base64Url = base64.replace(/\+/g, '-').replace(/\//g, '_');
+
+  // Step 2: Remove padding
+  base64Url = base64Url.replace(/=+$/, '');
+
+  return base64Url;
+}
+
+export function base64ToUint8Array(base64: string): Uint8Array {
+  return base64UrlToUint8Array(base64ToBase64Url(base64));
+}
+
+export function uint8ArrayToBase64(bytes: Uint8Array): string {
+  return base64UrlToBase64(uint8ArrayToBase64Url(bytes));
 }

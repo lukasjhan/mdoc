@@ -4,8 +4,8 @@ import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
 import { Buffer } from 'buffer';
-import * as jose from 'jose';
-import { importX509 } from 'jose';
+import keyToJWK from '../src/export-jwk.js';
+import { importX509 } from '../src/import.js';
 import { signWithJwk } from '../src/sign.js';
 import { verifyWithJwk } from '../src/verify.js';
 
@@ -60,7 +60,6 @@ export const mdocContext: MdocContext = {
       sign: async input => {
         const { jwk, sign1 } = input;
         const { data, alg } = sign1.getRawSigningData();
-        jwk.alg = jwk.alg ?? alg;
         return await signWithJwk({ jwk, data, alg });
       },
       verify: async input => {
@@ -82,8 +81,10 @@ export const mdocContext: MdocContext = {
     },
     getPublicKey: async (input: { certificate: Uint8Array; alg: string }) => {
       const certificate = new X509Certificate(input.certificate);
-      const key = await importX509(certificate.toString(), input.alg);
-      return jose.exportJWK(key);
+      const key = await importX509(certificate.toString(), input.alg, {
+        extractable: true,
+      });
+      return keyToJWK({ key });
     },
 
     validateCertificateChain: async (input: {

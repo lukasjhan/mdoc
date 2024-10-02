@@ -2,7 +2,7 @@ import { TypedMap } from '@jfromaniello/typedmap';
 import type { JWK } from 'jose';
 import { cborDecode, cborEncode } from '../../cbor/index.js';
 import {
-  uint8ArrayFromBase64URL,
+  base64UrlToUint8Array,
   uint8ArrayToBase64Url,
 } from '../../mdoc/u-base64.js';
 import { concat, uint8ArrayToString } from '../../u-buffer.js';
@@ -66,7 +66,7 @@ export const JWKToCOSEValue = new Map<
     label,
     (v: Uint8Array | string) => {
       const normalized = normalize(v);
-      return uint8ArrayFromBase64URL(normalized);
+      return base64UrlToUint8Array(normalized);
     },
   ]),
 ] as any);

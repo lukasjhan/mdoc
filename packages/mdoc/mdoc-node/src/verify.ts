@@ -1,7 +1,7 @@
 import type { JWK } from 'jose';
 import checkKeyLength from './check-key-length.js';
 import { getSignVerifyCryptoKey } from './get-sign-verify-key.js';
-import { importJWK } from './import-jwk.js';
+import { importJWK } from './import.js';
 import { subtleDsa } from './subtls-dsa.js';
 
 export const verify = async (input: {

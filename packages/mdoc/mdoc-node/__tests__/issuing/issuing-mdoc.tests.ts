@@ -9,7 +9,7 @@ import {
   Verifier,
   parse,
 } from '@protokoll/mdoc-client';
-import type * as jose from 'jose';
+import type { JWK } from 'jose';
 import { mdocContext } from '../mdoc-test-context.js';
 import {
   DEVICE_JWK,
@@ -17,7 +17,7 @@ import {
   ISSUER_PRIVATE_KEY_JWK,
 } from './config.js';
 
-const { d, ...publicKeyJWK } = DEVICE_JWK as jose.JWK;
+const { d, ...publicKeyJWK } = DEVICE_JWK as JWK;
 
 describe('issuing an MDOC', () => {
   let encoded: Uint8Array;

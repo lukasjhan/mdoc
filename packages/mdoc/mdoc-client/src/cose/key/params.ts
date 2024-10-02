@@ -33,7 +33,10 @@ export enum JWKParam {
   k = COSEKeyParam.k,
 }
 
-export const KTYSpecificJWKParams: Record<string, Map<number, string> | undefined> = {
+export const KTYSpecificJWKParams: Record<
+  string,
+  Map<number, string> | undefined
+> = {
   EC: new Map([
     [-1, 'crv'],
     [-2, 'x'],

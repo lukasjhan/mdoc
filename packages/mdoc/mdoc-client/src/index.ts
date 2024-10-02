@@ -14,7 +14,9 @@ export { MDoc } from './mdoc/model/mdoc.js';
 export type { DiagnosticInformation } from './mdoc/model/types.js';
 export { parse } from './mdoc/parser.js';
 export {
-  uint8ArrayFromBase64URL,
+  base64ToUint8Array,
+  base64UrlToUint8Array,
+  uint8ArrayToBase64,
   uint8ArrayToBase64Url,
 } from './mdoc/u-base64.js';
 export { Verifier } from './mdoc/verifier.js';

@@ -1,5 +1,4 @@
-import type {
-  DeviceSignedDocument} from '@protokoll/mdoc-client';
+import type { DeviceSignedDocument } from '@protokoll/mdoc-client';
 import {
   COSEKey,
   COSEKeyToRAW,

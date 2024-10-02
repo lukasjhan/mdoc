@@ -1,5 +1,4 @@
-import type {
-  DeviceSignedDocument} from '@protokoll/mdoc-client';
+import type { DeviceSignedDocument } from '@protokoll/mdoc-client';
 import {
   DataItem,
   DeviceResponse,
@@ -9,7 +8,7 @@ import {
   cborEncode,
   parse,
 } from '@protokoll/mdoc-client';
-import type * as jose from 'jose';
+import type { JWK } from 'jose';
 import { mdocContext } from '../mdoc-test-context.js';
 import {
   DEVICE_JWK,
@@ -18,7 +17,7 @@ import {
   PRESENTATION_DEFINITION_1,
 } from './config.js';
 
-const { d, ...publicKeyJWK } = DEVICE_JWK as jose.JWK;
+const { d, ...publicKeyJWK } = DEVICE_JWK as JWK;
 
 const getSessionTranscriptBytes = (
   {
