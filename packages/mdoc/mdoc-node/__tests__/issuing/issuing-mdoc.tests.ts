@@ -10,7 +10,7 @@ import {
   parse,
 } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
-import { mdocContext } from '../mdoc-test-context.js';
+import { mdocContext } from '../../src/index.js';
 import {
   DEVICE_JWK,
   ISSUER_CERTIFICATE,

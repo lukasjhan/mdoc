@@ -1,7 +1,7 @@
 import type { DiagnosticInformation } from '@protokoll/mdoc-client';
 import { Verifier } from '@protokoll/mdoc-client';
 import { hex } from 'buffer-tag';
-import { mdocContext } from './mdoc-test-context.js';
+import { mdocContext } from '../src/index.js';
 
 export const ISSUER_CERTIFICATE = `-----BEGIN CERTIFICATE-----
 MIICKjCCAdCgAwIBAgIUV8bM0wi95D7KN0TyqHE42ru4hOgwCgYIKoZIzj0EAwIw

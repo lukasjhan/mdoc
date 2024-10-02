@@ -22,6 +22,7 @@
   "dependencies": {
     "@noble/curves": "^1.6.0",
     "@peculiar/x509": "^1.12.2",
+    "@protokoll/crypto": "workspace:*",
     "@protokoll/mdoc-client": "workspace:*"
   },
   "devDependencies": {

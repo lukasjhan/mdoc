@@ -1,0 +1,38 @@
+{
+  "name": "@protokoll/crypto",
+  "description": "Protokoll subtle-crypto Functionality",
+  "author": "Martin Auer",
+  "version": "0.2.17",
+  "private": false,
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules dist",
+    "build": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@protokoll/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@protokoll/eslint-config": "workspace:*",
+    "@protokoll/prettier-config": "workspace:*",
+    "@protokoll/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prettier": "@protokoll/prettier-config",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/protokoll/packages/crypto"
+  }
+}

@@ -2,7 +2,7 @@ import type { MDoc } from '@protokoll/mdoc-client';
 import { parse } from '@protokoll/mdoc-client';
 import { hex } from 'buffer-tag';
 import type { JWK } from 'jose';
-import { mdocContext } from '../mdoc-test-context.js';
+import { mdocContext } from '../../src/index.js';
 
 describe('parse DeviceResponse Example 2', () => {
   describe('parse', () => {

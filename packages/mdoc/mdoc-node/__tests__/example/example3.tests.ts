@@ -2,7 +2,7 @@ import { hex } from 'buffer-tag';
 import fs from 'fs';
 
 import { Verifier } from '@protokoll/mdoc-client';
-import { mdocContext } from '../mdoc-test-context.js';
+import { mdocContext } from '../../src/index.js';
 
 export const ISSUER_CERTIFICATE = fs.readFileSync(
   `${__dirname}/issuer.pem`,

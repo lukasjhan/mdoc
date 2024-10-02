@@ -1,6 +1,6 @@
 import { Verifier } from '@protokoll/mdoc-client';
 import { hex } from 'buffer-tag';
-import { mdocContext } from './mdoc-test-context.js';
+import { mdocContext } from '../src/index.js';
 
 describe('verifier', () => {
   describe('parseDeviceResponse', () => {

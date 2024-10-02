@@ -100,6 +100,31 @@ importers:
         specifier: 'catalog:'
         version: 5.5.4
 
+  packages/crypto:
+    dependencies:
+      '@protokoll/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@protokoll/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@protokoll/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@protokoll/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      eslint:
+        specifier: 'catalog:'
+        version: 9.9.0(jiti@1.21.6)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.3.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.5.4
+
   packages/jarm:
     dependencies:
       '@protokoll/core':
@@ -234,6 +259,9 @@ importers:
       '@peculiar/x509':
         specifier: ^1.12.2
         version: 1.12.2
+      '@protokoll/crypto':
+        specifier: workspace:*
+        version: link:../../crypto
       '@protokoll/mdoc-client':
         specifier: workspace:*
         version: link:../mdoc-client

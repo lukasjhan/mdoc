@@ -1,5 +1,5 @@
-import type { MaybePromise } from '@protokoll/mdoc-client';
-import { base64ToUint8Array, uint8ArrayToBase64 } from '@protokoll/mdoc-client';
+import type { MaybePromise } from '@protokoll/core';
+import { base64ToUint8Array, uint8ArrayToBase64 } from '@protokoll/core';
 import formatPEM from './format-pem.js';
 import type { PEMImportOptions } from './import.js';
 

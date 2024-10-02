@@ -1,6 +1,6 @@
 import { Verifier } from '@protokoll/mdoc-client';
 import { hex } from 'buffer-tag';
-import { mdocContext } from '../mdoc-test-context.js';
+import { mdocContext } from '../../src/index.js';
 
 describe('example 1: valid device response with full disclosure', () => {
   const ephemeralReaderKey = hex`534b526561646572`;

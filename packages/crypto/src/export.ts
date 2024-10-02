@@ -1,5 +1,3 @@
-import type { JWK } from 'jose';
-
 /**
  * Exports a runtime-specific key representation (KeyLike) to a JWK.
  *
@@ -21,7 +19,7 @@ import type { JWK } from 'jose';
 export const exportJwk = async (input: {
   key: CryptoKey;
   crypto?: { subtle: SubtleCrypto };
-}): Promise<JWK> => {
+}): Promise<JsonWebKey> => {
   const { key } = input;
   if (!key.extractable) {
     throw new Error('non-extractable CryptoKey cannot be exported as a JWK');
@@ -33,7 +31,7 @@ export const exportJwk = async (input: {
     key
   );
 
-  return jwk as JWK;
+  return jwk as JsonWebKey;
 };
 
 export const exportRaw = async (input: {

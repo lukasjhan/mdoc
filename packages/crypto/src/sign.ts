@@ -1,4 +1,3 @@
-import type { JWK } from 'jose';
 import checkKeyLength from './check-key-length.js';
 import { getSignVerifyCryptoKey } from './get-sign-verify-key.js';
 import { importJWK } from './import.js';
@@ -24,7 +23,7 @@ export const sign = async (input: {
 };
 
 export const signWithJwk = async (input: {
-  jwk: JWK;
+  jwk: JsonWebKey;
   alg?: string;
   data: Uint8Array;
   crypto?: { subtle: SubtleCrypto };

@@ -11,7 +11,7 @@ import {
   parse,
 } from '@protokoll/mdoc-client';
 import * as jose from 'jose';
-import { mdocContext } from '../mdoc-test-context.js';
+import { mdocContext } from '../../src/index.js';
 import {
   DEVICE_JWK,
   ISSUER_CERTIFICATE,

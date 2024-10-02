@@ -1,6 +1,7 @@
 packages:
   - tooling/*
   - packages/core
+  - packages/crypto
   - packages/mdoc/*
   - packages/jose
   - packages/jarm

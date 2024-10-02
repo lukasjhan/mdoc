@@ -1,4 +1,3 @@
-import type { JWK } from 'jose';
 import { fromX509 } from './asn1.js';
 import isObject from './is-object.js';
 import { jwkToKey } from './jwk-to-key.js';
@@ -100,7 +99,7 @@ export async function importX509(
  *   {@link https://github.com/panva/jose/issues/210 Algorithm Key Requirements}.
  */
 export async function importJWK(input: {
-  jwk: JWK;
+  jwk: JsonWebKey;
   alg?: string;
   crypto?: { subtle: SubtleCrypto };
 }): Promise<CryptoKey> {

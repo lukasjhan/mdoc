@@ -1,6 +1,4 @@
-import type { JWK } from 'jose';
-
-export function subtleMapping(jwk: JWK): {
+export function subtleMapping(jwk: JsonWebKey): {
   algorithm: RsaHashedImportParams | EcKeyAlgorithm | Algorithm;
   keyUsages: KeyUsage[];
 } {
@@ -103,7 +101,7 @@ export function subtleMapping(jwk: JWK): {
 }
 
 export const jwkToKey = async (input: {
-  jwk: JWK;
+  jwk: JsonWebKey;
   crypto?: { subtle: SubtleCrypto };
 }): Promise<CryptoKey> => {
   const { jwk } = input;
@@ -124,7 +122,7 @@ export const jwkToKey = async (input: {
     (jwk.key_ops as KeyUsage[] | undefined) ?? keyUsages,
   ];
 
-  const keyData: JWK = { ...jwk };
+  const keyData: JsonWebKey = { ...jwk };
   delete keyData.alg;
   delete keyData.use;
   const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
