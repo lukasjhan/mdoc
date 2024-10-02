@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["jest", "node"],
     "verbatimModuleSyntax": false,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM"]
   },
   "include": ["src", "__tests__"],
   "exclude": ["node_modules"]

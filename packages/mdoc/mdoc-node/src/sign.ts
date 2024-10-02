@@ -4,16 +4,18 @@ import { getSignVerifyCryptoKey } from './get-sign-verify-key.js';
 import { importJWK } from './import-jwk.js';
 import { subtleDsa } from './subtls-dsa.js';
 
-export type SignFunction = (
-  alg: string,
-  key: CryptoKey,
-  data: Uint8Array
-) => Promise<Uint8Array>;
-
-export const sign: SignFunction = async (alg, key, data) => {
+export const sign = async (input: {
+  key: CryptoKey;
+  alg: string;
+  data: Uint8Array;
+  crypto?: { subtle: SubtleCrypto };
+}) => {
+  const { key, alg, data } = input;
   const cryptoKey = await getSignVerifyCryptoKey(alg, key, 'sign');
   checkKeyLength(alg, cryptoKey);
-  const signature = await crypto.subtle.sign(
+
+  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  const signature = await subtleCrypto.sign(
     subtleDsa(alg, cryptoKey.algorithm),
     cryptoKey,
     data
@@ -21,23 +23,16 @@ export const sign: SignFunction = async (alg, key, data) => {
   return new Uint8Array(signature);
 };
 
-export type SignWithJwkFunction = (
-  jwk: JWK,
-  data: Uint8Array
-) => Promise<Uint8Array>;
-
-export const signWithJwk: SignWithJwkFunction = async (jwk, data) => {
+export const signWithJwk = async (input: {
+  jwk: JWK;
+  alg?: string;
+  data: Uint8Array;
+  crypto?: { subtle: SubtleCrypto };
+}) => {
+  const { jwk, alg, data } = input;
+  jwk.alg = jwk.alg ?? alg;
   const key = await importJWK(jwk);
-  if (!jwk.alg) {
-    throw new Error(`Missing 'alg' value in jwk.`);
-  }
-  const alg = jwk.alg;
-  const cryptoKey = await getSignVerifyCryptoKey(alg, key, 'sign');
-  checkKeyLength(alg, cryptoKey);
-  const signature = await crypto.subtle.sign(
-    subtleDsa(alg, cryptoKey.algorithm),
-    cryptoKey,
-    data
-  );
-  return new Uint8Array(signature);
+  if (!jwk.alg) throw new Error(`Missing 'alg' value in jwk.`);
+
+  return sign({ key, alg: jwk.alg, data, crypto: input.crypto });
 };

@@ -48,14 +48,12 @@ export const mdocContext: MdocContext = {
       sign: async input => {
         const { jwk, mac0 } = input;
         const { data, alg } = mac0.getRawSigningData();
-        jwk.alg = jwk.alg ?? alg;
-        return await signWithJwk(jwk, data);
+        return await signWithJwk({ jwk, data, alg });
       },
       verify: async input => {
         const { mac0, jwk, options } = input;
         const { data, signature, alg } = mac0.getRawVerificationData(options);
-        jwk.alg = jwk.alg ?? alg;
-        return verifyWithJwk(jwk, signature, data);
+        return verifyWithJwk({ jwk, signature, data, alg });
       },
     },
     sign1: {
@@ -63,13 +61,12 @@ export const mdocContext: MdocContext = {
         const { jwk, sign1 } = input;
         const { data, alg } = sign1.getRawSigningData();
         jwk.alg = jwk.alg ?? alg;
-        return await signWithJwk(jwk, data);
+        return await signWithJwk({ jwk, data, alg });
       },
       verify: async input => {
         const { sign1, jwk, options } = input;
         const { data, signature, alg } = sign1.getRawVerificationData(options);
-        jwk.alg = jwk.alg ?? alg;
-        return verifyWithJwk(jwk, signature, data);
+        return verifyWithJwk({ jwk, signature, data, alg });
       },
     },
   },
