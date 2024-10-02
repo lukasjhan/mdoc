@@ -231,21 +231,12 @@ importers:
       '@noble/curves':
         specifier: ^1.6.0
         version: 1.6.0
-      '@panva/hkdf':
-        specifier: ^1.2.1
-        version: 1.2.1
       '@peculiar/x509':
         specifier: ^1.12.2
         version: 1.12.2
       '@protokoll/mdoc-client':
         specifier: workspace:*
         version: link:../mdoc-client
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
-      jose:
-        specifier: ^5.6.3
-        version: 5.9.3
     devDependencies:
       '@protokoll/eslint-config':
         specifier: workspace:*
@@ -277,6 +268,9 @@ importers:
       jest-snapshot:
         specifier: ^29.7.0
         version: 29.7.0
+      jose:
+        specifier: ^5.6.3
+        version: 5.9.3
       prettier:
         specifier: 'catalog:'
         version: 3.3.3
@@ -986,9 +980,6 @@ packages:
   '@open-draft/until@2.1.0':
     resolution: {integrity: sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg==}
 
-  '@panva/hkdf@1.2.1':
-    resolution: {integrity: sha512-6oclG6Y3PiDFcoyk8srjLfVKyMfVCKJ27JwNPViuXziFpmdz+MZnZN/aKY0JGXgYuO/VghU0jcOAZgWXZ1Dmrw==}
-
   '@peculiar/asn1-cms@2.3.13':
     resolution: {integrity: sha512-joqu8A7KR2G85oLPq+vB+NFr2ro7Ls4ol13Zcse/giPSzUNN0n2k3v8kMpf6QdGUhI13e5SzQYN8AKP8sJ8v4w==}
 
@@ -1476,9 +1467,6 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
-
-  buffer@6.0.3:
-    resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
   builtin-modules@3.3.0:
     resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
@@ -4734,8 +4722,6 @@ snapshots:
 
   '@open-draft/until@2.1.0': {}
 
-  '@panva/hkdf@1.2.1': {}
-
   '@peculiar/asn1-cms@2.3.13':
     dependencies:
       '@peculiar/asn1-schema': 2.3.13
@@ -5414,11 +5400,6 @@ snapshots:
   buffer-tag@1.0.2: {}
 
   buffer@5.7.1:
-    dependencies:
-      base64-js: 1.5.1
-      ieee754: 1.2.1
-
-  buffer@6.0.3:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1

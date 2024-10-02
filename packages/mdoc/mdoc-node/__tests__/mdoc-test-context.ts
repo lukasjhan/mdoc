@@ -1,13 +1,29 @@
 import { p256 } from '@noble/curves/p256';
-import { hkdf } from '@panva/hkdf';
 import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
-import { Buffer } from 'buffer';
-import keyToJWK from '../src/export-jwk.js';
+import { hkdf } from '../src/hkdf.js';
 import { importX509 } from '../src/import.js';
 import { signWithJwk } from '../src/sign.js';
 import { verifyWithJwk } from '../src/verify.js';
+import { exportJwk } from './../src/exports.js';
+
+export function uint8ArrayToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map(byte => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+const textEncoder = new TextEncoder();
+
+export function hexToUint8Array(hexString: string): Uint8Array {
+  const bytes = new Uint8Array(hexString.length / 2);
+  for (let i = 0; i < hexString.length; i += 2) {
+    bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+  }
+
+  return bytes;
+}
 
 export const mdocContext: MdocContext = {
   crypto: {
@@ -22,16 +38,17 @@ export const mdocContext: MdocContext = {
       const { privateKey, publicKey, sessionTranscriptBytes } = input;
       const ikm = p256
         .getSharedSecret(
-          Buffer.from(privateKey).toString('hex'),
-          Buffer.from(publicKey).toString('hex'),
+          uint8ArrayToHex(privateKey),
+          uint8ArrayToHex(publicKey),
           true
         )
         .slice(1);
       const salt = new Uint8Array(
         await crypto.subtle.digest('SHA-256', sessionTranscriptBytes)
       );
-      const info = Buffer.from('EMacKey', 'utf-8');
-      const result = await hkdf('sha256', ikm, salt, info, 32);
+      const info = textEncoder.encode('EMacKey');
+      const digest = 'sha256';
+      const result = await hkdf({ digest, ikm, salt, info, keylen: 32 });
 
       return {
         key_ops: ['sign', 'verify'],
@@ -86,7 +103,7 @@ export const mdocContext: MdocContext = {
         alg: input.alg,
         extractable: true,
       });
-      return keyToJWK({ key });
+      return exportJwk({ key });
     },
 
     validateCertificateChain: async (input: {
@@ -129,14 +146,13 @@ export const mdocContext: MdocContext = {
     },
     getCertificateData: async (input: { certificate: Uint8Array }) => {
       const certificate = new X509Certificate(input.certificate);
+      const thumbprint = await certificate.getThumbprint(crypto as any);
+      const thumbprintHex = uint8ArrayToHex(new Uint8Array(thumbprint));
       return {
         subjectName: certificate.subjectName.toString(),
         pem: certificate.toString(),
         serialNumber: certificate.serialNumber,
-        thumbprint: Buffer.from(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-          await certificate.getThumbprint(crypto as any)
-        ).toString('hex'),
+        thumbprint: thumbprintHex,
       };
     },
     getCertificateValidityData: (input: { certificate: Uint8Array }) => {
