@@ -2,7 +2,8 @@
   "extends": "@protokoll/tsconfig/internal-package.json",
   "compilerOptions": {
     "types": ["jest", "node"],
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src", "__tests__"],
   "exclude": ["node_modules"]

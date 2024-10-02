@@ -143,9 +143,9 @@ export class Mac0 extends COSEBase {
     }
 
     return {
-      algName: this.algName,
+      alg: this.algName,
       signature: this.tag,
-      mac0Structure: mac0Structure,
+      data: mac0Structure,
     };
   }
 

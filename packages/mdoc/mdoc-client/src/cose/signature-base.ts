@@ -117,7 +117,7 @@ export class SignatureBase extends COSEBase {
     return {
       alg: this.algName,
       signature: this.signature,
-      payload,
+      data: payload,
     };
   }
 }

@@ -4,24 +4,10 @@ import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
 import { Buffer } from 'buffer';
-import type { JWK } from 'jose';
 import * as jose from 'jose';
 import { importX509 } from 'jose';
-import crypto from 'node:crypto';
-
-export const getAlgFromJwk = (jwk: JWK) => {
-  console.log(jwk);
-  return jwk.kty !== 'oct'
-    ? {
-        name: 'ECDSA',
-        namedCurve: 'P-256',
-        hash: 'SHA-256',
-      }
-    : {
-        name: 'HMAC',
-        hash: 'SHA-256',
-      };
-};
+import { signWithJwk } from '../src/sign.js';
+import { verifyWithJwk } from '../src/verify.js';
 
 export const mdocContext: MdocContext = {
   crypto: {
@@ -61,46 +47,29 @@ export const mdocContext: MdocContext = {
     mac0: {
       sign: async input => {
         const { jwk, mac0 } = input;
-        const alg = getAlgFromJwk(jwk);
-        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
-          'sign',
-        ]);
-
-        const { data } = mac0.getRawSigningData();
-        const signature = await crypto.subtle.sign(alg, key, data);
-        return new Uint8Array(signature);
+        const { data, alg } = mac0.getRawSigningData();
+        jwk.alg = jwk.alg ?? alg;
+        return await signWithJwk(jwk, data);
       },
       verify: async input => {
         const { mac0, jwk, options } = input;
-        const alg = getAlgFromJwk(jwk);
-        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
-          'verify',
-        ]);
-        const { mac0Structure, signature } =
-          mac0.getRawVerificationData(options);
-        return crypto.subtle.verify(alg, key, signature, mac0Structure);
+        const { data, signature, alg } = mac0.getRawVerificationData(options);
+        jwk.alg = jwk.alg ?? alg;
+        return verifyWithJwk(jwk, signature, data);
       },
     },
     sign1: {
       sign: async input => {
-        const { sign1, jwk } = input;
-        const alg = getAlgFromJwk(jwk);
-        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
-          'sign',
-        ]);
-
-        const { data } = sign1.getRawSigningData();
-        const signature = await crypto.subtle.sign(alg, key, data);
-        return new Uint8Array(signature);
+        const { jwk, sign1 } = input;
+        const { data, alg } = sign1.getRawSigningData();
+        jwk.alg = jwk.alg ?? alg;
+        return await signWithJwk(jwk, data);
       },
       verify: async input => {
         const { sign1, jwk, options } = input;
-        const alg = getAlgFromJwk(jwk);
-        const key = await crypto.subtle.importKey('jwk', jwk, alg, false, [
-          'verify',
-        ]);
-        const { payload, signature } = sign1.getRawVerificationData(options);
-        return crypto.subtle.verify(alg, key, signature, payload);
+        const { data, signature, alg } = sign1.getRawVerificationData(options);
+        jwk.alg = jwk.alg ?? alg;
+        return verifyWithJwk(jwk, signature, data);
       },
     },
   },
@@ -165,6 +134,7 @@ export const mdocContext: MdocContext = {
         pem: certificate.toString(),
         serialNumber: certificate.serialNumber,
         thumbprint: Buffer.from(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
           await certificate.getThumbprint(crypto as any)
         ).toString('hex'),
       };

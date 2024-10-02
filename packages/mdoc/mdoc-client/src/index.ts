@@ -13,6 +13,9 @@ export { IssuerSignedDocument } from './mdoc/model/issuer-signed-document.js';
 export { MDoc } from './mdoc/model/mdoc.js';
 export type { DiagnosticInformation } from './mdoc/model/types.js';
 export { parse } from './mdoc/parser.js';
-export { uint8ArrayToBase64Url } from './mdoc/u-base64.js';
+export {
+  uint8ArrayFromBase64URL,
+  uint8ArrayToBase64Url,
+} from './mdoc/u-base64.js';
 export { Verifier } from './mdoc/verifier.js';
 export { areEqual } from './u-buffer.js';

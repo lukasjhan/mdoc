@@ -37,7 +37,7 @@ export const cborDecode = (
 export const cborDecodeUnknown = (
   input: Uint8Array,
   options: Options = encoderDefaults
-): any => {
+): unknown => {
   const params = { ...encoderDefaults, ...options };
   const enc = new Encoder(params);
   return enc.decode(input);
