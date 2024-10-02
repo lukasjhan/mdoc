@@ -1,10 +1,5 @@
 {
   "extends": "@protokoll/tsconfig/internal-package.json",
-  "compilerOptions": {
-    "types": ["jest", "node"],
-    "verbatimModuleSyntax": false,
-    "lib": ["ES2022", "DOM"]
-  },
   "include": ["src", "__tests__"],
   "exclude": ["node_modules"]
 }

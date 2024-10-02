@@ -2,10 +2,7 @@
   "extends": "@protokoll/tsconfig/internal-package.json",
   "include": ["src"],
   "compilerOptions": {
-    "lib": ["ES2022", "DOM"],
-    "module": "CommonJS",
-    "moduleResolution": "Node10",
-    "resolveJsonModule": false
+    "lib": ["ES2022", "DOM"]
   },
   "exclude": ["node_modules"]
 }

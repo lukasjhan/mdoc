@@ -7,7 +7,7 @@ import type {
   JoseJwsVerifyJwt,
   Jwk,
 } from '@protokoll/jose';
-import { joseContext } from '@protokoll/jose/dist/src/u-jose-test-context.js';
+import { joseContext } from '@protokoll/jose/u-jose-test-context';
 import { setupServer } from 'msw/node';
 import type { JarmAuthResponseCreate } from '../jarm-auth-response-create/index.js';
 import { jarmAuthResponseCreate } from '../jarm-auth-response-create/index.js';

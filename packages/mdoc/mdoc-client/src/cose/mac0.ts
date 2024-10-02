@@ -1,12 +1,12 @@
 import { addExtension, cborEncode } from '../cbor/index.js';
 import { COSEBase } from './cose-base.js';
 import { CoseError } from './e-cose.js';
-import { ProtectedHeaders } from './headers';
 import type { MacAlgorithms, SupportedMacAlg } from './headers.js';
 import {
   Headers,
   MacAlgorithmNames,
   MacProtectedHeaders,
+  ProtectedHeaders,
   UnprotectedHeaders,
 } from './headers.js';
 import { validateAlgorithms } from './validate-algorithms.js';
