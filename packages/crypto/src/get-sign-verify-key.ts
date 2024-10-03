@@ -6,7 +6,7 @@ export async function getSignVerifyCryptoKey(
   key: CryptoKey,
   usage: KeyUsage
 ) {
-  // todo: this is still missing
+  // todo: this is still missing however, I think this does nothing except returning the key.
   //if (usage === 'sign') {
   //key = await normalize.normalizePrivateKey(key, alg);
   //}

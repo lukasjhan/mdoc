@@ -4,16 +4,25 @@
   "author": "Martin Auer",
   "version": "0.2.1",
   "private": false,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
   "type": "module",
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/esm/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js",
+      "types": "./dist/esm/src/index.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
-    "build": "pkgroll --sourcemap",
+    "build": "pnpm build:cjs && pnpm build:esm",
+    "build:cjs": "tsc --module commonjs --moduleResolution node --outDir dist/cjs",
+    "build:esm": "tsc",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -22,6 +31,7 @@
   "dependencies": {
     "@noble/curves": "^1.6.0",
     "@peculiar/x509": "^1.12.2",
+    "@protokoll/core": "workspace:*",
     "@protokoll/crypto": "workspace:*",
     "@protokoll/mdoc-client": "workspace:*"
   },
@@ -37,7 +47,6 @@
     "jest": "^29.6.3",
     "jest-snapshot": "^29.7.0",
     "jose": "^5.6.3",
-    "pkgroll": "catalog:",
     "prettier": "catalog:",
     "ts-jest": "^29.1.1",
     "ts-loader": "^9.4.4",

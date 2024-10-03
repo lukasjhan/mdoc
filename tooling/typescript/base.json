@@ -14,7 +14,7 @@
     "forceConsistentCasingInFileNames": true,
     /**TODO: enable again */
     "verbatimModuleSyntax": false,
-    "outDir": "${configDir}/dist",
+    "outDir": "${configDir}/dist/esm",
 
     /** Keep TSC performant in monorepos */
     "incremental": true,
@@ -32,7 +32,6 @@
     "strictPropertyInitialization": true,
 
     /** Transpile using Typescript */
-    /** TODO: Fix this later */
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "sourceMap": true

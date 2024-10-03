@@ -12,6 +12,8 @@ import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
 
+const encoder = new TextEncoder();
+
 export const mdocContext: MdocContext = {
   crypto: {
     digest: async ({ digestAlgorithm, bytes }) => {
@@ -33,7 +35,7 @@ export const mdocContext: MdocContext = {
       const salt = new Uint8Array(
         await crypto.subtle.digest('SHA-256', sessionTranscriptBytes)
       );
-      const info = textEncoder.encode('EMacKey');
+      const info = encoder.encode('EMacKey');
       const digest = 'sha256';
       const result = await hkdf({ digest, ikm, salt, info, keylen: 32 });
 

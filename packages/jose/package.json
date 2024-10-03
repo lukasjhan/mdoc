@@ -4,42 +4,29 @@
   "author": "Martin Auer",
   "private": false,
   "version": "0.2.17",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
   "type": "module",
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/esm/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js",
+      "types": "./dist/esm/src/index.d.ts"
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
-    "build": "pkgroll --sourcemap",
+    "build": "pnpm build:cjs && pnpm build:esm",
+    "build:cjs": "tsc --module commonjs --moduleResolution node --outDir dist/cjs",
+    "build:esm": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/**/*.test.ts"
-  },
-  "exports": {
-    ".": {
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
-    },
-    "./u-jose-test-context": {
-      "require": {
-        "types": "./dist/u-jose-context.d.cts",
-        "default": "./dist/u-jose-context.cjs"
-      },
-      "import": {
-        "types": "./dist/u-jose-context.d.mts",
-        "default": "./dist/u-jose-context.mjs"
-      }
-    }
   },
   "dependencies": {
     "@protokoll/core": "workspace:*",
@@ -54,7 +41,6 @@
     "eslint": "catalog:",
     "jose": "catalog:",
     "msw": "catalog:",
-    "pkgroll": "catalog:",
     "prettier": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
