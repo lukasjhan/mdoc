@@ -82,19 +82,15 @@ export class Verifier {
       }
     }
 
-    const verificationJwk = certificate
-      ? await ctx.x509.getPublicKey({
-          certificate: certificate,
-          alg: issuerAuth.algName,
-        })
-      : undefined;
+    const verificationJwk = await ctx.x509.getPublicKey({
+      certificate: certificate,
+      alg: issuerAuth.algName,
+    });
 
-    const verificationResult =
-      verificationJwk &&
-      (await ctx.cose.sign1.verify({
-        sign1: issuerAuth,
-        jwk: verificationJwk,
-      }));
+    const verificationResult = await ctx.cose.sign1.verify({
+      sign1: issuerAuth,
+      jwk: verificationJwk,
+    });
 
     onCheck({
       status: verificationResult ? 'PASSED' : 'FAILED',
@@ -111,10 +107,8 @@ export class Verifier {
 
     onCheck({
       status:
-        certificate &&
-        validityInfo &&
-        (validityInfo.signed < certificateValidityData.notBefore ||
-          validityInfo.signed > certificateValidityData.notAfter)
+        validityInfo.signed < certificateValidityData.notBefore ||
+        validityInfo.signed > certificateValidityData.notAfter
           ? 'FAILED'
           : 'PASSED',
       check:
@@ -124,8 +118,7 @@ export class Verifier {
 
     onCheck({
       status:
-        validityInfo &&
-        (now < validityInfo.validFrom || now > validityInfo.validUntil)
+        now < validityInfo.validFrom || now > validityInfo.validUntil
           ? 'FAILED'
           : 'PASSED',
       check: 'The MSO must be valid at the time of verification',

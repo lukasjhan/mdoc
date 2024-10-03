@@ -1,3 +1,5 @@
+import { getSubtleCrypto } from './get-subtle-crypto.js';
+
 /**
  * Exports a runtime-specific key representation (KeyLike) to a JWK.
  *
@@ -25,7 +27,7 @@ export const exportJwk = async (input: {
     throw new Error('non-extractable CryptoKey cannot be exported as a JWK');
   }
 
-  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  const subtleCrypto = getSubtleCrypto(input);
   const { ext, key_ops, alg, use, ...jwk } = await subtleCrypto.exportKey(
     'jwk',
     key
@@ -43,7 +45,7 @@ export const exportRaw = async (input: {
     throw new Error('non-extractable CryptoKey cannot be exported as a JWK');
   }
 
-  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  const subtleCrypto = getSubtleCrypto(input);
   const raw = await subtleCrypto.exportKey('raw', key);
 
   return new Uint8Array(raw);

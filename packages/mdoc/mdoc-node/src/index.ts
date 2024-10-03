@@ -1,5 +1,6 @@
 import { p256 } from '@noble/curves/p256';
 import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
+import { uint8ArrayToHex } from '@protokoll/core';
 import {
   exportJwk,
   hkdf,
@@ -10,23 +11,6 @@ import {
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
-
-export function uint8ArrayToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-const textEncoder = new TextEncoder();
-
-export function hexToUint8Array(hexString: string): Uint8Array {
-  const bytes = new Uint8Array(hexString.length / 2);
-  for (let i = 0; i < hexString.length; i += 2) {
-    bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
-  }
-
-  return bytes;
-}
 
 export const mdocContext: MdocContext = {
   crypto: {
@@ -149,7 +133,7 @@ export const mdocContext: MdocContext = {
     },
     getCertificateData: async (input: { certificate: Uint8Array }) => {
       const certificate = new X509Certificate(input.certificate);
-      const thumbprint = await certificate.getThumbprint(crypto as any);
+      const thumbprint = await certificate.getThumbprint(crypto);
       const thumbprintHex = uint8ArrayToHex(new Uint8Array(thumbprint));
       return {
         subjectName: certificate.subjectName.toString(),

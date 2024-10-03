@@ -1,5 +1,6 @@
 import checkKeyLength from './check-key-length.js';
 import { getSignVerifyCryptoKey } from './get-sign-verify-key.js';
+import { getSubtleCrypto } from './get-subtle-crypto.js';
 import { importJWK } from './import.js';
 import { subtleDsa } from './subtls-dsa.js';
 
@@ -13,7 +14,7 @@ export const sign = async (input: {
   const cryptoKey = await getSignVerifyCryptoKey(alg, key, 'sign');
   checkKeyLength(alg, cryptoKey);
 
-  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  const subtleCrypto = getSubtleCrypto(input);
   const signature = await subtleCrypto.sign(
     subtleDsa(alg, cryptoKey.algorithm),
     cryptoKey,

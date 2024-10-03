@@ -1,4 +1,5 @@
 import { fromX509 } from './asn1.js';
+import { getSubtleCrypto } from './get-subtle-crypto.js';
 import isObject from './is-object.js';
 import { jwkToKey } from './jwk-to-key.js';
 
@@ -111,7 +112,7 @@ export async function importJWK(input: {
 
   alg ||= jwk.alg;
 
-  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  const subtleCrypto = getSubtleCrypto(input);
   switch (jwk.kty) {
     case 'oct':
       if (typeof jwk.k !== 'string' || !jwk.k) {

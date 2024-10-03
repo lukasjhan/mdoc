@@ -1,3 +1,5 @@
+import { getSubtleCrypto } from './get-subtle-crypto.js';
+
 export function subtleMapping(jwk: JsonWebKey): {
   algorithm: RsaHashedImportParams | EcKeyAlgorithm | Algorithm;
   keyUsages: KeyUsage[];
@@ -125,7 +127,7 @@ export const jwkToKey = async (input: {
   const keyData: JsonWebKey = { ...jwk };
   delete keyData.alg;
   delete keyData.use;
-  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
 
+  const subtleCrypto = getSubtleCrypto(input);
   return subtleCrypto.importKey('jwk', keyData, ...rest);
 };

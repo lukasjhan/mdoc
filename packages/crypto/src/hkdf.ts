@@ -1,3 +1,5 @@
+import { getSubtleCrypto } from './get-subtle-crypto.js';
+
 export const hkdf = async (input: {
   digest: 'sha1' | 'sha256' | 'sha384' | 'sha512';
   ikm: Uint8Array;
@@ -8,7 +10,7 @@ export const hkdf = async (input: {
 }): Promise<Uint8Array> => {
   const { digest, ikm, salt, info, keylen } = input;
 
-  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  const subtleCrypto = getSubtleCrypto(input);
   return new Uint8Array(
     await subtleCrypto.deriveBits(
       {

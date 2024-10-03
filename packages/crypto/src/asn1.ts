@@ -1,6 +1,7 @@
 import type { MaybePromise } from '@protokoll/core';
 import { base64ToUint8Array, uint8ArrayToBase64 } from '@protokoll/core';
 import formatPEM from './format-pem.js';
+import { getSubtleCrypto } from './get-subtle-crypto.js';
 import type { PEMImportOptions } from './import.js';
 
 export type PEMImportFunction = (
@@ -125,7 +126,7 @@ const genericImport = async (
       throw new Error('Invalid or unsupported "alg" (Algorithm) value');
   }
 
-  const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
+  const subtleCrypto = getSubtleCrypto(input);
   return subtleCrypto.importKey(
     keyFormat,
     keyData,
