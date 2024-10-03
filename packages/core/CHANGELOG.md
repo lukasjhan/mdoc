@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.18
+
+### Patch Changes
+
+- 4e374e9: feat: mdoc
+
 ## 0.2.17
 
 ## 0.2.16
