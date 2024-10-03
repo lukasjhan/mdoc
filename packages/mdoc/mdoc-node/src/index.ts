@@ -87,11 +87,13 @@ export const mdocContext: MdocContext = {
     },
     getPublicKey: async (input: { certificate: Uint8Array; alg: string }) => {
       const certificate = new X509Certificate(input.certificate);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const key = await importX509({
         x509: certificate.toString(),
         alg: input.alg,
         extractable: true,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       return (await exportJwk({ key })) as JWK;
     },
 
