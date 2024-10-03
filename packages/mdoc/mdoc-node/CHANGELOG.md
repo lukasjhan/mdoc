@@ -1,5 +1,14 @@
 # @protokoll/mdoc-node
 
+## 0.2.20
+
+### Patch Changes
+
+- 84dd03a: fix: tests
+  - @protokoll/core@0.2.20
+  - @protokoll/crypto@0.2.20
+  - @protokoll/mdoc-client@0.2.20
+
 ## 0.2.19
 
 ### Patch Changes

@@ -1,5 +1,7 @@
 # @protokoll/core
 
+## 0.2.20
+
 ## 0.2.19
 
 ### Patch Changes
