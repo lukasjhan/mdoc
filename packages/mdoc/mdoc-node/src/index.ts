@@ -1,6 +1,6 @@
 import { p256 } from '@noble/curves/p256';
 import { X509Certificate, X509ChainBuilder } from '@peculiar/x509';
-import { uint8ArrayToHex } from '@protokoll/core';
+import { stringToUint8Array, uint8ArrayToHex } from '@protokoll/core';
 import {
   exportJwk,
   hkdf,
@@ -11,8 +11,6 @@ import {
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
 import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
-
-const encoder = new TextEncoder();
 
 export const mdocContext: MdocContext = {
   crypto: {
@@ -35,7 +33,7 @@ export const mdocContext: MdocContext = {
       const salt = new Uint8Array(
         await crypto.subtle.digest('SHA-256', sessionTranscriptBytes)
       );
-      const info = encoder.encode('EMacKey');
+      const info = stringToUint8Array('EMacKey');
       const digest = 'sha256';
       const result = await hkdf({ digest, ikm, salt, info, keylen: 32 });
 

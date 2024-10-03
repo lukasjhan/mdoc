@@ -28,13 +28,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@jfromaniello/typedmap": "^1.4.0",
     "@protokoll/core": "workspace:*",
     "cbor-x": "^1.5.4",
     "compare-versions": "^6.0.0",
     "valibot": "catalog:"
   },
   "devDependencies": {
-    "@jfromaniello/typedmap": "^1.4.0",
     "@protokoll/eslint-config": "workspace:*",
     "@protokoll/prettier-config": "workspace:*",
     "@protokoll/tsconfig": "workspace:*",

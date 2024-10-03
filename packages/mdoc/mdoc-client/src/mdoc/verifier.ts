@@ -29,9 +29,9 @@ const DIGEST_ALGS = {
 export class Verifier {
   /**
    *
-   * @param issuersRootCertificates The IACA root certificates list of the supported issuers.
+   * @param trustedCertificates The IACA root certificates list of the supported issuers.
    */
-  constructor(public readonly issuersRootCertificates: string[]) {}
+  constructor(public readonly trustedCertificates: string[]) {}
 
   private async verifyIssuerSignature(
     issuerAuth: IssuerAuth,
@@ -63,11 +63,11 @@ export class Verifier {
 
     if (!disableCertificateChainValidation) {
       try {
-        if (!this.issuersRootCertificates[0]) {
-          throw new Error('No root certificate found');
+        if (!this.trustedCertificates[0]) {
+          throw new Error('No trusted certificates found');
         }
         await ctx.x509.validateCertificateChain({
-          certificates: this.issuersRootCertificates as [string, ...string[]],
+          certificates: this.trustedCertificates as [string, ...string[]],
         });
         onCheck({
           status: 'PASSED',

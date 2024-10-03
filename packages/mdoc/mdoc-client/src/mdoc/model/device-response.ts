@@ -1,3 +1,4 @@
+import { stringToUint8Array } from '@protokoll/core';
 import type { JWK } from 'jose';
 import type { MdocContext } from '../../c-mdoc.js';
 import { DataItem, cborEncode } from '../../cbor/index.js';
@@ -12,7 +13,6 @@ import {
 import { COSEKey, COSEKeyToRAW } from '../../cose/key/cose-key.js';
 import { Mac0 } from '../../cose/mac0.js';
 import { Sign1 } from '../../cose/sign1.js';
-import { stringToUint8Array } from '../../u-buffer.js';
 import type { IssuerSignedItem } from '../issuer-signed-item.js';
 import { parse } from '../parser.js';
 import { calculateDeviceAutenticationBytes } from '../utils.js';

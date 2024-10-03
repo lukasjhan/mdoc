@@ -26,13 +26,3 @@ export function areEqual(buf1: Uint8Array, buf2: Uint8Array): boolean {
 
   return true;
 }
-
-// this was added to Hermes
-export const encoder = new TextEncoder();
-export const stringToUint8Array = (input: string): Uint8Array =>
-  encoder.encode(input);
-
-// this must be polyfilled in Hermes
-export const decoder = new TextDecoder();
-export const uint8ArrayToString = (input: Uint8Array): string =>
-  decoder.decode(input);

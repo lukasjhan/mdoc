@@ -1,3 +1,4 @@
+import { stringToUint8Array } from '@protokoll/core';
 import type { JWK } from 'jose';
 import type { MdocContext } from '../../c-mdoc.js';
 import { DataItem, cborDecode, cborEncode } from '../../cbor/index.js';
@@ -8,7 +9,6 @@ import {
   UnprotectedHeaders,
 } from '../../cose/headers.js';
 import { COSEKey } from '../../cose/key/cose-key.js';
-import { stringToUint8Array } from '../../u-buffer.js';
 import { IssuerSignedItem } from '../issuer-signed-item.js';
 import { fromPEM } from '../utils.js';
 import IssuerAuth from './issuer-auth.js';

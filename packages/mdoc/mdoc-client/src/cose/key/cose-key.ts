@@ -1,11 +1,12 @@
 import { TypedMap } from '@jfromaniello/typedmap';
+import { uint8ArrayToString } from '@protokoll/core';
 import type { JWK } from 'jose';
 import { cborDecode, cborEncode } from '../../cbor/index.js';
 import {
   base64UrlToUint8Array,
   uint8ArrayToBase64Url,
 } from '../../mdoc/u-base64.js';
-import { concat, uint8ArrayToString } from '../../u-buffer.js';
+import { concat } from '../../u-buffer.js';
 import { Algorithms } from '../headers.js';
 import { Curve } from './curve.js';
 import type { KeyOps } from './key-ops.js';
