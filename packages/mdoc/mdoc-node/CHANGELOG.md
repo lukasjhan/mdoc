@@ -1,5 +1,15 @@
 # @protokoll/mdoc-node
 
+## 0.2.19
+
+### Patch Changes
+
+- 388cf85: fix: add missing dependency
+- Updated dependencies [388cf85]
+  - @protokoll/mdoc-client@0.2.19
+  - @protokoll/core@0.2.19
+  - @protokoll/crypto@0.2.19
+
 ## 0.2.18
 
 ### Patch Changes
