@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 // https://base64.guru/standards/base64url
 export const BASE64_URL_REGEX =
   /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/;
@@ -28,18 +26,21 @@ const IGNORE_BASE64URL = ' \t\n\r='.split('');
  * used to skip the character, or if -1 used to error out.
  */
 const FROM_BASE64URL = (() => {
-  const charMap: number[] = new Array(128);
+  const charMap: number[] = new Array<number>(128);
 
   for (let i = 0; i < charMap.length; i += 1) {
     charMap[i] = -1;
   }
 
+  // eslint-disable-next-line @typescript-eslint/prefer-for-of
   for (let i = 0; i < IGNORE_BASE64URL.length; i += 1) {
-    charMap[IGNORE_BASE64URL[i].charCodeAt(0)] = -2;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    charMap[IGNORE_BASE64URL[i]!.charCodeAt(0)] = -2;
   }
 
   for (let i = 0; i < TO_BASE64URL.length; i += 1) {
-    charMap[TO_BASE64URL[i].charCodeAt(0)] = i;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    charMap[TO_BASE64URL[i]!.charCodeAt(0)] = i;
   }
 
   return charMap;
@@ -63,7 +64,8 @@ export function byteToBase64URL(
 
     while (state.queuedBits >= 6) {
       const pos = (state.queue >> (state.queuedBits - 6)) & 63;
-      emit(TO_BASE64URL[pos]);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      emit(TO_BASE64URL[pos]!);
       state.queuedBits -= 6;
     }
   } else if (state.queuedBits > 0) {
@@ -72,7 +74,8 @@ export function byteToBase64URL(
 
     while (state.queuedBits >= 6) {
       const pos = (state.queue >> (state.queuedBits - 6)) & 63;
-      emit(TO_BASE64URL[pos]);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      emit(TO_BASE64URL[pos]!);
       state.queuedBits -= 6;
     }
   }
@@ -90,7 +93,8 @@ export function byteFromBase64URL(
   state: { queue: number; queuedBits: number },
   emit: (byte: number) => void
 ) {
-  const bits = FROM_BASE64URL[charCode];
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const bits = FROM_BASE64URL[charCode]!;
 
   if (bits > -1) {
     // valid Base64-URL character
@@ -284,6 +288,7 @@ export function uint8ArrayToBase64Url(bytes: Uint8Array) {
     result.push(char);
   };
 
+  // @ts-expect-error this works
   bytes.map(byte => byteToBase64URL(byte, state, onChar));
 
   // always call with `null` after processing all bytes
