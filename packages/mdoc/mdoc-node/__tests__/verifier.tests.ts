@@ -21,7 +21,7 @@ describe('verifier', () => {
           },
           mdocContext
         )
-      ).rejects.toThrow('No root certificate found');
+      ).rejects.toThrow('No trusted certificate found');
     });
 
     it('should allow the caller to pass a custom onCheck function', async () => {

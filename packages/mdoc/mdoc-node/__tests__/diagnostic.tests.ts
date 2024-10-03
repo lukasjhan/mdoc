@@ -51,7 +51,7 @@ describe('diagnostic info', () => {
       mdocContext
     );
     expect(diagnosticInfo.issuerSignature.reasons).toEqual([
-      'No root certificate found',
+      'No truested certificate found',
     ]);
   });
 });

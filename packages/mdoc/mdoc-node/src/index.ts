@@ -100,7 +100,7 @@ export const mdocContext: MdocContext = {
     }) => {
       const { certificates } = input;
       if (certificates.length === 0) {
-        throw new Error('No root certificate found');
+        throw new Error('No truested certificate found');
       }
 
       const parsedLeafCertificate = new X509Certificate(certificates[0]);
