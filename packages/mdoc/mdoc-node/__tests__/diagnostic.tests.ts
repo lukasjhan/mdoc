@@ -51,7 +51,7 @@ describe('diagnostic info', () => {
       mdocContext
     );
     expect(diagnosticInfo.issuerSignature.reasons).toEqual([
-      'No truested certificate found',
+      'No trusted certificates found',
     ]);
   });
 });
