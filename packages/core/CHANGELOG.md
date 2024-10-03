@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.19
+
+### Patch Changes
+
+- 388cf85: fix: add missing dependency
+
 ## 0.2.18
 
 ### Patch Changes

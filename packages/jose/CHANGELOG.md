@@ -1,5 +1,12 @@
 # @protokoll/jose
 
+## 0.2.19
+
+### Patch Changes
+
+- Updated dependencies [388cf85]
+  - @protokoll/core@0.2.19
+
 ## 0.2.18
 
 ### Patch Changes
