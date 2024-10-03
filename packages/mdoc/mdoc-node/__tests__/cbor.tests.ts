@@ -7,7 +7,6 @@ import {
   cborEncode,
   DataItem,
 } from '@protokoll/mdoc-client';
-import { cborDecodeUnknown } from '@protokoll/mdoc-client';
 
 describe('cbor', () => {
   it('should properly decode a nested map', () => {
