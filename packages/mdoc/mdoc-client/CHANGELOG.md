@@ -1,5 +1,12 @@
 # @protokoll/mdoc-client
 
+## 0.2.21
+
+### Patch Changes
+
+- 7b23174: fix: x509 validation
+  - @protokoll/core@0.2.21
+
 ## 0.2.20
 
 ### Patch Changes

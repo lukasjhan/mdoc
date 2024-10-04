@@ -2,7 +2,7 @@
   "name": "@protokoll/mdoc-client",
   "description": "Protokoll Mdoc and MDL client",
   "author": "Martin Auer",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "private": false,
   "type": "module",
   "main": "./dist/cjs/src/index.js",
