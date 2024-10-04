@@ -1,5 +1,15 @@
 # @protokoll/mdoc-node
 
+## 0.2.21
+
+### Patch Changes
+
+- 7b23174: fix: x509 validation
+- Updated dependencies [7b23174]
+  - @protokoll/mdoc-client@0.2.21
+  - @protokoll/core@0.2.21
+  - @protokoll/crypto@0.2.21
+
 ## 0.2.20
 
 ### Patch Changes

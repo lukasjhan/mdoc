@@ -2,7 +2,7 @@
   "name": "@protokoll/jarm",
   "description": "Protokoll JARM (JWT Secured Authorization Response Mode)",
   "author": "Auer Martin",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "private": false,
   "type": "module",
   "main": "./dist/cjs/src/index.js",
