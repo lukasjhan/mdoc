@@ -6,6 +6,11 @@ export {
   cborEncode,
 } from './cbor/index.js';
 export { COSEKey, COSEKeyToRAW } from './cose/key/cose-key.js';
+export {
+  defaultCallback,
+  type VerificationAssessment,
+  type VerificationCallback,
+} from './mdoc/check-callback.js';
 export { DeviceResponse } from './mdoc/model/device-response.js';
 export { DeviceSignedDocument } from './mdoc/model/device-signed-document.js';
 export { Document } from './mdoc/model/document.js';

@@ -4,10 +4,10 @@ import type { MDoc } from './model/mdoc.js';
 import { calculateDeviceAutenticationBytes } from './utils.js';
 
 import type {
-  UserDefinedVerificationCallback,
   VerificationAssessment,
+  VerificationCallback,
 } from './check-callback.js';
-import { buildCallback, onCatCheck } from './check-callback.js';
+import { defaultCallback, onCatCheck } from './check-callback.js';
 
 import type { JWK } from 'jose';
 import type { MdocContext, X509Context } from '../c-mdoc.js';
@@ -33,13 +33,13 @@ export class Verifier {
    */
   constructor(public readonly trustedCertificates: Uint8Array[]) {}
 
-  private async verifyIssuerSignature(
+  public async verifyIssuerSignature(
     issuerAuth: IssuerAuth,
     disableCertificateChainValidation: boolean,
-    onCheckG: UserDefinedVerificationCallback,
-    ctx: { x509: X509Context; cose: MdocContext['cose'] }
+    ctx: { x509: X509Context; cose: MdocContext['cose'] },
+    onCheckG?: VerificationCallback
   ) {
-    const onCheck = onCatCheck(onCheckG, 'ISSUER_AUTH');
+    const onCheck = onCatCheck(onCheckG ?? defaultCallback, 'ISSUER_AUTH');
     const { certificateChain } = issuerAuth;
     const countryName = issuerAuth.getIssuingCountry(ctx);
 
@@ -137,19 +137,19 @@ export class Verifier {
     });
   }
 
-  private async verifyDeviceSignature(
+  public async verifyDeviceSignature(
     document: IssuerSignedDocument | DeviceSignedDocument,
     options: {
       ephemeralPrivateKey?: Uint8Array;
       sessionTranscriptBytes?: Uint8Array;
-      onCheck: UserDefinedVerificationCallback;
     },
     ctx: {
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
-    }
+    },
+    onCheckG?: VerificationCallback
   ) {
-    const onCheck = onCatCheck(options.onCheck, 'DEVICE_AUTH');
+    const onCheck = onCatCheck(onCheckG ?? defaultCallback, 'DEVICE_AUTH');
 
     if (!(document instanceof DeviceSignedDocument)) {
       onCheck({
@@ -282,16 +282,16 @@ export class Verifier {
     }
   }
 
-  private async verifyData(
+  public async verifyData(
     mdoc: IssuerSignedDocument,
-    onCheckG: UserDefinedVerificationCallback,
-    ctx: { x509: X509Context; crypto: MdocContext['crypto'] }
+    ctx: { x509: X509Context; crypto: MdocContext['crypto'] },
+    onCheckG?: VerificationCallback
   ) {
     // Confirm that the mdoc data has not changed since issuance
     const { issuerAuth } = mdoc.issuerSigned;
     const { valueDigests, digestAlgorithm } = issuerAuth.decodedPayload;
 
-    const onCheck = onCatCheck(onCheckG, 'DATA_INTEGRITY');
+    const onCheck = onCatCheck(onCheckG ?? defaultCallback, 'DATA_INTEGRITY');
 
     onCheck({
       status:
@@ -400,7 +400,7 @@ export class Verifier {
       encodedSessionTranscript?: Uint8Array;
       ephemeralReaderKey?: Uint8Array;
       disableCertificateChainValidation?: boolean;
-      onCheck?: UserDefinedVerificationCallback;
+      onCheck?: VerificationCallback;
     } = {},
     ctx: {
       x509: X509Context;
@@ -408,7 +408,7 @@ export class Verifier {
       cose: MdocContext['cose'];
     }
   ): Promise<MDoc> {
-    const onCheck = buildCallback(options.onCheck);
+    const onCheck = options.onCheck ?? defaultCallback;
 
     const dr = parse(encodedDeviceResponse);
 
@@ -435,8 +435,8 @@ export class Verifier {
       await this.verifyIssuerSignature(
         issuerAuth,
         options.disableCertificateChainValidation ?? false,
-        onCheck,
-        ctx
+        ctx,
+        onCheck
       );
 
       await this.verifyDeviceSignature(
@@ -444,12 +444,12 @@ export class Verifier {
         {
           ephemeralPrivateKey: options.ephemeralReaderKey,
           sessionTranscriptBytes: options.encodedSessionTranscript,
-          onCheck,
         },
-        ctx
+        ctx,
+        onCheck
       );
 
-      await this.verifyData(document, onCheck, ctx);
+      await this.verifyData(document, ctx, onCheck);
     }
 
     return dr;

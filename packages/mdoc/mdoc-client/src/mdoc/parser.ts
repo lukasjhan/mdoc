@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { compareVersions } from 'compare-versions';
 import { cborDecode } from '../cbor/index.js';
 import { Mac0 } from '../cose/mac0.js';
@@ -10,7 +11,9 @@ import { IssuerSignedDocument } from './model/issuer-signed-document.js';
 import { MDoc } from './model/mdoc.js';
 import type {
   DeviceAuth,
+  DeviceSigned,
   IssuerNameSpaces,
+  IssuerSigned,
   RawDeviceAuth,
   RawIndexedDataItem,
   RawIssuerAuth,
@@ -19,13 +22,13 @@ import type {
 
 const parseIssuerAuthElement = (
   rawIssuerAuth: RawIssuerAuth,
-  expectedDocType: string
+  expectedDocType?: string
 ): IssuerAuth => {
   const issuerAuth = new IssuerAuth(...rawIssuerAuth);
   const { decodedPayload } = issuerAuth;
   const { docType, version } = decodedPayload;
 
-  if (docType !== expectedDocType) {
+  if (expectedDocType && docType !== expectedDocType) {
     throw new MDLParseError(
       `The issuerAuth docType must be ${expectedDocType}`
     );
@@ -76,6 +79,93 @@ const mapDeviceNameSpaces = (namespace: Map<string, Map<string, any>>) => {
 };
 
 /**
+ * Parse a IssuerSignedDocument
+ *
+ * @param issuerSigned - The cbor encoded or decoded IssuerSigned Structure
+ * @returns {Promise<IssuerSignedDocument>} - The parsed IssuerSigned document
+ */
+export const parseIssuerSignedDocument = (
+  issuerSigned: Uint8Array | Map<string, any>,
+  expectedDocType?: string
+): IssuerSignedDocument => {
+  let issuerSignedDecoded;
+  try {
+    issuerSignedDecoded =
+      issuerSigned instanceof Map
+        ? issuerSigned
+        : (cborDecode(issuerSigned) as Map<string, any>);
+  } catch (err) {
+    throw new MDLParseError(
+      `Unable to decode issuer signed document: ${err instanceof Error ? err.message : 'Unknown error'}`
+    );
+  }
+
+  const issuerAuth = parseIssuerAuthElement(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    issuerSignedDecoded.get('issuerAuth'),
+    expectedDocType
+  );
+
+  const parsedIssuerSigned: IssuerSigned = {
+    ...issuerSignedDecoded,
+    nameSpaces: mapIssuerNameSpaces(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      issuerSignedDecoded.get('nameSpaces')
+    ),
+    issuerAuth,
+  };
+
+  return new IssuerSignedDocument(
+    issuerAuth.decodedPayload.docType,
+    parsedIssuerSigned
+  );
+};
+
+/**
+ * Parse a DeviceSignedDocument
+ *
+ * @param deviceSigned - The cbor encoded or decoded DeviceSigned Structure
+ * @param issuerSigned - The cbor encoded or decoded IssuerSigned Structure
+ * @returns {Promise<DeviceSignedDocument>} - The parsed DeviceSigned document
+ */
+export const parseDeviceSignedDocument = (
+  deviceSigned: Uint8Array | Map<string, any>,
+  issuerSigned: Uint8Array | Map<string, any>,
+  expectedDocType?: string
+): DeviceSignedDocument => {
+  let deviceSignedDecoded;
+  try {
+    deviceSignedDecoded =
+      deviceSigned instanceof Map
+        ? deviceSigned
+        : (cborDecode(deviceSigned) as Map<string, any>);
+  } catch (err) {
+    throw new MDLParseError(
+      `Unable to decode device signed document : ${err instanceof Error ? err.message : 'Unknown error'}`
+    );
+  }
+
+  const deviceSignedParsed: DeviceSigned = {
+    ...deviceSignedDecoded,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+    nameSpaces: mapDeviceNameSpaces(deviceSignedDecoded.get('nameSpaces').data),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    deviceAuth: parseDeviceAuthElement(deviceSignedDecoded.get('deviceAuth')),
+  };
+
+  const issuerSignedDocument = parseIssuerSignedDocument(
+    issuerSigned,
+    expectedDocType
+  );
+
+  return new DeviceSignedDocument(
+    issuerSignedDocument.docType,
+    issuerSignedDocument.issuerSigned,
+    deviceSignedParsed
+  );
+};
+
+/**
  * Parse an mdoc
  *
  * @param encoded - The cbor encoded mdoc
@@ -93,45 +183,26 @@ export const parse = (encoded: Uint8Array): MDoc => {
 
   const { version, documents, status } = Object.fromEntries(deviceResponse);
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const parsedDocuments: IssuerSignedDocument[] = documents.map(
     (doc: Map<string, any>): IssuerSignedDocument => {
-      const issuerAuth = parseIssuerAuthElement(
-        doc.get('issuerSigned').get('issuerAuth'),
-        doc.get('docType')
-      );
-
-      const issuerSigned = doc.has('issuerSigned')
-        ? {
-            ...doc.get('issuerSigned'),
-            nameSpaces: mapIssuerNameSpaces(
-              doc.get('issuerSigned').get('nameSpaces')
-            ),
-            issuerAuth,
-          }
-        : undefined;
-
-      const deviceSigned = doc.has('deviceSigned')
-        ? {
-            ...doc.get('deviceSigned'),
-            nameSpaces: mapDeviceNameSpaces(
-              doc.get('deviceSigned').get('nameSpaces').data
-            ),
-            deviceAuth: parseDeviceAuthElement(
-              doc.get('deviceSigned').get('deviceAuth')
-            ),
-          }
-        : undefined;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const docType = doc.get('docType');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const issuerSigned = doc.get('issuerSigned');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const deviceSigned = doc.get('deviceSigned');
 
       if (deviceSigned) {
-        return new DeviceSignedDocument(
-          doc.get('docType'),
-          issuerSigned,
-          deviceSigned
-        );
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return parseDeviceSignedDocument(deviceSigned, issuerSigned, docType);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return parseIssuerSignedDocument(issuerSigned, docType);
       }
-      return new IssuerSignedDocument(doc.get('docType'), issuerSigned);
     }
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   return new MDoc(parsedDocuments, version, status);
 };

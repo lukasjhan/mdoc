@@ -43,15 +43,16 @@ export default class IssuerAuth extends Sign1 {
         })
       );
     };
+
     const result: MSO = {
       ...decoded,
       validityInfo: mapValidityInfo(decoded.validityInfo),
       validityDigests: decoded.validityDigests
         ? Object.fromEntries(decoded.validityDigests)
-        : decoded.validityDigests,
+        : undefined,
       deviceKeyInfo: decoded.deviceKeyInfo
         ? Object.fromEntries(decoded.deviceKeyInfo)
-        : decoded.deviceKeyInfo,
+        : undefined,
     };
     this.#decodedPayload = result;
     return result;

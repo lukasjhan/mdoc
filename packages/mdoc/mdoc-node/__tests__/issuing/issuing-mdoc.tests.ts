@@ -8,6 +8,7 @@ import {
   Document,
   MDoc,
   Verifier,
+  defaultCallback,
   parse,
 } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
@@ -62,11 +63,11 @@ describe('issuing an MDOC', () => {
     await verifier.verify(
       encoded,
       {
-        onCheck: (verification, original) => {
+        onCheck: verification => {
           if (verification.category === 'DEVICE_AUTH') {
             return;
           }
-          original(verification);
+          defaultCallback(verification);
         },
       },
       mdocContext

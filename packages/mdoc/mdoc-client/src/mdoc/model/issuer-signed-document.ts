@@ -17,7 +17,7 @@ export class IssuerSignedDocument {
    *
    * @returns {Map<string, unknown>} - The document as a map
    */
-  prepare(): Map<string, unknown> {
+  public prepare(): Map<string, unknown> {
     const nameSpaces = new Map(
       Object.entries(this.issuerSigned.nameSpaces).map(([nameSpace, items]) => {
         return [nameSpace, items.map(item => item.dataItem)] as const;

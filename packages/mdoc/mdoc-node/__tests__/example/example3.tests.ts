@@ -2,7 +2,7 @@ import { hex } from 'buffer-tag';
 import fs from 'fs';
 
 import { X509Certificate } from '@peculiar/x509';
-import { Verifier } from '@protokoll/mdoc-client';
+import { defaultCallback, Verifier } from '@protokoll/mdoc-client';
 import { mdocContext } from '../../src/index.js';
 
 export const ISSUER_CERTIFICATE = fs.readFileSync(
@@ -39,11 +39,11 @@ describe('example 3: device response with partial and tampered disclosure', () =
       {
         ephemeralReaderKey,
         encodedSessionTranscript,
-        onCheck: (v, cb) => {
+        onCheck: v => {
           if (v.category === 'DATA_INTEGRITY') {
             return;
           }
-          cb(v);
+          defaultCallback(v);
         },
       },
       mdocContext

@@ -2,7 +2,7 @@ import { hex } from 'buffer-tag';
 import fs from 'fs';
 
 import { X509Certificate } from '@peculiar/x509';
-import { Verifier } from '@protokoll/mdoc-client';
+import { defaultCallback, Verifier } from '@protokoll/mdoc-client';
 import { mdocContext } from '../../src/index.js';
 
 export const ISSUER_CERTIFICATE = fs.readFileSync(
@@ -33,11 +33,11 @@ describe('example 2: valid device response with partial disclosure', () => {
     await verifier.verify(
       deviceResponse,
       {
-        onCheck: (verification, original) => {
+        onCheck: verification => {
           if (verification.category === 'DEVICE_AUTH') {
             return;
           }
-          original(verification);
+          defaultCallback(verification);
         },
       },
       mdocContext

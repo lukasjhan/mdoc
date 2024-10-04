@@ -1,5 +1,5 @@
 import { X509Certificate } from '@peculiar/x509';
-import { Verifier } from '@protokoll/mdoc-client';
+import { Verifier, defaultCallback } from '@protokoll/mdoc-client';
 import { hex } from 'buffer-tag';
 import fs from 'fs';
 import { mdocContext } from '../../src/index.js';
@@ -32,11 +32,11 @@ describe('example 1: valid device response with full disclosure', () => {
     await verifier.verify(
       deviceResponse,
       {
-        onCheck: (verification, original) => {
+        onCheck: verification => {
           if (verification.category === 'DEVICE_AUTH') {
             return;
           }
-          original(verification);
+          defaultCallback(verification);
         },
       },
       mdocContext
