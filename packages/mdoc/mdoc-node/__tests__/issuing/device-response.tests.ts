@@ -1,3 +1,4 @@
+import { X509Certificate } from '@peculiar/x509';
 import type { DeviceSignedDocument } from '@protokoll/mdoc-client';
 import {
   DataItem,
@@ -134,7 +135,9 @@ describe('issuing a device response', () => {
   });
 
   it('should be verifiable', async () => {
-    const verifier = new Verifier([ISSUER_CERTIFICATE]);
+    const verifier = new Verifier([
+      new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
+    ]);
     await verifier.verify(
       encoded,
       {

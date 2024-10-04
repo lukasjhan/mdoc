@@ -120,6 +120,7 @@ exports[`diagnostic info should return the version 1`] = `
     "version": "1.0",
   },
   "issuerCertificate": {
+    "issuerName": "C=US, ST=New York, L=Albany, O=NY DMV, OU=NY DMV",
     "notAfter": 2033-09-11T14:55:18.000Z,
     "notBefore": 2023-09-14T14:55:18.000Z,
     "pem": "-----BEGIN CERTIFICATE-----

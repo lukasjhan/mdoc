@@ -75,9 +75,9 @@ export class SignatureBase extends COSEBase {
     );
   }
 
-  public get x5chain(): Uint8Array[] | undefined {
+  public get x5chain(): [Uint8Array, ...Uint8Array[]] | undefined {
     const x5chain =
-      (this.unprotectedHeaders.get(Headers.X5Chain) as
+      (this.protectedHeaders.get(Headers.X5Chain) as
         | Uint8Array
         | Uint8Array[]
         | undefined) ??
@@ -86,10 +86,12 @@ export class SignatureBase extends COSEBase {
         | Uint8Array[]
         | undefined);
 
-    if (!x5chain) {
+    if (!x5chain?.[0]) {
       return undefined;
     }
-    return Array.isArray(x5chain) ? x5chain : [x5chain];
+    return Array.isArray(x5chain)
+      ? (x5chain as [Uint8Array, ...Uint8Array[]])
+      : [x5chain];
   }
 
   protected internalGetRawVerificationData(

@@ -7,9 +7,6 @@ import type { DigestAlgorithm } from './mdoc/model/types.js';
 export type MaybePromise<TType> = Promise<TType> | TType;
 
 export interface X509Context {
-  getIssuerName: (input: {
-    certificate: Uint8Array;
-  }) => NonNullable<unknown> | undefined;
   getIssuerNameField: (input: {
     certificate: Uint8Array;
     field: string;
@@ -19,19 +16,17 @@ export interface X509Context {
     alg: string;
   }) => MaybePromise<JWK>;
   validateCertificateChain: (input: {
-    certificates: [string, ...string[]];
+    trustedCertificates: [Uint8Array, ...Uint8Array[]];
+    x5chain: [Uint8Array, ...Uint8Array[]];
   }) => MaybePromise<void>;
   getCertificateData: (input: { certificate: Uint8Array }) => MaybePromise<{
+    issuerName: string;
     subjectName: string;
-    pem: string;
     serialNumber: string;
     thumbprint: string;
-  }>;
-  getCertificateValidityData: (input: {
-    certificate: Uint8Array;
-  }) => MaybePromise<{
     notBefore: Date;
     notAfter: Date;
+    pem: string;
   }>;
 }
 

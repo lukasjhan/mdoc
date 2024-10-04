@@ -31,7 +31,7 @@ export class Verifier {
    *
    * @param trustedCertificates The IACA root certificates list of the supported issuers.
    */
-  constructor(public readonly trustedCertificates: string[]) {}
+  constructor(public readonly trustedCertificates: Uint8Array[] | string[]) {}
 
   private async verifyIssuerSignature(
     issuerAuth: IssuerAuth,
@@ -40,10 +40,11 @@ export class Verifier {
     ctx: { x509: X509Context; cose: MdocContext['cose'] }
   ) {
     const onCheck = onCatCheck(onCheckG, 'ISSUER_AUTH');
-    const { certificate } = issuerAuth;
+    const { certificateChain } = issuerAuth;
     const countryName = issuerAuth.getIssuingCountry(ctx);
 
-    if (!certificate) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!certificateChain) {
       onCheck({
         status: 'FAILED',
         check: 'Missing x509 certificate in issuerAuth',
@@ -67,7 +68,11 @@ export class Verifier {
           throw new Error('No trusted certificates found');
         }
         await ctx.x509.validateCertificateChain({
-          certificates: this.trustedCertificates as [string, ...string[]],
+          trustedCertificates: this.trustedCertificates as [
+            Uint8Array,
+            ...Uint8Array[],
+          ],
+          x5chain: certificateChain,
         });
         onCheck({
           status: 'PASSED',
@@ -83,7 +88,7 @@ export class Verifier {
     }
 
     const verificationJwk = await ctx.x509.getPublicKey({
-      certificate: certificate,
+      certificate: issuerAuth.certificate,
       alg: issuerAuth.algName,
     });
 
@@ -101,19 +106,19 @@ export class Verifier {
     const { validityInfo } = issuerAuth.decodedPayload;
     const now = new Date();
 
-    const certificateValidityData = await ctx.x509.getCertificateValidityData({
-      certificate,
+    const certificateData = await ctx.x509.getCertificateData({
+      certificate: issuerAuth.certificate,
     });
 
     onCheck({
       status:
-        validityInfo.signed < certificateValidityData.notBefore ||
-        validityInfo.signed > certificateValidityData.notAfter
+        validityInfo.signed < certificateData.notBefore ||
+        validityInfo.signed > certificateData.notAfter
           ? 'FAILED'
           : 'PASSED',
       check:
         'The MSO signed date must be within the validity period of the certificate',
-      reason: `The MSO signed date (${validityInfo.signed.toUTCString()}) must be within the validity period of the certificate (${certificateValidityData.notBefore.toUTCString()} to ${certificateValidityData.notAfter.toUTCString()})`,
+      reason: `The MSO signed date (${validityInfo.signed.toUTCString()}) must be within the validity period of the certificate (${certificateData.notBefore.toUTCString()} to ${certificateData.notAfter.toUTCString()})`,
     });
 
     onCheck({
@@ -329,10 +334,10 @@ export class Verifier {
           });
 
         if (ns === MDL_NAMESPACE) {
-          const issuer = ctx.x509.getIssuerName({
+          const certificateData = await ctx.x509.getCertificateData({
             certificate: issuerAuth.certificate,
           });
-          if (!issuer) {
+          if (!certificateData.issuerName) {
             onCheck({
               status: 'FAILED',
               check:
@@ -420,7 +425,7 @@ export class Verifier {
     });
 
     onCheck({
-      status: dr.documents && dr.documents.length > 0 ? 'PASSED' : 'FAILED',
+      status: dr.documents.length > 0 ? 'PASSED' : 'FAILED',
       check: 'Device Response must include at least one document.',
       category: 'DOCUMENT_FORMAT',
     });
@@ -479,10 +484,7 @@ export class Verifier {
     }
 
     const { issuerAuth } = document.issuerSigned;
-    const issuerCert =
-      issuerAuth.x5chain && issuerAuth.x5chain.length > 0
-        ? issuerAuth.x5chain[0]
-        : undefined;
+    const issuerCert = issuerAuth.certificate;
 
     const attributes = (
       await Promise.all(
@@ -542,14 +544,9 @@ export class Verifier {
       },
       validityInfo:
         document.issuerSigned.issuerAuth.decodedPayload.validityInfo,
-      issuerCertificate: issuerCert
-        ? {
-            ...(await ctx.x509.getCertificateValidityData({
-              certificate: issuerCert,
-            })),
-            ...(await ctx.x509.getCertificateData({ certificate: issuerCert })),
-          }
-        : undefined,
+      issuerCertificate: await ctx.x509.getCertificateData({
+        certificate: issuerCert,
+      }),
       issuerSignature: {
         // TODO
         alg: document.issuerSigned.issuerAuth.algName!,

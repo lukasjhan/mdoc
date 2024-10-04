@@ -14,7 +14,7 @@ import type { MSO } from './types.js';
  */
 export default class IssuerAuth extends Sign1 {
   #decodedPayload?: MSO;
-  #certificate?: Uint8Array;
+  #x5chain?: [Uint8Array, ...Uint8Array[]];
 
   constructor(
     protectedHeader: Map<number, unknown> | Uint8Array,
@@ -57,15 +57,18 @@ export default class IssuerAuth extends Sign1 {
     return result;
   }
 
-  public get certificate() {
-    if (typeof this.#certificate === 'undefined' && this.x5chain?.[0]) {
-      this.#certificate = this.x5chain[0];
-    }
+  public get certificateChain() {
+    if (this.#x5chain) return this.#x5chain;
+    this.#x5chain = this.x5chain;
 
-    if (!this.#certificate) {
+    if (!this.#x5chain) {
       throw new Error('No certificate found');
     }
-    return this.#certificate;
+    return this.#x5chain;
+  }
+
+  public get certificate() {
+    return this.certificateChain[0];
   }
 
   public getIssuingCountry(ctx: { x509: X509Context }) {
