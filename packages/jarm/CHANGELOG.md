@@ -1,5 +1,12 @@
 # @protokoll/jarm
 
+## 0.2.21
+
+### Patch Changes
+
+- @protokoll/core@0.2.21
+- @protokoll/jose@0.2.21
+
 ## 0.2.20
 
 ### Patch Changes
