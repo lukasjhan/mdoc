@@ -1,5 +1,12 @@
 # @protokoll/mdoc-client
 
+## 0.2.22
+
+### Patch Changes
+
+- 336733d: fix: update library
+  - @protokoll/core@0.2.22
+
 ## 0.2.21
 
 ### Patch Changes
