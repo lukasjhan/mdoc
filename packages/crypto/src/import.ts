@@ -48,6 +48,7 @@ export async function importX509(
   input: {
     x509: string;
     alg: string;
+    crypto?: { subtle: SubtleCrypto };
   } & PEMImportOptions
 ): Promise<CryptoKey> {
   const { x509 } = input;

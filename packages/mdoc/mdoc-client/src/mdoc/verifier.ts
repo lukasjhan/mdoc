@@ -31,7 +31,7 @@ export class Verifier {
    *
    * @param trustedCertificates The IACA root certificates list of the supported issuers.
    */
-  constructor(public readonly trustedCertificates: Uint8Array[] | string[]) {}
+  constructor(public readonly trustedCertificates: Uint8Array[]) {}
 
   private async verifyIssuerSignature(
     issuerAuth: IssuerAuth,

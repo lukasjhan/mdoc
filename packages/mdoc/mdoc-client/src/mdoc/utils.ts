@@ -1,3 +1,4 @@
+import { base64ToUint8Array } from '@protokoll/core';
 import { DataItem } from '../cbor/data-item.js';
 import { cborDecode, cborEncode } from '../cbor/index.js';
 
@@ -32,10 +33,9 @@ export const calculateDeviceAutenticationBytes = (
   return result;
 };
 
-// todo
 export function fromPEM(pem: string): Uint8Array {
   const base64 = pem
     .replace(/-{5}(BEGIN|END) .*-{5}/gm, '')
     .replace(/\s/gm, '');
-  return Buffer.from(base64, 'base64');
+  return base64ToUint8Array(base64);
 }

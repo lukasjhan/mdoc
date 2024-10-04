@@ -36,7 +36,7 @@ import type {
 export class DeviceResponse {
   private mdoc: MDoc;
   private pd?: PresentationDefinition;
-  private handover?: string[];
+  private sessionTranscriptBytes?: Uint8Array;
   private useMac = true;
   private devicePrivateKey?: Uint8Array;
   public deviceResponseCbor?: Uint8Array;
@@ -92,13 +92,82 @@ export class DeviceResponse {
   }
 
   /**
-   * Set the handover data to use for the device response.
+   * Set the session transcript data to use for the device response.
    *
-   * @param {string[]} handover - The handover data to use for the device response.
+   * This is arbitrary and should match the session transcript as it will be calculated by the verifier.
+   * The transcript must be a CBOR encoded DataItem of an array, there is no further requirement.
+   *
+   * Example: `usingSessionTranscriptBytes(cborEncode(DataItem.fromData([a,b,c])))` where `a`, `b` and `c` can be anything including `null`.
+   *
+   * It is preferable to use {@link usingSessionTranscriptForOID4VP} or {@link usingSessionTranscriptForWebAPI} when possible.
+   *
+   * @param {Uint8Array} sessionTranscriptBytes - The sessionTranscriptBytes data to use in the session transcript.
    * @returns {DeviceResponse}
    */
-  public usingHandover(handover: string[]): DeviceResponse {
-    this.handover = handover;
+  public usingSessionTranscriptBytes(
+    sessionTranscriptBytes: Uint8Array
+  ): DeviceResponse {
+    if (this.sessionTranscriptBytes) {
+      throw new Error(
+        'A session transcript has already been set, either with .usingSessionTranscriptForOID4VP, .usingSessionTranscriptForWebAPI or .usingSessionTranscriptBytes'
+      );
+    }
+    this.sessionTranscriptBytes = sessionTranscriptBytes;
+    return this;
+  }
+
+  /**
+   * Set the session transcript data to use for the device response as defined in ISO/IEC 18013-7 in Annex B (OID4VP), 2023 draft.
+   *
+   * This should match the session transcript as it will be calculated by the verifier.
+   *
+   * @param {string} mdocGeneratedNonce - A cryptographically random number with sufficient entropy.
+   * @param {string} clientId - The client_id Authorization Request parameter from the Authorization Request Object.
+   * @param {string} responseUri - The response_uri Authorization Request parameter from the Authorization Request Object.
+   * @param {string} verifierGeneratedNonce - The nonce Authorization Request parameter from the Authorization Request Object.
+   * @returns {DeviceResponse}
+   */
+  public usingSessionTranscriptForOID4VP(
+    mdocGeneratedNonce: string,
+    clientId: string,
+    responseUri: string,
+    verifierGeneratedNonce: string
+  ): DeviceResponse {
+    this.usingSessionTranscriptBytes(
+      cborEncode(
+        DataItem.fromData([
+          null, // deviceEngagementBytes
+          null, // eReaderKeyBytes
+          [mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce],
+        ])
+      )
+    );
+    return this;
+  }
+  /**
+   * Set the session transcript data to use for the device response as defined in ISO/IEC 18013-7 in Annex A (Web API), 2023 draft.
+   *
+   * This should match the session transcript as it will be calculated by the verifier.
+   *
+   * @param {Uint8Array} deviceEngagementBytes - The device engagement, encoded as a Tagged 24 cbor
+   * @param {Uint8Array} readerEngagementBytes - The reader engagement, encoded as a Tagged 24 cbor
+   * @param {Uint8Array} eReaderKeyBytes - The reader ephemeral public key as a COSE Key, encoded as a Tagged 24 cbor
+   * @returns {DeviceResponse}
+   */
+  public usingSessionTranscriptForWebAPI(
+    deviceEngagementBytes: Uint8Array,
+    readerEngagementBytes: Uint8Array,
+    eReaderKeyBytes: Uint8Array
+  ): DeviceResponse {
+    this.usingSessionTranscriptBytes(
+      cborEncode(
+        DataItem.fromData([
+          new DataItem({ buffer: deviceEngagementBytes }),
+          new DataItem({ buffer: eReaderKeyBytes }),
+          readerEngagementBytes,
+        ])
+      )
+    );
     return this;
   }
 
@@ -171,12 +240,17 @@ export class DeviceResponse {
     crypto: MdocContext['crypto'];
     cose: MdocContext['cose'];
   }): Promise<MDoc> {
-    if (!this.pd)
+    if (!this.pd) {
       throw new Error(
         'Must provide a presentation definition with .usingPresentationDefinition()'
       );
-    if (!this.handover)
-      throw new Error('Must provide handover data with .usingHandover()');
+    }
+
+    if (!this.sessionTranscriptBytes) {
+      throw new Error(
+        'Must provide the session transcript with either .usingSessionTranscriptForOID4VP, .usingSessionTranscriptForWebAPI or .usingSessionTranscriptBytes'
+      );
+    }
 
     const docs = await Promise.all(
       this.pd.input_descriptors.map(id => this.handleInputDescriptor(id, ctx))
@@ -218,14 +292,8 @@ export class DeviceResponse {
       crypto: MdocContext['crypto'];
     }
   ): Promise<DeviceSigned> {
-    const sessionTranscript = [
-      null, // deviceEngagementBytes
-      null, // eReaderKeyBytes,
-      this.handover,
-    ];
-
     const deviceAuthenticationBytes = calculateDeviceAutenticationBytes(
-      sessionTranscript,
+      this.sessionTranscriptBytes,
       docType,
       this.nameSpaces
     );
@@ -235,7 +303,7 @@ export class DeviceResponse {
       deviceAuth: this.useMac
         ? await this.getDeviceAuthMac(
             deviceAuthenticationBytes,
-            sessionTranscript,
+            this.sessionTranscriptBytes,
             ctx
           )
         : await this.getDeviceAuthSign(deviceAuthenticationBytes, ctx),
@@ -246,7 +314,7 @@ export class DeviceResponse {
 
   private async getDeviceAuthMac(
     deviceAuthenticationBytes: Uint8Array,
-    sessionTranscript: any,
+    sessionTranscriptBytes: any,
     ctx: {
       cose: Pick<MdocContext['cose'], 'mac0'>;
       crypto: MdocContext['crypto'];
@@ -266,7 +334,8 @@ export class DeviceResponse {
     const ephemeralMacKeyJwk = await ctx.crypto.calculateEphemeralMacKeyJwk({
       privateKey: key,
       publicKey: this.ephemeralPublicKey,
-      sessionTranscriptBytes: cborEncode(DataItem.fromData(sessionTranscript)),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      sessionTranscriptBytes: sessionTranscriptBytes,
     });
 
     if (!this.macAlg) throw new Error('Missing macAlg');
