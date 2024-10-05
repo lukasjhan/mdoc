@@ -12,9 +12,9 @@ describe('verifier', () => {
       const trustedCerts: Uint8Array[] = [];
       const verifier = new Verifier(trustedCerts);
       await expect(
-        verifier.verify(
-          encodedDeviceResponse,
+        verifier.verifyDeviceResponse(
           {
+            encodedDeviceResponse,
             ephemeralReaderKey,
             encodedSessionTranscript,
           },
@@ -33,9 +33,9 @@ describe('verifier', () => {
       let called = false;
 
       try {
-        await verifier.verify(
-          encodedDeviceResponse,
+        await verifier.verifyDeviceResponse(
           {
+            encodedDeviceResponse,
             ephemeralReaderKey,
             encodedSessionTranscript,
             onCheck: verification => {

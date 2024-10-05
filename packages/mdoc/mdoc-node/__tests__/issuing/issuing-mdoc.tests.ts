@@ -22,7 +22,7 @@ import {
 const { d, ...publicKeyJWK } = DEVICE_JWK as JWK;
 
 describe('issuing an MDOC', () => {
-  let encoded: Uint8Array;
+  let encodedDeviceResponse: Uint8Array;
   let parsedDocument: IssuerSignedDocument;
 
   beforeAll(async () => {
@@ -50,9 +50,9 @@ describe('issuing an MDOC', () => {
       );
 
     const mdoc = new MDoc([document]);
-    encoded = mdoc.encode();
+    encodedDeviceResponse = mdoc.encode();
 
-    const parsedMDOC = parse(encoded);
+    const parsedMDOC = parse(encodedDeviceResponse);
     parsedDocument = parsedMDOC.documents[0] as DeviceSignedDocument;
   });
 
@@ -60,9 +60,9 @@ describe('issuing an MDOC', () => {
     const verifier = new Verifier([
       new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
     ]);
-    await verifier.verify(
-      encoded,
+    await verifier.verifyDeviceResponse(
       {
+        encodedDeviceResponse,
         onCheck: verification => {
           if (verification.category === 'DEVICE_AUTH') {
             return;

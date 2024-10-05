@@ -34,16 +34,19 @@ export class Verifier {
   constructor(public readonly trustedCertificates: Uint8Array[]) {}
 
   public async verifyIssuerSignature(
-    issuerAuth: IssuerAuth,
-    disableCertificateChainValidation: boolean,
-    ctx: { x509: X509Context; cose: MdocContext['cose'] },
-    onCheckG?: VerificationCallback
+    input: {
+      issuerAuth: IssuerAuth;
+      now?: Date;
+      disableCertificateChainValidation: boolean;
+      onCheckG?: VerificationCallback;
+    },
+    ctx: { x509: X509Context; cose: MdocContext['cose'] }
   ) {
+    const { issuerAuth, disableCertificateChainValidation, onCheckG } = input;
     const onCheck = onCatCheck(onCheckG ?? defaultCallback, 'ISSUER_AUTH');
     const { certificateChain } = issuerAuth;
     const countryName = issuerAuth.getIssuingCountry(ctx);
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!certificateChain) {
       onCheck({
         status: 'FAILED',
@@ -104,7 +107,7 @@ export class Verifier {
 
     // Validity
     const { validityInfo } = issuerAuth.decodedPayload;
-    const now = new Date();
+    const now = input.now ?? new Date();
 
     const certificateData = await ctx.x509.getCertificateData({
       certificate: issuerAuth.certificate,
@@ -138,29 +141,27 @@ export class Verifier {
   }
 
   public async verifyDeviceSignature(
-    document: IssuerSignedDocument | DeviceSignedDocument,
-    options: {
+    input: {
+      deviceSigned: DeviceSignedDocument;
       ephemeralPrivateKey?: Uint8Array;
       sessionTranscriptBytes?: Uint8Array;
+      onCheckG?: VerificationCallback;
     },
     ctx: {
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
-    },
-    onCheckG?: VerificationCallback
-  ) {
-    const onCheck = onCatCheck(onCheckG ?? defaultCallback, 'DEVICE_AUTH');
-
-    if (!(document instanceof DeviceSignedDocument)) {
-      onCheck({
-        status: 'FAILED',
-        check: 'The document is not signed by the device.',
-      });
-      return;
     }
-    const { deviceAuth, nameSpaces } = document.deviceSigned;
-    const { docType } = document;
-    const { deviceKeyInfo } = document.issuerSigned.issuerAuth.decodedPayload;
+  ) {
+    const { deviceSigned, sessionTranscriptBytes, ephemeralPrivateKey } = input;
+    const onCheck = onCatCheck(
+      input.onCheckG ?? defaultCallback,
+      'DEVICE_AUTH'
+    );
+
+    const { deviceAuth, nameSpaces } = deviceSigned.deviceSigned;
+    const { docType } = deviceSigned;
+    const { deviceKeyInfo } =
+      deviceSigned.issuerSigned.issuerAuth.decodedPayload;
     const { deviceKey: deviceKeyCoseKey } = deviceKeyInfo ?? {};
 
     // Prevent cloning of the mdoc and mitigate man in the middle attacks
@@ -173,7 +174,7 @@ export class Verifier {
       return;
     }
 
-    if (!options.sessionTranscriptBytes) {
+    if (!sessionTranscriptBytes) {
       onCheck({
         status: 'FAILED',
         check:
@@ -183,7 +184,7 @@ export class Verifier {
     }
 
     const deviceAuthenticationBytes = calculateDeviceAutenticationBytes(
-      options.sessionTranscriptBytes,
+      sessionTranscriptBytes,
       docType,
       nameSpaces
     );
@@ -247,20 +248,20 @@ export class Verifier {
     }
 
     onCheck({
-      status: options.ephemeralPrivateKey ? 'PASSED' : 'FAILED',
+      status: ephemeralPrivateKey ? 'PASSED' : 'FAILED',
       check:
         'Ephemeral private key must be present when using MAC authentication',
     });
-    if (!options.ephemeralPrivateKey) {
+    if (!ephemeralPrivateKey) {
       return;
     }
 
     try {
       const deviceKeyRaw = COSEKeyToRAW(deviceKeyCoseKey);
       const ephemeralMacKeyJwk = await ctx.crypto.calculateEphemeralMacKeyJwk({
-        privateKey: options.ephemeralPrivateKey,
+        privateKey: ephemeralPrivateKey,
         publicKey: deviceKeyRaw,
-        sessionTranscriptBytes: options.sessionTranscriptBytes,
+        sessionTranscriptBytes: sessionTranscriptBytes,
       });
 
       const isValid = await ctx.cose.mac0.verify({
@@ -283,10 +284,13 @@ export class Verifier {
   }
 
   public async verifyData(
-    mdoc: IssuerSignedDocument,
-    ctx: { x509: X509Context; crypto: MdocContext['crypto'] },
-    onCheckG?: VerificationCallback
+    input: {
+      mdoc: IssuerSignedDocument;
+      onCheckG?: VerificationCallback;
+    },
+    ctx: { x509: X509Context; crypto: MdocContext['crypto'] }
   ) {
+    const { mdoc, onCheckG } = input;
     // Confirm that the mdoc data has not changed since issuance
     const { issuerAuth } = mdoc.issuerSigned;
     const { valueDigests, digestAlgorithm } = issuerAuth.decodedPayload;
@@ -390,25 +394,27 @@ export class Verifier {
   /**
    * Parse and validate a DeviceResponse as specified in ISO/IEC 18013-5 (Device Retrieval section).
    *
-   * @param encodedDeviceResponse
-   * @param options.encodedSessionTranscript The CBOR encoded SessionTranscript.
-   * @param options.ephemeralReaderKey The private part of the ephemeral key used in the session where the DeviceResponse was obtained. This is only required if the DeviceResponse is using the MAC method for device authentication.
+   * @param input.encodedDeviceResponse
+   * @param input.encodedSessionTranscript The CBOR encoded SessionTranscript.
+   * @param input.ephemeralReaderKey The private part of the ephemeral key used in the session where the DeviceResponse was obtained. This is only required if the DeviceResponse is using the MAC method for device authentication.
    */
-  async verify(
-    encodedDeviceResponse: Uint8Array,
-    options: {
+  async verifyDeviceResponse(
+    input: {
+      encodedDeviceResponse: Uint8Array;
       encodedSessionTranscript?: Uint8Array;
       ephemeralReaderKey?: Uint8Array;
       disableCertificateChainValidation?: boolean;
+      now?: Date;
       onCheck?: VerificationCallback;
-    } = {},
+    },
     ctx: {
       x509: X509Context;
       crypto: MdocContext['crypto'];
       cose: MdocContext['cose'];
     }
   ): Promise<MDoc> {
-    const onCheck = options.onCheck ?? defaultCallback;
+    const { encodedDeviceResponse, now } = input;
+    const onCheck = input.onCheck ?? defaultCallback;
 
     const dr = parse(encodedDeviceResponse);
 
@@ -432,24 +438,37 @@ export class Verifier {
 
     for (const document of dr.documents) {
       const { issuerAuth } = document.issuerSigned;
+      if (!(document instanceof DeviceSignedDocument)) {
+        onCheck({
+          status: 'FAILED',
+          category: 'DEVICE_AUTH',
+          check: `The document is not signed by the device. ${document.docType}`,
+        });
+        continue;
+      }
+
       await this.verifyIssuerSignature(
-        issuerAuth,
-        options.disableCertificateChainValidation ?? false,
-        ctx,
-        onCheck
+        {
+          issuerAuth,
+          disableCertificateChainValidation:
+            input.disableCertificateChainValidation ?? false,
+          now,
+          onCheckG: onCheck,
+        },
+        ctx
       );
 
       await this.verifyDeviceSignature(
-        document,
         {
-          ephemeralPrivateKey: options.ephemeralReaderKey,
-          sessionTranscriptBytes: options.encodedSessionTranscript,
+          deviceSigned: document,
+          ephemeralPrivateKey: input.ephemeralReaderKey,
+          sessionTranscriptBytes: input.encodedSessionTranscript,
+          onCheckG: onCheck,
         },
-        ctx,
-        onCheck
+        ctx
       );
 
-      await this.verifyData(document, ctx, onCheck);
+      await this.verifyData({ mdoc: document, onCheckG: onCheck }, ctx);
     }
 
     return dr;
@@ -469,9 +488,9 @@ export class Verifier {
     }
   ): Promise<DiagnosticInformation> {
     const dr: VerificationAssessment[] = [];
-    const decoded = await this.verify(
-      encodedDeviceResponse,
+    const decoded = await this.verifyDeviceResponse(
       {
+        encodedDeviceResponse,
         ...options,
         onCheck: check => dr.push(check),
       },

@@ -9,8 +9,6 @@ const encoderDefaults: Options = {
   tagUint8Array: false,
   useRecords: false,
   mapsAsObjects: false,
-  // @ts-expect-error keep this for now
-  useTag259ForMaps: false,
 };
 
 addExtension({

@@ -30,7 +30,7 @@
   "dependencies": {
     "@jfromaniello/typedmap": "^1.4.0",
     "@protokoll/core": "workspace:*",
-    "cbor-x": "^1.5.4",
+    "cbor-x": "^1.6.0",
     "compare-versions": "^6.0.0",
     "valibot": "catalog:"
   },

@@ -29,6 +29,7 @@
     "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
+    "@credo-ts/core": "link:/Users/martinauer/Documents/credo-ts/packages/core",
     "jwt-decode": "^4.0.0",
     "valibot": "catalog:"
   },

@@ -17,7 +17,11 @@ export { Document } from './mdoc/model/document.js';
 export { IssuerSignedDocument } from './mdoc/model/issuer-signed-document.js';
 export { MDoc } from './mdoc/model/mdoc.js';
 export type { DiagnosticInformation } from './mdoc/model/types.js';
-export { parse } from './mdoc/parser.js';
+export {
+  parse,
+  parseDeviceSignedDocument,
+  parseIssuerSignedDocument,
+} from './mdoc/parser.js';
 export {
   base64ToUint8Array,
   base64UrlToUint8Array,

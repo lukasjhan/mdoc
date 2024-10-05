@@ -24,7 +24,7 @@ import {
 const { d, ...publicKeyJWK } = DEVICE_JWK;
 
 describe('issuing a device response with MAC authentication', () => {
-  let encoded: Uint8Array;
+  let encodedDeviceResponse: Uint8Array;
   let parsedDocument: DeviceSignedDocument;
   let mdoc: MDoc;
   let ephemeralPrivateKey: Uint8Array;
@@ -135,8 +135,8 @@ describe('issuing a device response with MAC authentication', () => {
         .addDeviceNameSpace('com.foobar-device', { test: 1234 })
         .sign(mdocContext);
 
-      encoded = deviceResponseMDoc.encode();
-      const parsedMDOC = parse(encoded);
+      encodedDeviceResponse = deviceResponseMDoc.encode();
+      const parsedMDOC = parse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],
@@ -147,9 +147,9 @@ describe('issuing a device response with MAC authentication', () => {
       const verifier = new Verifier([
         new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
       ]);
-      await verifier.verify(
-        encoded,
+      await verifier.verifyDeviceResponse(
         {
+          encodedDeviceResponse,
           ephemeralReaderKey: ephemeralPrivateKey,
           encodedSessionTranscript: getSessionTranscriptBytes(
             clientId,
@@ -206,9 +206,9 @@ describe('issuing a device response with MAC authentication', () => {
             const verifier = new Verifier([
               new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
             ]);
-            await verifier.verify(
-              encoded,
+            await verifier.verifyDeviceResponse(
               {
+                encodedDeviceResponse,
                 ephemeralReaderKey: ephemeralPrivateKey,
                 encodedSessionTranscript: getSessionTranscriptBytes(
                   values.clientId,
@@ -298,10 +298,10 @@ describe('issuing a device response with MAC authentication', () => {
           .authenticateWithMAC(DEVICE_JWK, ephemeralPublicKey, 'HS256')
           .addDeviceNameSpace('com.foobar-device', { test: 1234 })
           .sign(mdocContext);
-        encoded = deviceResponseMDoc.encode();
+        encodedDeviceResponse = deviceResponseMDoc.encode();
       }
 
-      const parsedMDOC = parse(encoded);
+      const parsedMDOC = parse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],
@@ -312,9 +312,9 @@ describe('issuing a device response with MAC authentication', () => {
       const verifier = new Verifier([
         new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
       ]);
-      await verifier.verify(
-        encoded,
+      await verifier.verifyDeviceResponse(
         {
+          encodedDeviceResponse,
           ephemeralReaderKey: ephemeralPrivateKey,
           encodedSessionTranscript: getSessionTranscriptBytes(
             readerEngagementBytes,
@@ -360,9 +360,9 @@ describe('issuing a device response with MAC authentication', () => {
           ]);
 
           try {
-            await verifier.verify(
-              encoded,
+            await verifier.verifyDeviceResponse(
               {
+                encodedDeviceResponse,
                 ephemeralReaderKey: ephemeralPrivateKey,
                 encodedSessionTranscript: getSessionTranscriptBytes(
                   values.readerEngagementBytes,

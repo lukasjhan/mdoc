@@ -21,7 +21,7 @@ import {
 const { d, ...publicKeyJWK } = DEVICE_JWK;
 
 describe('issuing a device response', () => {
-  let encoded: Uint8Array;
+  let encodedDeviceResponse: Uint8Array;
   let parsedDocument: DeviceSignedDocument;
   let mdoc: MDoc;
 
@@ -117,8 +117,8 @@ describe('issuing a device response', () => {
         .addDeviceNameSpace('com.foobar-device', { test: 1234 })
         .sign(mdocContext);
 
-      encoded = deviceResponseMDoc.encode();
-      const parsedMDOC = parse(encoded);
+      encodedDeviceResponse = deviceResponseMDoc.encode();
+      const parsedMDOC = parse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],
@@ -129,9 +129,9 @@ describe('issuing a device response', () => {
       const verifier = new Verifier([
         new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
       ]);
-      await verifier.verify(
-        encoded,
+      await verifier.verifyDeviceResponse(
         {
+          encodedDeviceResponse,
           encodedSessionTranscript: getSessionTranscriptBytes(
             clientId,
             responseUri,
@@ -187,9 +187,9 @@ describe('issuing a device response', () => {
             const verifier = new Verifier([
               new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
             ]);
-            await verifier.verify(
-              encoded,
+            await verifier.verifyDeviceResponse(
               {
+                encodedDeviceResponse,
                 encodedSessionTranscript: getSessionTranscriptBytes(
                   values.clientId,
                   values.responseUri,
@@ -267,10 +267,10 @@ describe('issuing a device response', () => {
           .authenticateWithSignature(devicePrivateKey, 'ES256')
           .addDeviceNameSpace('com.foobar-device', { test: 1234 })
           .sign(mdocContext);
-        encoded = deviceResponseMDoc.encode();
+        encodedDeviceResponse = deviceResponseMDoc.encode();
       }
 
-      const parsedMDOC = parse(encoded);
+      const parsedMDOC = parse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],
@@ -281,9 +281,9 @@ describe('issuing a device response', () => {
       const verifier = new Verifier([
         new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
       ]);
-      await verifier.verify(
-        encoded,
+      await verifier.verifyDeviceResponse(
         {
+          encodedDeviceResponse,
           encodedSessionTranscript: getSessionTranscriptBytes(
             readerEngagementBytes,
             deviceEngagementBytes,
@@ -327,9 +327,9 @@ describe('issuing a device response', () => {
             new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
           ]);
           try {
-            await verifier.verify(
-              encoded,
+            await verifier.verifyDeviceResponse(
               {
+                encodedDeviceResponse,
                 encodedSessionTranscript: getSessionTranscriptBytes(
                   values.readerEngagementBytes,
                   values.deviceEngagementBytes,
