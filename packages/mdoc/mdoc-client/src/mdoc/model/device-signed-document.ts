@@ -19,6 +19,7 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
 
   override prepare(): Map<string, unknown> {
     const doc = super.prepare();
+
     const deviceSignature =
       this.deviceSigned.deviceAuth.deviceSignature?.getContentForEncoding();
     const deviceMac =
@@ -41,6 +42,7 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
         deviceMac,
       },
     });
+
     return doc;
   }
 

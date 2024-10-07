@@ -29,12 +29,11 @@ const DIGEST_ALGS = {
 export class Verifier {
   /**
    *
-   * @param trustedCertificates The IACA root certificates list of the supported issuers.
+   * @param input.trustedCertificates The IACA root certificates list of the supported issuers.
    */
-  constructor(public readonly trustedCertificates: Uint8Array[]) {}
-
   public async verifyIssuerSignature(
     input: {
+      trustedCertificates: Uint8Array[];
       issuerAuth: IssuerAuth;
       now?: Date;
       disableCertificateChainValidation: boolean;
@@ -66,12 +65,15 @@ export class Verifier {
     }
 
     if (!disableCertificateChainValidation) {
+      const trustedCertificates = input.trustedCertificates;
       try {
-        if (!this.trustedCertificates[0]) {
-          throw new Error('No trusted certificates found');
+        if (!trustedCertificates[0]) {
+          throw new Error(
+            'No trusted certificates found. Cannot verify issuer signature.'
+          );
         }
         await ctx.x509.validateCertificateChain({
-          trustedCertificates: this.trustedCertificates as [
+          trustedCertificates: trustedCertificates as [
             Uint8Array,
             ...Uint8Array[],
           ],
@@ -143,7 +145,7 @@ export class Verifier {
   public async verifyDeviceSignature(
     input: {
       deviceSigned: DeviceSignedDocument;
-      ephemeralPrivateKey?: Uint8Array;
+      ephemeralPrivateKey?: JWK | Uint8Array;
       sessionTranscriptBytes?: Uint8Array;
       onCheckG?: VerificationCallback;
     },
@@ -259,7 +261,10 @@ export class Verifier {
     try {
       const deviceKeyRaw = COSEKeyToRAW(deviceKeyCoseKey);
       const ephemeralMacKeyJwk = await ctx.crypto.calculateEphemeralMacKeyJwk({
-        privateKey: ephemeralPrivateKey,
+        privateKey:
+          ephemeralPrivateKey instanceof Uint8Array
+            ? ephemeralPrivateKey
+            : COSEKeyToRAW(COSEKey.fromJWK(ephemeralPrivateKey).encode()),
         publicKey: deviceKeyRaw,
         sessionTranscriptBytes: sessionTranscriptBytes,
       });
@@ -402,8 +407,9 @@ export class Verifier {
     input: {
       encodedDeviceResponse: Uint8Array;
       encodedSessionTranscript?: Uint8Array;
-      ephemeralReaderKey?: Uint8Array;
+      ephemeralReaderKey?: JWK | Uint8Array;
       disableCertificateChainValidation?: boolean;
+      trustedCertificates: Uint8Array[];
       now?: Date;
       onCheck?: VerificationCallback;
     },
@@ -413,7 +419,7 @@ export class Verifier {
       cose: MdocContext['cose'];
     }
   ): Promise<MDoc> {
-    const { encodedDeviceResponse, now } = input;
+    const { encodedDeviceResponse, now, trustedCertificates } = input;
     const onCheck = input.onCheck ?? defaultCallback;
 
     const dr = parse(encodedDeviceResponse);
@@ -454,6 +460,7 @@ export class Verifier {
             input.disableCertificateChainValidation ?? false,
           now,
           onCheckG: onCheck,
+          trustedCertificates,
         },
         ctx
       );
@@ -477,8 +484,9 @@ export class Verifier {
   async getDiagnosticInformation(
     encodedDeviceResponse: Uint8Array,
     options: {
+      trustedCertificates: Uint8Array[];
       encodedSessionTranscript?: Uint8Array;
-      ephemeralReaderKey?: Uint8Array;
+      ephemeralReaderKey?: JWK | Uint8Array;
       disableCertificateChainValidation?: boolean;
     },
     ctx: {
@@ -487,12 +495,14 @@ export class Verifier {
       cose: MdocContext['cose'];
     }
   ): Promise<DiagnosticInformation> {
+    const { trustedCertificates } = options;
     const dr: VerificationAssessment[] = [];
     const decoded = await this.verifyDeviceResponse(
       {
         encodedDeviceResponse,
         ...options,
         onCheck: check => dr.push(check),
+        trustedCertificates,
       },
       ctx
     );

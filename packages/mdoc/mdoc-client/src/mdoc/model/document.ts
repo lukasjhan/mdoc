@@ -67,7 +67,7 @@ export class Document {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private validateValues(values: Record<string, any>) {
+  private validateValues(values: Record<string, unknown>) {
     // TODO
     // validate required fields, no extra fields, data types, etc...
   }
@@ -80,8 +80,8 @@ export class Document {
    * @returns {Document} - The document
    */
   addIssuerNameSpace(
-    namespace: 'org.iso.18013.5.1' | string,
-    values: Record<string, any>
+    namespace: 'org.iso.18013.5.1' | (string & {}),
+    values: Record<string, unknown>
   ): Document {
     if (namespace === DEFAULT_NS) {
       this.validateValues(values);
@@ -89,7 +89,7 @@ export class Document {
 
     const namespaceRecord = this.#issuerNameSpaces[namespace] ?? [];
 
-    const addAttribute = (key: string, value: any) => {
+    const addAttribute = (key: string, value: unknown) => {
       const digestID = namespaceRecord.length;
       const issuerSignedItem = IssuerSignedItem.create(
         digestID,
@@ -102,7 +102,12 @@ export class Document {
 
     for (const [key, value] of Object.entries(values)) {
       addAttribute(key, value);
-      if (key === 'birth_date') {
+      if (this.docType === 'org.iso.18013.5.1.mDL' && key === 'birth_date') {
+        if (typeof value !== 'string') {
+          throw new Error(
+            `Invalid type for 'birth_date'. Expected 'string', received '${typeof value}'`
+          );
+        }
         const ageInYears = getAgeInYears(value);
         addAttribute('age_over_21', ageInYears >= 21);
         addAttribute(`age_over_${Math.floor(ageInYears)}`, true);
@@ -120,7 +125,7 @@ export class Document {
    * @param {string} namespace - The namespace to add.
    * @returns {Record<string, any>} - The values in the namespace as an object
    */
-  getIssuerNameSpace(namespace: string): Record<string, any> | undefined {
+  getIssuerNameSpace(namespace: string): Record<string, unknown> | undefined {
     const nameSpace = this.#issuerNameSpaces[namespace];
     if (!nameSpace) return undefined;
     return Object.fromEntries(

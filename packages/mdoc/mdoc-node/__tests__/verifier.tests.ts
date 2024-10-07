@@ -10,17 +10,20 @@ describe('verifier', () => {
       const ephemeralReaderKey = hex`de3b4b9e5f72dd9b58406ae3091434da48a6f9fd010d88fcb0958e2cebec947c`;
 
       const trustedCerts: Uint8Array[] = [];
-      const verifier = new Verifier(trustedCerts);
+      const verifier = new Verifier();
       await expect(
         verifier.verifyDeviceResponse(
           {
+            trustedCertificates: trustedCerts,
             encodedDeviceResponse,
             ephemeralReaderKey,
             encodedSessionTranscript,
           },
           mdocContext
         )
-      ).rejects.toThrow('No trusted certificates found');
+      ).rejects.toThrow(
+        'No trusted certificates found. Cannot verify issuer signature.'
+      );
     });
 
     it('should allow the caller to pass a custom onCheck function', async () => {
@@ -29,7 +32,7 @@ describe('verifier', () => {
       const ephemeralReaderKey = hex`de3b4b9e5f72dd9b58406ae3091434da48a6f9fd010d88fcb0958e2cebec947c`;
 
       const trustedCerts: Uint8Array[] = [];
-      const verifier = new Verifier(trustedCerts);
+      const verifier = new Verifier();
       let called = false;
 
       try {
@@ -38,6 +41,7 @@ describe('verifier', () => {
             encodedDeviceResponse,
             ephemeralReaderKey,
             encodedSessionTranscript,
+            trustedCertificates: trustedCerts,
             onCheck: verification => {
               if (
                 verification.check.includes(

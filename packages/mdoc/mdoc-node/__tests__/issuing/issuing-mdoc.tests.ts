@@ -57,11 +57,12 @@ describe('issuing an MDOC', () => {
   });
 
   it('should be verifiable', async () => {
-    const verifier = new Verifier([
-      new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-    ]);
+    const verifier = new Verifier();
     await verifier.verifyDeviceResponse(
       {
+        trustedCertificates: [
+          new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
+        ],
         encodedDeviceResponse,
         onCheck: verification => {
           if (verification.category === 'DEVICE_AUTH') {

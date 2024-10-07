@@ -1,7 +1,6 @@
 import { X509Certificate } from '@peculiar/x509';
 import type { DeviceSignedDocument } from '@protokoll/mdoc-client';
 import {
-  COSEKeyToRAW,
   DataItem,
   DeviceResponse,
   Document,
@@ -10,9 +9,9 @@ import {
   cborEncode,
   parse,
 } from '@protokoll/mdoc-client';
+import type { JWK } from 'jose';
 import * as jose from 'jose';
 import { randomFillSync } from 'node:crypto';
-import { COSEKey } from '../../../mdoc-client/dist/cjs/src/index.js';
 import { mdocContext } from '../../src/index.js';
 import {
   DEVICE_JWK,
@@ -27,8 +26,8 @@ describe('issuing a device response with MAC authentication', () => {
   let encodedDeviceResponse: Uint8Array;
   let parsedDocument: DeviceSignedDocument;
   let mdoc: MDoc;
-  let ephemeralPrivateKey: Uint8Array;
-  let ephemeralPublicKey: Uint8Array;
+  let ephemeralPrivateKey: JWK;
+  let ephemeralPublicKey: JWK;
 
   beforeAll(async () => {
     const issuerPrivateKey = ISSUER_PRIVATE_KEY_JWK;
@@ -90,12 +89,8 @@ describe('issuing a device response with MAC authentication', () => {
           (await jose.generateKeyPair('ES256')).privateKey
         );
         const { d: _1, ...ephemeralKeyPublic } = ephemeralKey;
-        ephemeralPrivateKey = COSEKeyToRAW(
-          COSEKey.fromJWK(ephemeralKey).encode()
-        );
-        ephemeralPublicKey = COSEKeyToRAW(
-          COSEKey.fromJWK(ephemeralKeyPublic).encode()
-        );
+        ephemeralPrivateKey = ephemeralKey;
+        ephemeralPublicKey = ephemeralKeyPublic;
       }
     }
   });
@@ -144,11 +139,12 @@ describe('issuing a device response with MAC authentication', () => {
     });
 
     it('should be verifiable', async () => {
-      const verifier = new Verifier([
-        new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-      ]);
+      const verifier = new Verifier();
       await verifier.verifyDeviceResponse(
         {
+          trustedCertificates: [
+            new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
+          ],
           encodedDeviceResponse,
           ephemeralReaderKey: ephemeralPrivateKey,
           encodedSessionTranscript: getSessionTranscriptBytes(
@@ -203,12 +199,15 @@ describe('issuing a device response with MAC authentication', () => {
       ].forEach(([name, values]) => {
         it(`with a different ${name}`, async () => {
           try {
-            const verifier = new Verifier([
-              new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-            ]);
+            const verifier = new Verifier();
             await verifier.verifyDeviceResponse(
               {
                 encodedDeviceResponse,
+                trustedCertificates: [
+                  new Uint8Array(
+                    new X509Certificate(ISSUER_CERTIFICATE).rawData
+                  ),
+                ],
                 ephemeralReaderKey: ephemeralPrivateKey,
                 encodedSessionTranscript: getSessionTranscriptBytes(
                   values.clientId,
@@ -277,13 +276,9 @@ describe('issuing a device response with MAC authentication', () => {
         const ephemeralKey = await jose.exportJWK(
           (await jose.generateKeyPair('ES256')).privateKey
         );
-        ephemeralPrivateKey = COSEKeyToRAW(
-          COSEKey.fromJWK(ephemeralKey).encode()
-        );
+        ephemeralPrivateKey = ephemeralKey;
         const { d: _1, ...ephemeralKeyPublic } = ephemeralKey;
-        ephemeralPublicKey = COSEKeyToRAW(
-          COSEKey.fromJWK(ephemeralKeyPublic).encode()
-        );
+        ephemeralPublicKey = ephemeralKeyPublic;
       }
 
       //  This is the Device side
@@ -309,11 +304,12 @@ describe('issuing a device response with MAC authentication', () => {
     });
 
     it('should be verifiable', async () => {
-      const verifier = new Verifier([
-        new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-      ]);
+      const verifier = new Verifier();
       await verifier.verifyDeviceResponse(
         {
+          trustedCertificates: [
+            new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
+          ],
           encodedDeviceResponse,
           ephemeralReaderKey: ephemeralPrivateKey,
           encodedSessionTranscript: getSessionTranscriptBytes(
@@ -355,13 +351,16 @@ describe('issuing a device response with MAC authentication', () => {
         ] as const,
       ].forEach(([name, values]) => {
         it(`with a different ${name}`, async () => {
-          const verifier = new Verifier([
-            new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-          ]);
+          const verifier = new Verifier();
 
           try {
             await verifier.verifyDeviceResponse(
               {
+                trustedCertificates: [
+                  new Uint8Array(
+                    new X509Certificate(ISSUER_CERTIFICATE).rawData
+                  ),
+                ],
                 encodedDeviceResponse,
                 ephemeralReaderKey: ephemeralPrivateKey,
                 encodedSessionTranscript: getSessionTranscriptBytes(

@@ -126,11 +126,12 @@ describe('issuing a device response', () => {
     });
 
     it('should be verifiable', async () => {
-      const verifier = new Verifier([
-        new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-      ]);
+      const verifier = new Verifier();
       await verifier.verifyDeviceResponse(
         {
+          trustedCertificates: [
+            new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
+          ],
           encodedDeviceResponse,
           encodedSessionTranscript: getSessionTranscriptBytes(
             clientId,
@@ -184,11 +185,14 @@ describe('issuing a device response', () => {
       ].forEach(([name, values]) => {
         it(`with a different ${name}`, async () => {
           try {
-            const verifier = new Verifier([
-              new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-            ]);
+            const verifier = new Verifier();
             await verifier.verifyDeviceResponse(
               {
+                trustedCertificates: [
+                  new Uint8Array(
+                    new X509Certificate(ISSUER_CERTIFICATE).rawData
+                  ),
+                ],
                 encodedDeviceResponse,
                 encodedSessionTranscript: getSessionTranscriptBytes(
                   values.clientId,
@@ -278,11 +282,12 @@ describe('issuing a device response', () => {
     });
 
     it('should be verifiable', async () => {
-      const verifier = new Verifier([
-        new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-      ]);
+      const verifier = new Verifier();
       await verifier.verifyDeviceResponse(
         {
+          trustedCertificates: [
+            new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
+          ],
           encodedDeviceResponse,
           encodedSessionTranscript: getSessionTranscriptBytes(
             readerEngagementBytes,
@@ -323,12 +328,15 @@ describe('issuing a device response', () => {
         ] as const,
       ].forEach(([name, values]) => {
         it(`with a different ${name}`, async () => {
-          const verifier = new Verifier([
-            new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-          ]);
+          const verifier = new Verifier();
           try {
             await verifier.verifyDeviceResponse(
               {
+                trustedCertificates: [
+                  new Uint8Array(
+                    new X509Certificate(ISSUER_CERTIFICATE).rawData
+                  ),
+                ],
                 encodedDeviceResponse,
                 encodedSessionTranscript: getSessionTranscriptBytes(
                   values.readerEngagementBytes,
