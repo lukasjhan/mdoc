@@ -2,7 +2,7 @@
   "name": "@protokoll/core",
   "description": "Protokoll Core Functionality",
   "author": "Martin Auer",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "private": false,
   "type": "module",
   "main": "./dist/cjs/src/index.js",
