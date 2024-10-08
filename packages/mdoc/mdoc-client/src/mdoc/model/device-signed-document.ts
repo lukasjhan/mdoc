@@ -69,7 +69,7 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
   }
 
   public get allDeviceSignedNamespaces(): MdocNameSpaces {
-    const namespaces = this.issuerSignedNameSpaces;
+    const namespaces = this.deviceSignedNameSpaces;
 
     return Object.fromEntries(
       namespaces.map(namespace => {
