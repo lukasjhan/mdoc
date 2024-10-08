@@ -73,7 +73,7 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
 
     return Object.fromEntries(
       namespaces.map(namespace => {
-        const namespaceValues = this.getIssuerNameSpace(namespace);
+        const namespaceValues = this.getDeviceNameSpace(namespace);
         if (!namespaceValues) {
           throw new Error(
             `Cannot extract the namespace '${namespace}' from the mdoc.`

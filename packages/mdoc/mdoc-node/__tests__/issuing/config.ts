@@ -1,5 +1,3 @@
-import type { JWK } from 'jose';
-
 //  All the keys here are randomly generated for the purpose of this test.
 export const DEVICE_JWK = {
   kty: 'EC',
@@ -29,7 +27,7 @@ MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCCjo+vMGbV0J9LCokdb
 oNWqYk4JBIgCiysI99sUkMw2ng==
 -----END PRIVATE KEY-----`;
 
-export const ISSUER_PRIVATE_KEY_JWK: JWK = {
+export const ISSUER_PRIVATE_KEY_JWK = {
   kty: 'EC',
   kid: '1234',
   x: 'iTwtg0eQbcbNabf2Nq9L_VM_lhhPCq2s0Qgw2kRx29s',
