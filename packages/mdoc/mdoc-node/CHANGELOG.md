@@ -1,5 +1,15 @@
 # @protokoll/mdoc-node
 
+## 0.2.24
+
+### Patch Changes
+
+- e68a628: feat: add getters
+- Updated dependencies [e68a628]
+  - @protokoll/mdoc-client@0.2.24
+  - @protokoll/core@0.2.24
+  - @protokoll/crypto@0.2.24
+
 ## 0.2.23
 
 ### Patch Changes
