@@ -1,7 +1,7 @@
 import { hex } from 'buffer-tag';
 
+import { areEqualUint8Array } from '@protokoll/core';
 import {
-  areEqual,
   cborDecode,
   cborDecodeUnknown,
   cborEncode,
@@ -23,7 +23,7 @@ describe('cbor', () => {
     const encoded = cborEncode(DataItem.fromData({ foo: 'baz' }));
     const decoded = cborDecodeUnknown(encoded);
     const reEncode = cborEncode(decoded);
-    expect(areEqual(reEncode, encoded)).toBeTruthy();
+    expect(areEqualUint8Array(reEncode, encoded)).toBeTruthy();
   });
 
   it('should properly encoded and decoded with arrays', () => {
@@ -35,7 +35,7 @@ describe('cbor', () => {
     >;
     expect(decoded.data.get('foo')?.data).toStrictEqual([1, 2, 3, 4, 5]);
     const reEncode = cborEncode(decoded);
-    expect(areEqual(reEncode, encoded)).toBeTruthy();
+    expect(areEqualUint8Array(reEncode, encoded)).toBeTruthy();
   });
 
   it('should properly encoded and decoded with buffers', () => {
@@ -48,7 +48,7 @@ describe('cbor', () => {
     >;
     expect(decoded.data.get('foo')?.data).toBeInstanceOf(Uint8Array);
     const reEncode = cborEncode(decoded);
-    expect(areEqual(reEncode, encoded)).toBeTruthy();
+    expect(areEqualUint8Array(reEncode, encoded)).toBeTruthy();
   });
 
   it('should be able to encode/decode a DataItem', () => {
@@ -59,6 +59,6 @@ describe('cbor', () => {
       Buffer.from(DataItem.fromData(decoded.data).buffer).toString('hex')
     );
     const reEncode = cborEncode(DataItem.fromData(decoded.data));
-    expect(areEqual(reEncode, encoded)).toBeTruthy();
+    expect(areEqualUint8Array(reEncode, encoded)).toBeTruthy();
   });
 });

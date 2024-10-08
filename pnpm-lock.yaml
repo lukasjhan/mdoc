@@ -108,6 +108,9 @@ importers:
       '@protokoll/core':
         specifier: workspace:*
         version: link:../core
+      valibot:
+        specifier: 'catalog:'
+        version: 0.37.0(typescript@5.5.4)
     devDependencies:
       '@protokoll/eslint-config':
         specifier: workspace:*

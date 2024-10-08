@@ -1,7 +1,11 @@
 import { p256 } from '@noble/curves/p256';
 import * as x509 from '@peculiar/x509';
 import { X509Certificate } from '@peculiar/x509';
-import { stringToUint8Array, uint8ArrayToHex } from '@protokoll/core';
+import {
+  stringToUint8Array,
+  uint8ArrayToBase64Url,
+  uint8ArrayToHex,
+} from '@protokoll/core';
 import {
   exportJwk,
   hkdf,
@@ -10,7 +14,6 @@ import {
   verifyWithJwk,
 } from '@protokoll/crypto';
 import type { MdocContext, X509Context } from '@protokoll/mdoc-client';
-import { uint8ArrayToBase64Url } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
 
 export const mdocContext: MdocContext = {

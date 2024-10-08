@@ -13,7 +13,7 @@ import {
 import { COSEKey, COSEKeyToRAW } from '../../cose/key/cose-key.js';
 import { Mac0 } from '../../cose/mac0.js';
 import { Sign1 } from '../../cose/sign1.js';
-import { parse } from '../parser.js';
+import { parseDeviceResponse } from '../parser.js';
 import { calculateDeviceAutenticationBytes } from '../utils.js';
 import { DeviceSignedDocument } from './device-signed-document.js';
 import { MDoc } from './mdoc.js';
@@ -49,7 +49,7 @@ export class DeviceResponse {
    */
   public static from(mdoc: MDoc | Uint8Array): DeviceResponse {
     if (mdoc instanceof Uint8Array) {
-      return new DeviceResponse(parse(mdoc));
+      return new DeviceResponse(parseDeviceResponse(mdoc));
     }
     return new DeviceResponse(mdoc);
   }
@@ -122,23 +122,39 @@ export class DeviceResponse {
    * @param {string} verifierGeneratedNonce - The nonce Authorization Request parameter from the Authorization Request Object.
    * @returns {DeviceResponse}
    */
-  public usingSessionTranscriptForOID4VP(
-    mdocGeneratedNonce: string,
-    clientId: string,
-    responseUri: string,
-    verifierGeneratedNonce: string
-  ): DeviceResponse {
-    this.usingSessionTranscriptBytes(
-      cborEncode(
-        DataItem.fromData([
-          null, // deviceEngagementBytes
-          null, // eReaderKeyBytes
-          [mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce],
-        ])
-      )
-    );
+  public usingSessionTranscriptForOID4VP(input: {
+    mdocGeneratedNonce: string;
+    clientId: string;
+    responseUri: string;
+    verifierGeneratedNonce: string;
+  }): DeviceResponse {
+    const bytes = DeviceResponse.calculateSessionTranscriptForOID4VP(input);
+    this.usingSessionTranscriptBytes(bytes);
     return this;
   }
+
+  public static calculateSessionTranscriptForOID4VP(input: {
+    mdocGeneratedNonce: string;
+    clientId: string;
+    responseUri: string;
+    verifierGeneratedNonce: string;
+  }) {
+    const {
+      mdocGeneratedNonce,
+      clientId,
+      responseUri,
+      verifierGeneratedNonce,
+    } = input;
+
+    return cborEncode(
+      DataItem.fromData([
+        null, // deviceEngagementBytes
+        null, // eReaderKeyBytes
+        [mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce],
+      ])
+    );
+  }
+
   /**
    * Set the session transcript data to use for the device response as defined in ISO/IEC 18013-7 in Annex A (Web API), 2023 draft.
    *
@@ -149,21 +165,31 @@ export class DeviceResponse {
    * @param {Uint8Array} eReaderKeyBytes - The reader ephemeral public key as a COSE Key, encoded as a Tagged 24 cbor
    * @returns {DeviceResponse}
    */
-  public usingSessionTranscriptForWebAPI(
-    deviceEngagementBytes: Uint8Array,
-    readerEngagementBytes: Uint8Array,
-    eReaderKeyBytes: Uint8Array
-  ): DeviceResponse {
-    this.usingSessionTranscriptBytes(
-      cborEncode(
-        DataItem.fromData([
-          new DataItem({ buffer: deviceEngagementBytes }),
-          new DataItem({ buffer: eReaderKeyBytes }),
-          readerEngagementBytes,
-        ])
-      )
-    );
+  public usingSessionTranscriptForWebAPI(input: {
+    deviceEngagementBytes: Uint8Array;
+    readerEngagementBytes: Uint8Array;
+    eReaderKeyBytes: Uint8Array;
+  }): DeviceResponse {
+    const bytes = DeviceResponse.calculateSessionTranscriptForWebApi(input);
+    this.usingSessionTranscriptBytes(bytes);
     return this;
+  }
+
+  public static calculateSessionTranscriptForWebApi(input: {
+    deviceEngagementBytes: Uint8Array;
+    readerEngagementBytes: Uint8Array;
+    eReaderKeyBytes: Uint8Array;
+  }) {
+    const { deviceEngagementBytes, eReaderKeyBytes, readerEngagementBytes } =
+      input;
+
+    return cborEncode(
+      DataItem.fromData([
+        new DataItem({ buffer: deviceEngagementBytes }),
+        new DataItem({ buffer: eReaderKeyBytes }),
+        readerEngagementBytes,
+      ])
+    );
   }
 
   /**

@@ -7,7 +7,7 @@ import {
   MDoc,
   Verifier,
   cborEncode,
-  parse,
+  parseDeviceResponse,
 } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
 import * as jose from 'jose';
@@ -120,18 +120,18 @@ describe('issuing a device response with MAC authentication', () => {
       //  This is the Device side
       const deviceResponseMDoc = await DeviceResponse.from(mdoc)
         .usingPresentationDefinition(PRESENTATION_DEFINITION_1)
-        .usingSessionTranscriptForOID4VP(
+        .usingSessionTranscriptForOID4VP({
           mdocGeneratedNonce,
           clientId,
           responseUri,
-          verifierGeneratedNonce
-        )
+          verifierGeneratedNonce,
+        })
         .authenticateWithMAC(DEVICE_JWK, ephemeralPublicKey, 'HS256')
         .addDeviceNameSpace('com.foobar-device', { test: 1234 })
         .sign(mdocContext);
 
       encodedDeviceResponse = deviceResponseMDoc.encode();
-      const parsedMDOC = parse(encodedDeviceResponse);
+      const parsedMDOC = parseDeviceResponse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],
@@ -285,18 +285,18 @@ describe('issuing a device response with MAC authentication', () => {
       {
         const deviceResponseMDoc = await DeviceResponse.from(mdoc)
           .usingPresentationDefinition(PRESENTATION_DEFINITION_1)
-          .usingSessionTranscriptForWebAPI(
+          .usingSessionTranscriptForWebAPI({
             deviceEngagementBytes,
             readerEngagementBytes,
-            eReaderKeyBytes
-          )
+            eReaderKeyBytes,
+          })
           .authenticateWithMAC(DEVICE_JWK, ephemeralPublicKey, 'HS256')
           .addDeviceNameSpace('com.foobar-device', { test: 1234 })
           .sign(mdocContext);
         encodedDeviceResponse = deviceResponseMDoc.encode();
       }
 
-      const parsedMDOC = parse(encodedDeviceResponse);
+      const parsedMDOC = parseDeviceResponse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],

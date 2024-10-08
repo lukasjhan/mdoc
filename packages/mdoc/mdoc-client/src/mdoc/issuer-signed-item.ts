@@ -1,7 +1,7 @@
+import { areEqualUint8Array } from '@protokoll/core';
 import type { MdocContext, X509Context } from '../c-mdoc.js';
 import { DataItem } from '../cbor/data-item.js';
 import { cborEncode } from '../cbor/index.js';
-import { areEqual } from '../u-buffer.js';
 import type IssuerAuth from './model/issuer-auth.js';
 import type { DigestAlgorithm } from './model/types.js';
 
@@ -80,7 +80,7 @@ export class IssuerSignedItem {
     }
     const expectedDigest = digests.get(this.digestID);
     this.#isValid =
-      expectedDigest && areEqual(new Uint8Array(digest), expectedDigest);
+      expectedDigest && areEqualUint8Array(digest, expectedDigest);
     return Boolean(this.#isValid);
   }
 

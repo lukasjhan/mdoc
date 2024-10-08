@@ -28,7 +28,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@protokoll/core": "workspace:*"
+    "@protokoll/core": "workspace:*",
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@protokoll/eslint-config": "workspace:*",

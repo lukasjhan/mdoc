@@ -11,7 +11,7 @@ export const subtleDsa = (
     case 'PS256':
     case 'PS384':
     case 'PS512':
-      // @ts-expect-error this should work
+      // @ts-expect-error this works
       return { hash, name: 'RSA-PSS', saltLength: alg.slice(-3) >> 3 };
     case 'RS256':
     case 'RS384':

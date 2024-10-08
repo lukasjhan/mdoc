@@ -7,7 +7,7 @@ import {
   MDoc,
   Verifier,
   cborEncode,
-  parse,
+  parseDeviceResponse,
 } from '@protokoll/mdoc-client';
 import { randomFillSync } from 'node:crypto';
 import { mdocContext } from '../../src/index.js';
@@ -88,37 +88,23 @@ describe('issuing a device response', () => {
     const responseUri =
       'http://localhost:4000/api/presentation_request/dc8999df-d6ea-4c84-9985-37a8b81a82ec/callback';
 
-    const getSessionTranscriptBytes = (
-      clId: string,
-      respUri: string,
-      nonce: string,
-      mdocNonce: string
-    ) =>
-      cborEncode(
-        DataItem.fromData([
-          null, // DeviceEngagementBytes
-          null, // EReaderKeyBytes
-          [mdocNonce, clId, respUri, nonce], // Handover = OID4VPHandover
-        ])
-      );
-
     beforeAll(async () => {
       //  This is the Device side
       const devicePrivateKey = DEVICE_JWK;
       const deviceResponseMDoc = await DeviceResponse.from(mdoc)
         .usingPresentationDefinition(PRESENTATION_DEFINITION_1)
-        .usingSessionTranscriptForOID4VP(
+        .usingSessionTranscriptForOID4VP({
           mdocGeneratedNonce,
           clientId,
           responseUri,
-          verifierGeneratedNonce
-        )
+          verifierGeneratedNonce,
+        })
         .authenticateWithSignature(devicePrivateKey, 'ES256')
         .addDeviceNameSpace('com.foobar-device', { test: 1234 })
         .sign(mdocContext);
 
       encodedDeviceResponse = deviceResponseMDoc.encode();
-      const parsedMDOC = parse(encodedDeviceResponse);
+      const parsedMDOC = parseDeviceResponse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],
@@ -133,12 +119,13 @@ describe('issuing a device response', () => {
             new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
           ],
           encodedDeviceResponse,
-          encodedSessionTranscript: getSessionTranscriptBytes(
-            clientId,
-            responseUri,
-            verifierGeneratedNonce,
-            mdocGeneratedNonce
-          ),
+          encodedSessionTranscript:
+            DeviceResponse.calculateSessionTranscriptForOID4VP({
+              clientId,
+              responseUri,
+              verifierGeneratedNonce,
+              mdocGeneratedNonce,
+            }),
         },
         mdocContext
       );
@@ -194,12 +181,13 @@ describe('issuing a device response', () => {
                   ),
                 ],
                 encodedDeviceResponse,
-                encodedSessionTranscript: getSessionTranscriptBytes(
-                  values.clientId,
-                  values.responseUri,
-                  values.verifierGeneratedNonce,
-                  values.mdocGeneratedNonce
-                ),
+                encodedSessionTranscript:
+                  DeviceResponse.calculateSessionTranscriptForOID4VP({
+                    clientId: values.clientId,
+                    responseUri: values.responseUri,
+                    verifierGeneratedNonce: values.verifierGeneratedNonce,
+                    mdocGeneratedNonce: values.mdocGeneratedNonce,
+                  }),
               },
               mdocContext
             );
@@ -263,18 +251,18 @@ describe('issuing a device response', () => {
         const devicePrivateKey = DEVICE_JWK;
         const deviceResponseMDoc = await DeviceResponse.from(mdoc)
           .usingPresentationDefinition(PRESENTATION_DEFINITION_1)
-          .usingSessionTranscriptForWebAPI(
+          .usingSessionTranscriptForWebAPI({
             deviceEngagementBytes,
             readerEngagementBytes,
-            eReaderKeyBytes
-          )
+            eReaderKeyBytes,
+          })
           .authenticateWithSignature(devicePrivateKey, 'ES256')
           .addDeviceNameSpace('com.foobar-device', { test: 1234 })
           .sign(mdocContext);
         encodedDeviceResponse = deviceResponseMDoc.encode();
       }
 
-      const parsedMDOC = parse(encodedDeviceResponse);
+      const parsedMDOC = parseDeviceResponse(encodedDeviceResponse);
       [parsedDocument] = parsedMDOC.documents as [
         DeviceSignedDocument,
         ...DeviceSignedDocument[],
@@ -289,11 +277,12 @@ describe('issuing a device response', () => {
             new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
           ],
           encodedDeviceResponse,
-          encodedSessionTranscript: getSessionTranscriptBytes(
-            readerEngagementBytes,
-            deviceEngagementBytes,
-            eReaderKeyBytes
-          ),
+          encodedSessionTranscript:
+            DeviceResponse.calculateSessionTranscriptForWebApi({
+              readerEngagementBytes,
+              deviceEngagementBytes,
+              eReaderKeyBytes,
+            }),
         },
         mdocContext
       );

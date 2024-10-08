@@ -9,7 +9,7 @@ import {
   MDoc,
   Verifier,
   defaultCallback,
-  parse,
+  parseDeviceResponse,
 } from '@protokoll/mdoc-client';
 import type { JWK } from 'jose';
 import { mdocContext } from '../../src/index.js';
@@ -52,7 +52,7 @@ describe('issuing an MDOC', () => {
     const mdoc = new MDoc([document]);
     encodedDeviceResponse = mdoc.encode();
 
-    const parsedMDOC = parse(encodedDeviceResponse);
+    const parsedMDOC = parseDeviceResponse(encodedDeviceResponse);
     parsedDocument = parsedMDOC.documents[0] as DeviceSignedDocument;
   });
 

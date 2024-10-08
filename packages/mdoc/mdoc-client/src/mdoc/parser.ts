@@ -71,7 +71,7 @@ const mapIssuerNameSpaces = (namespace: RawNameSpaces): IssuerNameSpaces => {
   );
 };
 
-const mapDeviceNameSpaces = (namespace: Map<string, Map<string, any>>) => {
+const mapDeviceNameSpaces = (namespace: Map<string, Map<string, unknown>>) => {
   const entries = Array.from(namespace.entries()).map(([ns, attrs]) => {
     return [ns, Object.fromEntries(attrs.entries())];
   });
@@ -168,7 +168,7 @@ export const parseDeviceSigned = (
  * @param encoded - The cbor encoded mdoc
  * @returns {Promise<MDoc>} - The parsed device response
  */
-export const parse = (encoded: Uint8Array): MDoc => {
+export const parseDeviceResponse = (encoded: Uint8Array): MDoc => {
   let deviceResponse;
   try {
     deviceResponse = cborDecode(encoded) as Map<string, any>;

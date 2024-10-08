@@ -31,8 +31,7 @@
     "@jfromaniello/typedmap": "^1.4.0",
     "@protokoll/core": "workspace:*",
     "cbor-x": "^1.6.0",
-    "compare-versions": "^6.0.0",
-    "valibot": "catalog:"
+    "compare-versions": "^6.0.0"
   },
   "devDependencies": {
     "@protokoll/eslint-config": "workspace:*",

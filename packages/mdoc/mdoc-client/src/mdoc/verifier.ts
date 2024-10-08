@@ -18,7 +18,7 @@ import { DeviceSignedDocument } from './model/device-signed-document.js';
 import type IssuerAuth from './model/issuer-auth.js';
 import type { IssuerSignedDocument } from './model/issuer-signed-document.js';
 import type { DiagnosticInformation } from './model/types.js';
-import { parse } from './parser.js';
+import { parseDeviceResponse } from './parser.js';
 
 const DIGEST_ALGS = {
   'SHA-256': 'sha256',
@@ -422,7 +422,7 @@ export class Verifier {
     const { encodedDeviceResponse, now, trustedCertificates } = input;
     const onCheck = input.onCheck ?? defaultCallback;
 
-    const dr = parse(encodedDeviceResponse);
+    const dr = parseDeviceResponse(encodedDeviceResponse);
 
     onCheck({
       status: dr.version ? 'PASSED' : 'FAILED',

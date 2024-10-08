@@ -27,7 +27,7 @@ export type DeviceAuth =
 
 export interface DeviceSigned {
   deviceAuth: DeviceAuth;
-  nameSpaces: Record<string, Record<string, any>>;
+  nameSpaces: Record<string, Record<string, unknown>>;
 }
 
 export type RawIndexedDataItem = IssuerSignedDataItem[];
@@ -56,14 +56,14 @@ export interface DiagnosticInformation {
   attributes: {
     ns: string;
     id: string;
-    value: any;
+    value: unknown;
     isValid: boolean;
     matchCertificate?: boolean;
   }[];
   deviceAttributes: {
     ns: string;
     id: string;
-    value: any;
+    value: unknown;
   }[];
   issuerCertificate?: {
     subjectName: string;
@@ -96,7 +96,7 @@ export interface DiagnosticInformation {
 
 export interface DeviceKeyInfo {
   deviceKey: Map<number, number | Uint8Array>;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface MSO {
