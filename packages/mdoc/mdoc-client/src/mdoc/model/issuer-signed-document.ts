@@ -1,4 +1,4 @@
-import type { DocType, IssuerSigned } from './types.js';
+import type { DocType, IssuerSigned, MdocNameSpaces } from './types.js';
 
 /**
  * Represents an issuer signed document.
@@ -56,5 +56,21 @@ export class IssuerSignedDocument {
    */
   get issuerSignedNameSpaces(): string[] {
     return Object.keys(this.issuerSigned.nameSpaces);
+  }
+
+  public get allIssuerSignedNamespaces(): MdocNameSpaces {
+    const namespaces = this.issuerSignedNameSpaces;
+
+    return Object.fromEntries(
+      namespaces.map(namespace => {
+        const namespaceValues = this.getIssuerNameSpace(namespace);
+        if (!namespaceValues) {
+          throw new Error(
+            `Cannot extract the namespace '${namespace}' from the mdoc.`
+          );
+        }
+        return [namespace, namespaceValues];
+      })
+    );
   }
 }

@@ -1,6 +1,11 @@
 import { DataItem } from '../../cbor/data-item.js';
 import { IssuerSignedDocument } from './issuer-signed-document.js';
-import type { DeviceSigned, DocType, IssuerSigned } from './types.js';
+import type {
+  DeviceSigned,
+  DocType,
+  IssuerSigned,
+  MdocNameSpaces,
+} from './types.js';
 
 /**
  * Represents a device signed document.
@@ -54,5 +59,28 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
    */
   getDeviceNameSpace(namespace: string): Record<string, unknown> | undefined {
     return this.deviceSigned.nameSpaces[namespace];
+  }
+
+  /**
+   * List of namespaces in the document.
+   */
+  get deviceSignedNameSpaces(): string[] {
+    return Object.keys(this.deviceSigned.nameSpaces);
+  }
+
+  public get allDeviceSignedNamespaces(): MdocNameSpaces {
+    const namespaces = this.issuerSignedNameSpaces;
+
+    return Object.fromEntries(
+      namespaces.map(namespace => {
+        const namespaceValues = this.getIssuerNameSpace(namespace);
+        if (!namespaceValues) {
+          throw new Error(
+            `Cannot extract the namespace '${namespace}' from the mdoc.`
+          );
+        }
+        return [namespace, namespaceValues];
+      })
+    );
   }
 }

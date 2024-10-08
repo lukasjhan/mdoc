@@ -21,6 +21,7 @@ export { limitDisclosureToInputDescriptor } from './mdoc/model/pex-limit-disclos
 export type { PresentationDefinition } from './mdoc/model/presentation-definition.js';
 export type {
   DiagnosticInformation,
+  MdocNameSpaces,
   ValidityInfo,
 } from './mdoc/model/types.js';
 export {

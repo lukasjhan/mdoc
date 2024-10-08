@@ -16,6 +16,8 @@ export interface ValidityInfo {
 
 export type IssuerNameSpaces = Record<string, IssuerSignedItem[]>;
 
+export type MdocNameSpaces = Record<string, Record<string, unknown>>;
+
 export interface IssuerSigned {
   issuerAuth: IssuerAuth;
   nameSpaces: IssuerNameSpaces;
