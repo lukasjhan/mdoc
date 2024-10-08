@@ -1,5 +1,12 @@
 # @protokoll/core
 
+## 0.2.25
+
+### Patch Changes
+
+- Updated dependencies [e01d88a]
+  - @protokoll/core@0.2.25
+
 ## 0.2.24
 
 ### Patch Changes

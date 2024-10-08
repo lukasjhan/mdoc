@@ -1,5 +1,11 @@
 # @protokoll/core
 
+## 0.2.25
+
+### Patch Changes
+
+- e01d88a: fix: update pnpm and fix ci
+
 ## 0.2.24
 
 ## 0.2.23
