@@ -1,3 +1,4 @@
+export * from './digest.js';
 export * from './export.js';
 export * from './hkdf.js';
 export * from './import.js';
