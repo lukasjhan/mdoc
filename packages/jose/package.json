@@ -3,7 +3,7 @@
   "description": "Protokoll Jose",
   "author": "Martin Auer",
   "private": false,
-  "version": "0.2.25",
+  "version": "0.2.26",
   "type": "module",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",

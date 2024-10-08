@@ -1,5 +1,12 @@
 # @protokoll/mdoc-client
 
+## 0.2.26
+
+### Patch Changes
+
+- ebf73f6: fix: use correct namespace
+  - @protokoll/core@0.2.26
+
 ## 0.2.25
 
 ### Patch Changes
