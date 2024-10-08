@@ -13,16 +13,12 @@ import {
 import { COSEKey, COSEKeyToRAW } from '../../cose/key/cose-key.js';
 import { Mac0 } from '../../cose/mac0.js';
 import { Sign1 } from '../../cose/sign1.js';
-import type { IssuerSignedItem } from '../issuer-signed-item.js';
 import { parse } from '../parser.js';
 import { calculateDeviceAutenticationBytes } from '../utils.js';
 import { DeviceSignedDocument } from './device-signed-document.js';
-import type { IssuerSignedDocument } from './issuer-signed-document.js';
 import { MDoc } from './mdoc.js';
-import type {
-  InputDescriptor,
-  PresentationDefinition,
-} from './presentation-definition.js';
+import { limitDisclosureToInputDescriptor } from './pex-limit-disclosure.js';
+import type { PresentationDefinition } from './presentation-definition.js';
 import type {
   DeviceAuth,
   DeviceSigned,
@@ -243,42 +239,43 @@ export class DeviceResponse {
       );
     }
 
-    const docs = await Promise.all(
-      this.pd.input_descriptors.map(id => this.handleInputDescriptor(id, ctx))
-    );
-    return new MDoc(docs);
-  }
+    const limitedDeviceSignedDocuments = await Promise.all(
+      this.pd.input_descriptors.map(async inputDescriptor => {
+        const mdocMatchingInputDescriptor = this.mdoc?.documents.filter(
+          document => document.docType === inputDescriptor.id
+        );
 
-  private async handleInputDescriptor(
-    inputDescriptor: InputDescriptor,
-    ctx: {
-      cose: MdocContext['cose'];
-      crypto: MdocContext['crypto'];
-    }
-  ): Promise<DeviceSignedDocument> {
-    const documentMatchingInputDescriptor = (this.mdoc?.documents ?? []).find(
-      document => document.docType === inputDescriptor.id
-    );
-    if (!documentMatchingInputDescriptor) {
-      // TODO; probl need to create a DocumentError here, but let's just throw for now
-      throw new Error(
-        `The mdoc does not have a document with DocType "${inputDescriptor.id}"`
-      );
-    }
+        if (!mdocMatchingInputDescriptor?.[0]) {
+          // TODO; probl need to create a DocumentError here, but let's just throw for now
+          throw new Error(
+            `Cannot limit the disclosure to a presentation definition. No credential is matching the input descriptor with DocType '${inputDescriptor.id}'`
+          );
+        }
 
-    const nameSpaces = await this.prepareNamespaces(
-      inputDescriptor,
-      documentMatchingInputDescriptor
+        if (mdocMatchingInputDescriptor.length > 1) {
+          throw new Error(
+            `Cannot limit the disclosure to a presentation definition. Multiple credentials are matching a single input descriptor. DocType '${inputDescriptor.id}'`
+          );
+        }
+
+        const mdoc = mdocMatchingInputDescriptor[0];
+        const disclosedNameSpaces = limitDisclosureToInputDescriptor({
+          mdoc,
+          inputDescriptor,
+        });
+
+        return new DeviceSignedDocument(
+          mdoc.docType,
+          {
+            nameSpaces: disclosedNameSpaces,
+            issuerAuth: mdoc.issuerSigned.issuerAuth,
+          },
+          await this.getDeviceSigned(mdoc.docType, ctx)
+        );
+      })
     );
 
-    return new DeviceSignedDocument(
-      documentMatchingInputDescriptor.docType,
-      {
-        nameSpaces,
-        issuerAuth: documentMatchingInputDescriptor.issuerSigned.issuerAuth,
-      },
-      await this.getDeviceSigned(documentMatchingInputDescriptor.docType, ctx)
-    );
+    return new MDoc(limitedDeviceSignedDocuments);
   }
 
   private async getDeviceSigned(
@@ -388,117 +385,5 @@ export class DeviceResponse {
     sign1.signature = signature;
 
     return { deviceSignature: sign1 };
-  }
-
-  private async prepareNamespaces(
-    inputDescriptor: InputDescriptor,
-    document: IssuerSignedDocument
-  ) {
-    const nameSpaces: Record<string, IssuerSignedItem[]> = {};
-
-    for await (const field of inputDescriptor.constraints.fields) {
-      const result = this.prepareDigest(field.path, document);
-      if (!result) {
-        // TODO: Do we add an entry to DocumentErrors if not found?
-        console.log(`No matching field found for '${field.path.join('.')}'`);
-        continue;
-      }
-
-      const { nameSpace, digest } = result;
-      if (!nameSpaces[nameSpace]) nameSpaces[nameSpace] = [];
-      nameSpaces[nameSpace].push(digest);
-    }
-
-    return nameSpaces;
-  }
-
-  private prepareDigest(
-    paths: string[],
-    document: IssuerSignedDocument
-  ): { nameSpace: string; digest: IssuerSignedItem } | null {
-    for (const path of paths) {
-      const { nameSpace, elementIdentifier } = this.parsePath(path);
-      const nsAttrs = document.issuerSigned.nameSpaces[nameSpace] ?? [];
-
-      if (elementIdentifier.startsWith('age_over_')) {
-        return this.handleAgeOverNN(elementIdentifier, nameSpace, nsAttrs);
-      }
-
-      const digest = nsAttrs.find(
-        d => d.elementIdentifier === elementIdentifier
-      );
-      if (digest) {
-        return { nameSpace, digest };
-      }
-    }
-    return null;
-  }
-
-  private parsePath(path: string): {
-    nameSpace: string;
-    elementIdentifier: string;
-  } {
-    /**
-     * path looks like this: "$['org.iso.18013.5.1']['family_name']"
-     * the regex creates two groups with contents between "['" and "']"
-     * the second entry in each group contains the result without the "'[" or "']"
-     *
-     * @example org.iso.18013.5.1 family_name
-     */
-    const matches = [...path.matchAll(/\['(.*?)'\]/g)];
-    if (matches.length !== 2) {
-      throw new Error(`Invalid path format: "${path}"`);
-    }
-
-    const [nameSpaceMatch, elementIdentifierMatch] = matches;
-    const nameSpace = nameSpaceMatch?.[1];
-    const elementIdentifier = elementIdentifierMatch?.[1];
-
-    if (!nameSpace || !elementIdentifier) {
-      throw new Error(`Failed to parse path: "${path}"`);
-    }
-
-    return { nameSpace, elementIdentifier };
-  }
-
-  private handleAgeOverNN(
-    request: string,
-    nameSpace: string,
-    attributes: IssuerSignedItem[]
-  ): { nameSpace: string; digest: IssuerSignedItem } | null {
-    const ageOverList = attributes
-      .map((a, i) => {
-        const { elementIdentifier: key, elementValue: value } = a;
-        return { key, value, index: i };
-      })
-      .filter(i => i.key.startsWith('age_over_'))
-      .map(i => ({
-        nn: parseInt(i.key.replace('age_over_', ''), 10),
-        ...i,
-      }))
-      .sort((a, b) => a.nn - b.nn);
-
-    const reqNN = parseInt(request.replace('age_over_', ''), 10);
-
-    let item;
-    // Find nearest TRUE
-    item = ageOverList.find(i => i.value === true && i.nn >= reqNN);
-
-    if (!item) {
-      // Find the nearest False
-      item = ageOverList
-        .sort((a, b) => b.nn - a.nn)
-        .find(i => i.value === false && i.nn <= reqNN);
-    }
-
-    if (!item) {
-      return null;
-    }
-
-    return {
-      nameSpace,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      digest: attributes[item.index]!,
-    };
   }
 }

@@ -84,7 +84,7 @@ const mapDeviceNameSpaces = (namespace: Map<string, Map<string, any>>) => {
  * @param issuerSigned - The cbor encoded or decoded IssuerSigned Structure
  * @returns {Promise<IssuerSignedDocument>} - The parsed IssuerSigned document
  */
-export const parseIssuerSignedDocument = (
+export const parseIssuerSigned = (
   issuerSigned: Uint8Array | Map<string, any>,
   expectedDocType?: string
 ): IssuerSignedDocument => {
@@ -128,7 +128,7 @@ export const parseIssuerSignedDocument = (
  * @param issuerSigned - The cbor encoded or decoded IssuerSigned Structure
  * @returns {Promise<DeviceSignedDocument>} - The parsed DeviceSigned document
  */
-export const parseDeviceSignedDocument = (
+export const parseDeviceSigned = (
   deviceSigned: Uint8Array | Map<string, any>,
   issuerSigned: Uint8Array | Map<string, any>,
   expectedDocType?: string
@@ -153,10 +153,7 @@ export const parseDeviceSignedDocument = (
     deviceAuth: parseDeviceAuthElement(deviceSignedDecoded.get('deviceAuth')),
   };
 
-  const issuerSignedDocument = parseIssuerSignedDocument(
-    issuerSigned,
-    expectedDocType
-  );
+  const issuerSignedDocument = parseIssuerSigned(issuerSigned, expectedDocType);
 
   return new DeviceSignedDocument(
     issuerSignedDocument.docType,
@@ -195,10 +192,10 @@ export const parse = (encoded: Uint8Array): MDoc => {
 
       if (deviceSigned) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        return parseDeviceSignedDocument(deviceSigned, issuerSigned, docType);
+        return parseDeviceSigned(deviceSigned, issuerSigned, docType);
       } else {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        return parseIssuerSignedDocument(issuerSigned, docType);
+        return parseIssuerSigned(issuerSigned, docType);
       }
     }
   );
