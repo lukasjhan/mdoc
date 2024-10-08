@@ -1,5 +1,13 @@
 # @protokoll/mdoc-client
 
+## 0.2.25
+
+### Patch Changes
+
+- e01d88a: fix: update pnpm and fix ci
+- Updated dependencies [e01d88a]
+  - @protokoll/core@0.2.25
+
 ## 0.2.24
 
 ### Patch Changes
