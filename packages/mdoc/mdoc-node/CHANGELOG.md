@@ -1,5 +1,17 @@
 # @protokoll/mdoc-node
 
+## 0.2.23
+
+### Patch Changes
+
+- 9967166: fix: don't export everything
+- 18d684a: feat: add several exports
+- Updated dependencies [9967166]
+- Updated dependencies [18d684a]
+  - @protokoll/mdoc-client@0.2.23
+  - @protokoll/core@0.2.23
+  - @protokoll/crypto@0.2.23
+
 ## 0.2.22
 
 ### Patch Changes
