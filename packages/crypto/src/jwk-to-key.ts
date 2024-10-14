@@ -1,4 +1,4 @@
-import { getSubtleCrypto } from './get-subtle-crypto.js';
+import type { CryptoContext } from './c-crypto.js';
 
 export function subtleMapping(jwk: JsonWebKey): {
   algorithm: RsaHashedImportParams | EcKeyAlgorithm | Algorithm;
@@ -102,10 +102,12 @@ export function subtleMapping(jwk: JsonWebKey): {
   return { algorithm, keyUsages };
 }
 
-export const jwkToKey = async (input: {
-  jwk: JsonWebKey;
-  crypto?: { subtle: SubtleCrypto };
-}): Promise<CryptoKey> => {
+export const jwkToKey = async (
+  input: {
+    jwk: JsonWebKey;
+  },
+  ctx: CryptoContext
+): Promise<CryptoKey> => {
   const { jwk } = input;
   if (!jwk.alg) {
     throw new TypeError(
@@ -128,6 +130,5 @@ export const jwkToKey = async (input: {
   delete keyData.alg;
   delete keyData.use;
 
-  const subtleCrypto = getSubtleCrypto(input);
-  return subtleCrypto.importKey('jwk', keyData, ...rest);
+  return ctx.crypto.subtle.importKey('jwk', keyData, ...rest);
 };

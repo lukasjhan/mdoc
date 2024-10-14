@@ -13,19 +13,16 @@ npm i @auth0/mdl
 ## Verifying a credential
 
 ```javascript
-import { Verifier } from '@auth0/mdl';
-import { inspect } from 'node:util';
-import fs from 'node:fs';
+import { Verifier } from "@auth0/mdl";
+import { inspect } from "node:util";
+import fs from "node:fs";
 
 (async () => {
   const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, 'hex');
-  const encodedSessionTranscript = Buffer.from(
-    encodedSessionTranscriptHex,
-    'hex'
-  );
+  const encodedSessionTranscript = Buffer.from(encodedSessionTranscriptHex, 'hex');
   const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, 'hex');
 
-  const trustedCerts = [fs.readFileSync('./caCert1.pem') /*, ... */];
+  const trustedCerts = [fs.readFileSync('./caCert1.pem')/*, ... */];
   const verifier = new Verifier(trustedCerts);
   const mdoc = await verifier.verify(encodedDeviceResponse, {
     ephemeralReaderKey,
@@ -40,28 +37,22 @@ import fs from 'node:fs';
 ## Getting diagnostic information
 
 ```javascript
-import { Verifier } from '@auth0/mdl';
-import { inspect } from 'node:util';
-import fs from 'node:fs';
+import { Verifier } from "@auth0/mdl";
+import { inspect } from "node:util";
+import fs from "node:fs";
 
 (async () => {
   const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, 'hex');
-  const encodedSessionTranscript = Buffer.from(
-    encodedSessionTranscriptHex,
-    'hex'
-  );
+  const encodedSessionTranscript = Buffer.from(encodedSessionTranscriptHex, 'hex');
   const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, 'hex');
 
-  const trustedCerts = [fs.readFileSync('./caCert1.pem') /*, ... */];
+  const trustedCerts = [fs.readFileSync('./caCert1.pem')/*, ... */];
   const verifier = new Verifier(trustedCerts);
 
-  const diagnosticInfo = await verifier.getDiagnosticInformation(
-    encodedDeviceResponse,
-    {
-      ephemeralReaderKey,
-      encodedSessionTranscript,
-    }
-  );
+  const diagnosticInfo = await verifier.getDiagnosticInformation(encodedDeviceResponse, {
+    ephemeralReaderKey,
+    encodedSessionTranscript,
+  });
 
   inspect(diagnosticInfo);
 })();
@@ -70,9 +61,8 @@ import fs from 'node:fs';
 ## Issuing a credential
 
 ```js
-import { MDoc, Document } from '@auth0/mdl';
-import { inspect } from 'node:util';
-import fs from 'node:fs';
+import { MDoc, Document } from "@auth0/mdl";
+import { inspect } from "node:util";
 
 (async () => {
   const document = await new Document('org.iso.18013.5.1.mDL')
@@ -100,14 +90,7 @@ import fs from 'node:fs';
 ## Generating a device response
 
 ```js
-import {
-  DeviceResponse,
-  DataItem,
-  MDoc,
-  DataItem,
-  cborEncode,
-} from '@auth0/mdl';
-import { createHash } from 'node:crypto';
+import { DeviceResponse, MDoc } from '@auth0/mdl';
 
 (async () => {
   let issuerMDoc;
@@ -120,6 +103,7 @@ import { createHash } from 'node:crypto';
     let issuerPrivateKey;
     let issuerCertificate;
     let devicePublicKey; // the public key for the device, as a JWK
+
     const document = await new Document('org.iso.18013.5.1.mDL')
       .addIssuerNameSpace('org.iso.18013.5.1', {
         family_name: 'Jones',
@@ -136,6 +120,7 @@ import { createHash } from 'node:crypto';
         issuerCertificate,
         alg: 'ES256',
       });
+
     issuerMDoc = new MDoc([document]).encode();
   }
 
@@ -144,8 +129,10 @@ import { createHash } from 'node:crypto';
    */
   {
     let devicePrivateKey; // the private key for the device, as a JWK
+
+    // Parameters coming from the OID4VP transaction
+    let mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce;
     let presentationDefinition = {
-      // the presentation definition we create a response for
       id: 'family_name_only',
       input_descriptors: [
         {
@@ -153,62 +140,20 @@ import { createHash } from 'node:crypto';
           format: { mso_mdoc: { alg: ['EdDSA', 'ES256'] } },
           constraints: {
             limit_disclosure: 'required',
-            fields: [
-              {
+            fields: [{
                 path: ["$['org.iso.18013.5.1']['family_name']"],
                 intent_to_retain: false,
-              },
-            ],
+              }],
           },
         },
       ],
     };
 
-    /** ... using a OID4VP handover: */
-    {
-      // Parameters coming from the OID4VP transaction
-      let mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce;
-
-      deviceResponseMDoc = await DeviceResponse.from(issuerMDoc)
-        .usingPresentationDefinition(presentationDefinition)
-        .usingSessionTranscriptForOID4VP(
-          mdocGeneratedNonce,
-          clientId,
-          responseUri,
-          verifierGeneratedNonce
-        )
-        .authenticateWithSignature(devicePrivateKey, 'ES256')
-        .sign();
-    }
-
-    /** ... OR ALTERNATIVELY using an "Annex A" transcript: */
-    {
-      let encodedReaderEngagement; // CBOR as received from the reader
-      let encodedDeviceEngagement; // CBOR as sent to the reader
-      let encodedReaderPublicKey; // as found in the ReaderEngagement
-
-      const engagementToApp = Buffer.from(
-        createHash('sha256').update(encodedReaderEngagement).digest('hex'),
-        'hex'
-      );
-      const sessionTranscriptBytes = cborEncode(
-        DataItem.fromData([
-          new DataItem({ buffer: encodedDeviceEngagement }),
-          new DataItem({ buffer: encodedReaderPublicKey }),
-          engagementToApp,
-        ])
-      );
-
-      deviceResponseMDoc = await DeviceResponse.from(issuerMDoc)
-        .usingPresentationDefinition(presentationDefinition)
-        .usingSessionTranscriptForWebAPI(
-          encodedDeviceEngagement,
-          encodedReaderEngagement,
-          encodedReaderPublicKey
-        )
-        .authenticateWithSignature(devicePrivateKey, 'ES256')
-        .sign();
-    }
+    deviceResponseMDoc = await DeviceResponse.from(issuerMDoc)
+      .usingPresentationDefinition(presentationDefinition)
+      .usingSessionTranscriptForOID4VP(mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce)
+      .authenticateWithSignature(devicePrivateKey, 'ES256')
+      .sign();
   }
 })();
 ```

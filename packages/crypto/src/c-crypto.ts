@@ -1,6 +1,10 @@
-export const getSubtleCrypto = (input: {
-  crypto?: { subtle: SubtleCrypto };
-}) => {
+export interface CryptoContext {
+  crypto: { subtle: SubtleCrypto };
+}
+
+export const withCryptoContext = <T extends Partial<CryptoContext>>(
+  input: T
+): T & CryptoContext => {
   const subtleCrypto = input.crypto?.subtle ?? crypto.subtle;
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!subtleCrypto) {
@@ -9,5 +13,8 @@ export const getSubtleCrypto = (input: {
     );
   }
 
-  return subtleCrypto;
+  return {
+    ...input,
+    crypto: { subtle: subtleCrypto },
+  };
 };

@@ -1,7 +1,8 @@
-import { fromX509 } from './asn1.js';
-import { getSubtleCrypto } from './get-subtle-crypto.js';
-import isObject from './is-object.js';
-import { jwkToKey } from './jwk-to-key.js';
+import { fromPKCS8, fromSPKI, fromX509 } from '../asn1.js';
+import type { CryptoContext } from '../c-crypto.js';
+import { withCryptoContext } from '../c-crypto.js';
+import isObject from '../is-object.js';
+import { jwkToKey } from '../jwk-to-key.js';
 
 export interface PEMImportOptions {
   /**
@@ -12,8 +13,61 @@ export interface PEMImportOptions {
 }
 
 /**
+ * Imports a PEM-encoded SPKI string as a runtime-specific public key representation
+ * ({@link !CryptoKey}).
+ *
+ * Note: The OID id-RSASSA-PSS (1.2.840.113549.1.1.10) is not supported in
+ * {@link https://w3c.github.io/webcrypto/ Web Cryptography API}, use the OID rsaEncryption
+ * (1.2.840.113549.1.1.1) instead for all RSA algorithms.
+ *
+ * This function is exported (as a named export) from the main `'jose'` module entry point as well
+ * as from its subpath export `'jose/key/import'`.
+ *
+ * @example
+ *
+ * ```js
+ * const algorithm = 'ES256'
+ * const spki = `-----BEGIN PUBLIC KEY-----
+ * MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEFlHHWfLk0gLBbsLTcuCrbCqoHqmM
+ * YJepMC+Q+Dd6RBmBiA41evUsNMwLeN+PNFqib+xwi9JkJ8qhZkq8Y/IzGg==
+ * -----END PUBLIC KEY-----`
+ * const ecPublicKey = await jose.importSPKI(spki, algorithm)
+ * ```
+ *
+ * @param spki PEM-encoded SPKI string
+ * @param alg (Only effective in Web Crypto API runtimes) JSON Web Algorithm identifier to be used
+ *   with the imported key, its presence is only enforced in Web Crypto API runtimes. See
+ *   {@link https://github.com/panva/jose/issues/210 Algorithm Key Requirements}.
+ */
+export async function importSPKI(
+  input: {
+    spki: string;
+    alg: string;
+  } & PEMImportOptions,
+  _ctx?: CryptoContext
+): Promise<CryptoKey> {
+  const { spki, alg, extractable } = input;
+  if (
+    typeof spki !== 'string' ||
+    !spki.startsWith('-----BEGIN PUBLIC KEY-----')
+  ) {
+    throw new TypeError('"spki" must be SPKI formatted string');
+  }
+
+  const ctx = withCryptoContext(_ctx ?? {});
+  return fromSPKI(
+    {
+      pem: spki,
+      alg,
+      extractable,
+    },
+    ctx
+  );
+}
+
+/**
  * Imports the SPKI from an X.509 string certificate as a runtime-specific public key representation
- * ({@link !KeyObject} or {@link !CryptoKey}).
+ * ({@link !CryptoKey}).
  *
  * Note: The OID id-RSASSA-PSS (1.2.840.113549.1.1.10) is not supported in
  * {@link https://w3c.github.io/webcrypto/ Web Cryptography API}, use the OID rsaEncryption
@@ -48,8 +102,8 @@ export async function importX509(
   input: {
     x509: string;
     alg: string;
-    crypto?: { subtle: SubtleCrypto };
-  } & PEMImportOptions
+  } & PEMImportOptions,
+  _ctx?: CryptoContext
 ): Promise<CryptoKey> {
   const { x509 } = input;
   if (
@@ -58,7 +112,56 @@ export async function importX509(
   ) {
     throw new TypeError('"x509" must be X.509 formatted string');
   }
-  return fromX509({ ...input, pem: x509 });
+
+  const ctx = withCryptoContext(_ctx ?? {});
+  return fromX509({ ...input, pem: x509 }, ctx);
+}
+
+/**
+ * Imports a PEM-encoded PKCS#8 string as a runtime-specific private key representation
+ * ({{@link !CryptoKey}).
+ *
+ * Note: The OID id-RSASSA-PSS (1.2.840.113549.1.1.10) is not supported in
+ * {@link https://w3c.github.io/webcrypto/ Web Cryptography API}, use the OID rsaEncryption
+ * (1.2.840.113549.1.1.1) instead for all RSA algorithms.
+ *
+ * This function is exported (as a named export) from the main `'jose'` module entry point as well
+ * as from its subpath export `'jose/key/import'`.
+ *
+ * @example
+ *
+ * ```js
+ * const algorithm = 'ES256'
+ * const pkcs8 = `-----BEGIN PRIVATE KEY-----
+ * MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgiyvo0X+VQ0yIrOaN
+ * nlrnUclopnvuuMfoc8HHly3505OhRANCAAQWUcdZ8uTSAsFuwtNy4KtsKqgeqYxg
+ * l6kwL5D4N3pEGYGIDjV69Sw0zAt43480WqJv7HCL0mQnyqFmSrxj8jMa
+ * -----END PRIVATE KEY-----`
+ * const ecPrivateKey = await jose.importPKCS8(pkcs8, algorithm)
+ * ```
+ *
+ * @param pkcs8 PEM-encoded PKCS#8 string
+ * @param alg (Only effective in Web Crypto API runtimes) JSON Web Algorithm identifier to be used
+ *   with the imported key, its presence is only enforced in Web Crypto API runtimes. See
+ *   {@link https://github.com/panva/jose/issues/210 Algorithm Key Requirements}.
+ */
+export async function importPKCS8(
+  input: {
+    pkcs8: string;
+    alg: string;
+  } & PEMImportOptions,
+  _ctx?: CryptoContext
+): Promise<CryptoKey> {
+  const { pkcs8, alg, extractable } = input;
+  if (
+    typeof pkcs8 !== 'string' ||
+    !pkcs8.startsWith('-----BEGIN PRIVATE KEY-----')
+  ) {
+    throw new TypeError('"pkcs8" must be PKCS#8 formatted string');
+  }
+
+  const ctx = withCryptoContext(_ctx ?? {});
+  return fromPKCS8({ pem: pkcs8, alg, extractable }, ctx);
 }
 
 /**
@@ -100,11 +203,13 @@ export async function importX509(
  *   in Web Crypto API runtimes. See
  *   {@link https://github.com/panva/jose/issues/210 Algorithm Key Requirements}.
  */
-export async function importJWK(input: {
-  jwk: JsonWebKey;
-  alg?: string;
-  crypto?: { subtle: SubtleCrypto };
-}): Promise<CryptoKey> {
+export async function importJWK(
+  input: {
+    jwk: JsonWebKey;
+    alg?: string;
+  },
+  _ctx?: CryptoContext
+): Promise<CryptoKey> {
   // eslint-disable-next-line prefer-const
   let { jwk, alg } = input;
   if (!isObject(jwk)) {
@@ -113,7 +218,7 @@ export async function importJWK(input: {
 
   alg ||= jwk.alg;
 
-  const subtleCrypto = getSubtleCrypto(input);
+  const ctx = withCryptoContext(_ctx ?? {});
   switch (jwk.kty) {
     case 'oct':
       if (typeof jwk.k !== 'string' || !jwk.k) {
@@ -124,7 +229,7 @@ export async function importJWK(input: {
         throw new Error('Invalid Key Input');
       }
 
-      return subtleCrypto.importKey(
+      return ctx.crypto.subtle.importKey(
         'jwk',
         jwk,
         { hash: `SHA-${jwk.alg.slice(-3)}`, name: 'HMAC' },
@@ -141,7 +246,7 @@ export async function importJWK(input: {
       break;
     case 'EC':
     case 'OKP':
-      return jwkToKey({ jwk: { ...jwk, alg }, crypto: input.crypto });
+      return jwkToKey({ jwk: { ...jwk, alg } }, ctx);
   }
 
   throw new Error('Unsupported "kty" (Key Type) Parameter value');

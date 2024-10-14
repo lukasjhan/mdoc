@@ -308,7 +308,7 @@ export class Verifier {
       check: 'Issuer Auth must include a supported digestAlgorithm element',
     });
 
-    const nameSpaces = mdoc.issuerSigned.nameSpaces || {};
+    const nameSpaces = mdoc.issuerSigned.nameSpaces ?? {};
 
     await Promise.all(
       Object.entries(nameSpaces).map(async ([ns, nsItems]) => {
@@ -355,7 +355,7 @@ export class Verifier {
                 "The 'issuing_country' and 'issuing_jurisdiction' cannot be verified because the DS certificate was not provided",
             });
           } else {
-            const invalidIssuingCountry = verifications
+            const invalidCountry = verifications
               .filter(
                 v => v.ns === ns && v.ev.elementIdentifier === 'issuing_country'
               )
@@ -364,11 +364,12 @@ export class Verifier {
               );
 
             onCheck({
-              status: invalidIssuingCountry ? 'FAILED' : 'PASSED',
+              status: invalidCountry ? 'FAILED' : 'PASSED',
               check:
                 "The 'issuing_country' if present must match the 'countryName' in the subject field within the DS certificate",
-              reason: invalidIssuingCountry
-                ? `The 'issuing_country' (${invalidIssuingCountry.ev.elementValue}) must match the 'countryName' (${issuerAuth.getIssuingCountry(ctx)}) in the subject field within the issuer certificate`
+              reason: invalidCountry
+                ? // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                  `The 'issuing_country' (${invalidCountry.ev.elementValue}) must match the 'countryName' (${issuerAuth.countryName}) in the subject field within the issuer certificate`
                 : undefined,
             });
 
@@ -387,7 +388,8 @@ export class Verifier {
               check:
                 "The 'issuing_jurisdiction' if present must match the 'stateOrProvinceName' in the subject field within the DS certificate",
               reason: invalidJurisdiction
-                ? `The 'issuing_jurisdiction' (${invalidJurisdiction.ev.elementValue}) must match the 'stateOrProvinceName' (${issuerAuth.getIssuingStateOrProvince(ctx)}) in the subject field within the issuer certificate`
+                ? // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                  `The 'issuing_jurisdiction' (${invalidJurisdiction.ev.elementValue}) must match the 'stateOrProvinceName' (${issuerAuth.stateOrProvince}) in the subject field within the issuer certificate`
                 : undefined,
             });
           }

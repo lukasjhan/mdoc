@@ -1,16 +1,68 @@
 import type { MaybePromise } from '@protokoll/core';
 import { base64ToUint8Array, uint8ArrayToBase64 } from '@protokoll/core';
+import type { CryptoContext } from './c-crypto.js';
 import formatPEM from './format-pem.js';
-import { getSubtleCrypto } from './get-subtle-crypto.js';
-import type { PEMImportOptions } from './import.js';
+import invalidKeyInput from './invalid-key-input.js';
+import type { PEMImportOptions } from './key/import.js';
+import { isCryptoKey } from './webcrypto.js';
 
 export type PEMImportFunction = (
   input: {
     pem: string;
     alg: string;
-    crypto?: { subtle: SubtleCrypto };
-  } & PEMImportOptions
+  } & PEMImportOptions,
+  ctx: CryptoContext
 ) => MaybePromise<CryptoKey>;
+
+const genericExport = async (
+  input: {
+    keyType: 'private' | 'public';
+    keyFormat: 'spki' | 'pkcs8';
+    key: CryptoKey;
+  },
+  ctx: CryptoContext
+) => {
+  const { keyType, keyFormat, key } = input;
+
+  if (!isCryptoKey(key)) {
+    throw new TypeError(invalidKeyInput(key, ...['CryptoKey']));
+  }
+
+  if (!key.extractable) {
+    throw new TypeError('CryptoKey is not extractable');
+  }
+
+  if (key.type !== keyType) {
+    throw new TypeError(`key is not a ${keyType} key`);
+  }
+
+  return formatPEM(
+    uint8ArrayToBase64(
+      new Uint8Array(await ctx.crypto.subtle.exportKey(keyFormat, key))
+    ),
+    `${keyType.toUpperCase()} KEY`
+  );
+};
+
+export const toSPKI = (
+  input: {
+    key: CryptoKey;
+  },
+  ctx: CryptoContext
+) => {
+  const { key } = input;
+  return genericExport({ keyType: 'public', keyFormat: 'spki', key }, ctx);
+};
+
+export const toPKCS8 = (
+  input: {
+    key: CryptoKey;
+  },
+  ctx: CryptoContext
+) => {
+  const { key } = input;
+  return genericExport({ keyType: 'public', keyFormat: 'pkcs8', key }, ctx);
+};
 
 const findOid = (keyData: Uint8Array, oid: number[], from = 0): boolean => {
   if (from === 0) {
@@ -55,10 +107,10 @@ const genericImport = async (
   input: {
     pem: string;
     alg: string;
-    crypto?: { subtle: SubtleCrypto };
     replace: RegExp;
     keyFormat: 'spki' | 'pkcs8';
-  } & PEMImportOptions
+  } & PEMImportOptions,
+  ctx: CryptoContext
 ) => {
   const { pem, alg, keyFormat, replace, extractable } = input;
   let algorithm: RsaHashedImportParams | EcKeyAlgorithm | Algorithm;
@@ -126,8 +178,7 @@ const genericImport = async (
       throw new Error('Invalid or unsupported "alg" (Algorithm) value');
   }
 
-  const subtleCrypto = getSubtleCrypto(input);
-  return subtleCrypto.importKey(
+  return ctx.crypto.subtle.importKey(
     keyFormat,
     keyData,
     algorithm,
@@ -136,20 +187,26 @@ const genericImport = async (
   );
 };
 
-export const fromPKCS8: PEMImportFunction = input => {
-  return genericImport({
-    ...input,
-    keyFormat: 'pkcs8',
-    replace: /(?:-----(?:BEGIN|END) PRIVATE KEY-----|\s)/g,
-  });
+export const fromPKCS8: PEMImportFunction = (input, ctx) => {
+  return genericImport(
+    {
+      ...input,
+      keyFormat: 'pkcs8',
+      replace: /(?:-----(?:BEGIN|END) PRIVATE KEY-----|\s)/g,
+    },
+    ctx
+  );
 };
 
-export const fromSPKI: PEMImportFunction = input => {
-  return genericImport({
-    ...input,
-    keyFormat: 'spki',
-    replace: /(?:-----(?:BEGIN|END) PUBLIC KEY-----|\s)/g,
-  });
+export const fromSPKI: PEMImportFunction = (input, ctx) => {
+  return genericImport(
+    {
+      ...input,
+      keyFormat: 'spki',
+      replace: /(?:-----(?:BEGIN|END) PUBLIC KEY-----|\s)/g,
+    },
+    ctx
+  );
 };
 
 function getElement(seq: Uint8Array) {
@@ -246,7 +303,7 @@ function getSPKI(x509: string): string {
   return formatPEM(spkiFromX509(raw), 'PUBLIC KEY');
 }
 
-export const fromX509: PEMImportFunction = input => {
+export const fromX509: PEMImportFunction = (input, ctx) => {
   const { pem } = input;
   let spki: string;
   try {
@@ -254,5 +311,5 @@ export const fromX509: PEMImportFunction = input => {
   } catch (cause) {
     throw new Error('Failed to parse the X.509 certificate', { cause });
   }
-  return fromSPKI({ ...input, pem: spki });
+  return fromSPKI({ ...input, pem: spki }, ctx);
 };

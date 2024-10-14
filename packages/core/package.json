@@ -29,8 +29,6 @@
     "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
-    "@credo-ts/core": "link:/Users/martinauer/Documents/credo-ts/packages/core",
-    "jwt-decode": "^4.0.0",
     "valibot": "catalog:"
   },
   "devDependencies": {
@@ -39,8 +37,6 @@
     "@protokoll/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
-    "jose": "catalog:",
-    "msw": "catalog:",
     "prettier": "catalog:",
     "tsx": "catalog:",
     "type-fest": "^4.26.1",
