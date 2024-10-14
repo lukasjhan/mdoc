@@ -1,5 +1,16 @@
 # @protokoll/mdoc-node
 
+## 0.2.28
+
+### Patch Changes
+
+- 220df5e: fix: some nits
+- Updated dependencies [220df5e]
+- Updated dependencies [6c1b685]
+  - @protokoll/crypto@0.2.28
+  - @protokoll/mdoc-client@0.2.28
+  - @protokoll/core@0.2.28
+
 ## 0.2.27
 
 ### Patch Changes
