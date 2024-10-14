@@ -13,16 +13,19 @@ npm i @auth0/mdl
 ## Verifying a credential
 
 ```javascript
-import { Verifier } from "@auth0/mdl";
-import { inspect } from "node:util";
-import fs from "node:fs";
+import { Verifier } from '@auth0/mdl';
+import { inspect } from 'node:util';
+import fs from 'node:fs';
 
 (async () => {
   const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, 'hex');
-  const encodedSessionTranscript = Buffer.from(encodedSessionTranscriptHex, 'hex');
+  const encodedSessionTranscript = Buffer.from(
+    encodedSessionTranscriptHex,
+    'hex'
+  );
   const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, 'hex');
 
-  const trustedCerts = [fs.readFileSync('./caCert1.pem')/*, ... */];
+  const trustedCerts = [fs.readFileSync('./caCert1.pem') /*, ... */];
   const verifier = new Verifier(trustedCerts);
   const mdoc = await verifier.verify(encodedDeviceResponse, {
     ephemeralReaderKey,
@@ -37,22 +40,28 @@ import fs from "node:fs";
 ## Getting diagnostic information
 
 ```javascript
-import { Verifier } from "@auth0/mdl";
-import { inspect } from "node:util";
-import fs from "node:fs";
+import { Verifier } from '@auth0/mdl';
+import { inspect } from 'node:util';
+import fs from 'node:fs';
 
 (async () => {
   const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, 'hex');
-  const encodedSessionTranscript = Buffer.from(encodedSessionTranscriptHex, 'hex');
+  const encodedSessionTranscript = Buffer.from(
+    encodedSessionTranscriptHex,
+    'hex'
+  );
   const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, 'hex');
 
-  const trustedCerts = [fs.readFileSync('./caCert1.pem')/*, ... */];
+  const trustedCerts = [fs.readFileSync('./caCert1.pem') /*, ... */];
   const verifier = new Verifier(trustedCerts);
 
-  const diagnosticInfo = await verifier.getDiagnosticInformation(encodedDeviceResponse, {
-    ephemeralReaderKey,
-    encodedSessionTranscript,
-  });
+  const diagnosticInfo = await verifier.getDiagnosticInformation(
+    encodedDeviceResponse,
+    {
+      ephemeralReaderKey,
+      encodedSessionTranscript,
+    }
+  );
 
   inspect(diagnosticInfo);
 })();
@@ -61,8 +70,8 @@ import fs from "node:fs";
 ## Issuing a credential
 
 ```js
-import { MDoc, Document } from "@auth0/mdl";
-import { inspect } from "node:util";
+import { MDoc, Document } from '@auth0/mdl';
+import { inspect } from 'node:util';
 
 (async () => {
   const document = await new Document('org.iso.18013.5.1.mDL')
@@ -140,10 +149,12 @@ import { DeviceResponse, MDoc } from '@auth0/mdl';
           format: { mso_mdoc: { alg: ['EdDSA', 'ES256'] } },
           constraints: {
             limit_disclosure: 'required',
-            fields: [{
+            fields: [
+              {
                 path: ["$['org.iso.18013.5.1']['family_name']"],
                 intent_to_retain: false,
-              }],
+              },
+            ],
           },
         },
       ],
@@ -151,7 +162,12 @@ import { DeviceResponse, MDoc } from '@auth0/mdl';
 
     deviceResponseMDoc = await DeviceResponse.from(issuerMDoc)
       .usingPresentationDefinition(presentationDefinition)
-      .usingSessionTranscriptForOID4VP(mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce)
+      .usingSessionTranscriptForOID4VP(
+        mdocGeneratedNonce,
+        clientId,
+        responseUri,
+        verifierGeneratedNonce
+      )
       .authenticateWithSignature(devicePrivateKey, 'ES256')
       .sign();
   }
