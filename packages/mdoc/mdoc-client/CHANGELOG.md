@@ -1,5 +1,12 @@
 # @protokoll/mdoc-client
 
+## 0.2.27
+
+### Patch Changes
+
+- 9e620eb: fix: namespace
+  - @protokoll/core@0.2.27
+
 ## 0.2.26
 
 ### Patch Changes
