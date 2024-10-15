@@ -1,4 +1,5 @@
 import type { CryptoContext } from './c-crypto.js';
+import { withCryptoContext } from './c-crypto.js';
 import type { GenerateKeyPairOptions } from './key/generate-key-pair.js';
 import type { GenerateSecretOptions } from './key/generate-secret.js';
 
@@ -69,7 +70,7 @@ export async function generateKeyPair(
   input: {
     alg: string;
   } & GenerateKeyPairOptions,
-  ctx: CryptoContext
+  _ctx?: CryptoContext
 ) {
   const { alg, extractable } = input;
   let algorithm: RsaHashedKeyGenParams | EcKeyGenParams | KeyAlgorithm;
@@ -165,6 +166,7 @@ export async function generateKeyPair(
       );
   }
 
+  const ctx = withCryptoContext(_ctx ?? {});
   return ctx.crypto.subtle.generateKey(
     algorithm,
     extractable ?? false,

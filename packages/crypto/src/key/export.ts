@@ -21,9 +21,8 @@ import { withCryptoContext } from '../c-crypto.js';
  */
 export async function exportSPKI(
   input: { key: CryptoKey },
-  _ctx?: CryptoContext
+  ctx?: CryptoContext
 ): Promise<string> {
-  const ctx = withCryptoContext(_ctx ?? {});
   return exportPublic(input, ctx);
 }
 

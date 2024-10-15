@@ -1,5 +1,4 @@
 import type { CryptoContext } from '../c-crypto.js';
-import { withCryptoContext } from '../c-crypto.js';
 import { generateKeyPair as generate } from '../generate.js';
 
 export interface GenerateKeyPairResult {
@@ -66,8 +65,7 @@ export async function generateKeyPair(
   input: {
     alg: string;
   } & GenerateKeyPairOptions,
-  _ctx?: CryptoContext
+  ctx?: CryptoContext
 ): Promise<GenerateKeyPairResult> {
-  const ctx = withCryptoContext(_ctx ?? {});
   return generate(input, ctx);
 }

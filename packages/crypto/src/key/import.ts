@@ -44,7 +44,7 @@ export async function importSPKI(
     spki: string;
     alg: string;
   } & PEMImportOptions,
-  _ctx?: CryptoContext
+  ctx?: CryptoContext
 ): Promise<CryptoKey> {
   const { spki, alg, extractable } = input;
   if (
@@ -54,7 +54,6 @@ export async function importSPKI(
     throw new TypeError('"spki" must be SPKI formatted string');
   }
 
-  const ctx = withCryptoContext(_ctx ?? {});
   return fromSPKI(
     {
       pem: spki,
@@ -103,7 +102,7 @@ export async function importX509(
     x509: string;
     alg: string;
   } & PEMImportOptions,
-  _ctx?: CryptoContext
+  ctx?: CryptoContext
 ): Promise<CryptoKey> {
   const { x509 } = input;
   if (
@@ -113,7 +112,6 @@ export async function importX509(
     throw new TypeError('"x509" must be X.509 formatted string');
   }
 
-  const ctx = withCryptoContext(_ctx ?? {});
   return fromX509({ ...input, pem: x509 }, ctx);
 }
 
@@ -150,7 +148,7 @@ export async function importPKCS8(
     pkcs8: string;
     alg: string;
   } & PEMImportOptions,
-  _ctx?: CryptoContext
+  ctx?: CryptoContext
 ): Promise<CryptoKey> {
   const { pkcs8, alg, extractable } = input;
   if (
@@ -160,7 +158,6 @@ export async function importPKCS8(
     throw new TypeError('"pkcs8" must be PKCS#8 formatted string');
   }
 
-  const ctx = withCryptoContext(_ctx ?? {});
   return fromPKCS8({ pem: pkcs8, alg, extractable }, ctx);
 }
 

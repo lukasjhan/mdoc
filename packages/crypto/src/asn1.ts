@@ -1,6 +1,7 @@
 import type { MaybePromise } from '@protokoll/core';
 import { base64ToUint8Array, uint8ArrayToBase64 } from '@protokoll/core';
 import type { CryptoContext } from './c-crypto.js';
+import { withCryptoContext } from './c-crypto.js';
 import formatPEM from './format-pem.js';
 import invalidKeyInput from './invalid-key-input.js';
 import type { PEMImportOptions } from './key/import.js';
@@ -11,7 +12,7 @@ export type PEMImportFunction = (
     pem: string;
     alg: string;
   } & PEMImportOptions,
-  ctx: CryptoContext
+  ctx?: CryptoContext
 ) => MaybePromise<CryptoKey>;
 
 const genericExport = async (
@@ -20,7 +21,7 @@ const genericExport = async (
     keyFormat: 'spki' | 'pkcs8';
     key: CryptoKey;
   },
-  ctx: CryptoContext
+  _ctx?: CryptoContext
 ) => {
   const { keyType, keyFormat, key } = input;
 
@@ -36,6 +37,7 @@ const genericExport = async (
     throw new TypeError(`key is not a ${keyType} key`);
   }
 
+  const ctx = withCryptoContext(_ctx ?? {});
   return formatPEM(
     uint8ArrayToBase64(
       new Uint8Array(await ctx.crypto.subtle.exportKey(keyFormat, key))
@@ -48,7 +50,7 @@ export const toSPKI = (
   input: {
     key: CryptoKey;
   },
-  ctx: CryptoContext
+  ctx?: CryptoContext
 ) => {
   const { key } = input;
   return genericExport({ keyType: 'public', keyFormat: 'spki', key }, ctx);
@@ -58,7 +60,7 @@ export const toPKCS8 = (
   input: {
     key: CryptoKey;
   },
-  ctx: CryptoContext
+  ctx?: CryptoContext
 ) => {
   const { key } = input;
   return genericExport({ keyType: 'public', keyFormat: 'pkcs8', key }, ctx);
@@ -110,7 +112,7 @@ const genericImport = async (
     replace: RegExp;
     keyFormat: 'spki' | 'pkcs8';
   } & PEMImportOptions,
-  ctx: CryptoContext
+  _ctx?: CryptoContext
 ) => {
   const { pem, alg, keyFormat, replace, extractable } = input;
   let algorithm: RsaHashedImportParams | EcKeyAlgorithm | Algorithm;
@@ -178,6 +180,7 @@ const genericImport = async (
       throw new Error('Invalid or unsupported "alg" (Algorithm) value');
   }
 
+  const ctx = withCryptoContext(_ctx ?? {});
   return ctx.crypto.subtle.importKey(
     keyFormat,
     keyData,
