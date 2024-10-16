@@ -1,5 +1,7 @@
 # @protokoll/eslint-config
 
+## 0.2.30
+
 ## 0.2.29
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @protokoll/github
 
+## 0.2.30
+
+### Patch Changes
+
+- d5a3df3: feat: publish packages
+
 ## 0.2.29
 
 ### Patch Changes
