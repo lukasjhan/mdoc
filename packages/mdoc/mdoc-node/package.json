@@ -21,7 +21,7 @@
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
     "build": "pnpm build:cjs && pnpm build:esm",
-    "build:cjs": "tsc --module commonjs --moduleResolution node --outDir dist/cjs",
+    "build:cjs": "tsc --module commonjs --moduleResolution node --verbatimModuleSyntax false --outDir dist/cjs",
     "build:esm": "tsc",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "eslint .",

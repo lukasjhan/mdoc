@@ -12,8 +12,7 @@
     "moduleDetection": "force",
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-    /**TODO: enable again */
-    "verbatimModuleSyntax": false,
+    "verbatimModuleSyntax": true,
     "outDir": "${configDir}/dist/esm",
 
     /** Keep TSC performant in monorepos */
