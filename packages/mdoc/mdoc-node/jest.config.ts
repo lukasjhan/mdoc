@@ -9,6 +9,13 @@ const jestConfig: JestConfigWithTsJest = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   testMatch: ['**/__tests__/**/*.tests.ts'],
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        verbatimModuleSyntax: false,
+      },
+    },
+  },
 };
 
 export default jestConfig;
