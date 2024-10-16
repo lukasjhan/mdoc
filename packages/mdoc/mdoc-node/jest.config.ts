@@ -11,7 +11,7 @@ const jestConfig: JestConfigWithTsJest = {
   testMatch: ['**/__tests__/**/*.tests.ts'],
   globals: {
     'ts-jest': {
-      typescript: {
+      tsconfig: {
         verbatimModuleSyntax: false,
       },
     },
