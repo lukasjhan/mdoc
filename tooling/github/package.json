@@ -1,7 +1,7 @@
 {
   "name": "@protokoll/github",
   "description": "Protokoll Github Actions",
-  "version": "0.2.30",
+  "version": "0.2.31",
   "private": false,
   "files": [
     "**/*.yml"

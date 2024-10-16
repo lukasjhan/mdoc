@@ -1,5 +1,11 @@
 # @protokoll/eslint-config
 
+## 0.2.31
+
+### Patch Changes
+
+- 1908962: fix: confgi
+
 ## 0.2.30
 
 ## 0.2.29
