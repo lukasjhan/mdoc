@@ -1,5 +1,11 @@
 # @protokoll/mdoc-client
 
+## 0.2.30
+
+### Patch Changes
+
+- @protokoll/core@0.2.30
+
 ## 0.2.29
 
 ### Patch Changes
