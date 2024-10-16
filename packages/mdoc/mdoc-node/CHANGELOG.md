@@ -1,5 +1,13 @@
 # @protokoll/mdoc-node
 
+## 0.2.30
+
+### Patch Changes
+
+- @protokoll/core@0.2.30
+- @protokoll/crypto@0.2.30
+- @protokoll/mdoc-client@0.2.30
+
 ## 0.2.29
 
 ### Patch Changes
