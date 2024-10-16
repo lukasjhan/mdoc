@@ -1,5 +1,0 @@
-{
-  "extends": "@protokoll/tsconfig/base.json",
-  "include": ["."],
-  "exclude": ["node_modules"]
-}

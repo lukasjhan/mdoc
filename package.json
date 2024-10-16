@@ -23,13 +23,13 @@
     "release": "turbo run release && pnpm changeset publish"
   },
   "devDependencies": {
+    "@ausweis/prettier-config": "catalog:",
     "@changesets/cli": "^2.27.9",
-    "@protokoll/prettier-config": "workspace:*",
     "@turbo/gen": "^2.1.3",
     "prettier": "catalog:",
     "start-server-and-test": "^2.0.8",
     "turbo": "^2.1.3",
     "typescript": "catalog:"
   },
-  "prettier": "@protokoll/prettier-config"
+  "prettier": "@ausweis/prettier-config"
 }

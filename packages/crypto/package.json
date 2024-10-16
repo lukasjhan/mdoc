@@ -32,14 +32,14 @@
     "valibot": "catalog:"
   },
   "devDependencies": {
-    "@protokoll/eslint-config": "workspace:*",
-    "@protokoll/prettier-config": "workspace:*",
-    "@protokoll/tsconfig": "workspace:*",
+    "@ausweis/eslint-config": "catalog:",
+    "@ausweis/prettier-config": "catalog:",
+    "@ausweis/tsconfig": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@protokoll/prettier-config",
+  "prettier": "@ausweis/prettier-config",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -21,8 +21,7 @@
   "eslint.runtime": "node",
   "eslint.workingDirectories": [
     { "pattern": "packages/*/" },
-    { "pattern": "packages/mdoc/*/" },
-    { "pattern": "tooling/*/" }
+    { "pattern": "packages/mdoc/*/" }
   ],
   "prettier.ignorePath": ".gitignore"
 }
