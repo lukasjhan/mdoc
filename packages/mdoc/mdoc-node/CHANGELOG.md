@@ -1,5 +1,15 @@
 # @protokoll/mdoc-node
 
+## 0.2.29
+
+### Patch Changes
+
+- 4f2deb0: feat: update configs
+- Updated dependencies [4f2deb0]
+  - @protokoll/core@0.2.29
+  - @protokoll/crypto@0.2.29
+  - @protokoll/mdoc-client@0.2.29
+
 ## 0.2.28
 
 ### Patch Changes

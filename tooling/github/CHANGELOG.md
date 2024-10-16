@@ -1,5 +1,11 @@
 # @protokoll/github
 
+## 0.2.29
+
+### Patch Changes
+
+- 4f2deb0: feat: update configs
+
 ## 0.2.28
 
 ## 0.2.27
