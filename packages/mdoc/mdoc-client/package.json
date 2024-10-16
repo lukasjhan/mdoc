@@ -34,16 +34,16 @@
     "compare-versions": "^6.1.1"
   },
   "devDependencies": {
-    "@ausweis/eslint-config": "catalog:",
-    "@ausweis/prettier-config": "catalog:",
-    "@ausweis/tsconfig": "catalog:",
+    "@ausweis/eslint": "catalog:",
+    "@ausweis/prettier": "catalog:",
+    "@ausweis/typescript": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "jose": "^5.9.3",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@ausweis/prettier-config",
+  "prettier": "@ausweis/prettier",
   "license": "MIT",
   "repository": {
     "type": "git",

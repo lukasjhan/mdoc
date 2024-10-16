@@ -36,9 +36,9 @@
     "@protokoll/mdoc-client": "workspace:*"
   },
   "devDependencies": {
-    "@ausweis/eslint-config": "catalog:",
-    "@ausweis/prettier-config": "catalog:",
-    "@ausweis/tsconfig": "catalog:",
+    "@ausweis/eslint": "catalog:",
+    "@ausweis/prettier": "catalog:",
+    "@ausweis/typescript": "catalog:",
     "@types/jest": "^29.5.13",
     "@types/node": "catalog:",
     "buffer-tag": "^1.0.2",
@@ -51,7 +51,7 @@
     "ts-loader": "^9.5.1",
     "typescript": "catalog:"
   },
-  "prettier": "@ausweis/prettier-config",
+  "prettier": "@ausweis/prettier",
   "license": "MIT",
   "repository": {
     "type": "git",
