@@ -1,5 +1,15 @@
 # @protokoll/mdoc-node
 
+## 0.2.32
+
+### Patch Changes
+
+- be91f34: fix: auth0-mdl fixes
+- Updated dependencies [be91f34]
+  - @protokoll/mdoc-client@0.2.32
+  - @protokoll/core@0.2.32
+  - @protokoll/crypto@0.2.32
+
 ## 0.2.31
 
 ### Patch Changes
