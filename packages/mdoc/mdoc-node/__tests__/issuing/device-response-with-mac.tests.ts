@@ -29,6 +29,10 @@ describe('issuing a device response with MAC authentication', () => {
   let ephemeralPrivateKey: JWK;
   let ephemeralPublicKey: JWK;
 
+  const signed = new Date('2023-10-24T14:55:18Z');
+  const validUntil = new Date(signed);
+  validUntil.setFullYear(signed.getFullYear() + 30);
+
   beforeAll(async () => {
     const issuerPrivateKey = ISSUER_PRIVATE_KEY_JWK;
 
@@ -40,7 +44,7 @@ describe('issuing a device response with MAC authentication', () => {
           given_name: 'Ava',
           birth_date: '2007-03-25',
           issue_date: '2023-09-01',
-          expiry_date: '2028-09-31',
+          expiry_date: '2028-09-30',
           issuing_country: 'US',
           issuing_authority: 'NY DMV',
           document_number: '01-856-5050',
@@ -48,8 +52,8 @@ describe('issuing a device response with MAC authentication', () => {
           driving_privileges: [
             {
               vehicle_category_code: 'C',
-              issue_date: '2023-09-01',
-              expiry_date: '2028-09-31',
+              issue_date: '2022-09-01',
+              expiry_date: '2027-09-30',
             },
           ],
           un_distinguishing_sign: 'tbd-us.ny.dmv',
@@ -67,10 +71,7 @@ describe('issuing a device response with MAC authentication', () => {
           issuing_jurisdiction: 'New York',
         })
         .useDigestAlgorithm('SHA-512')
-        .addValidityInfo({
-          signed: new Date('2023-10-24'),
-          validUntil: new Date('2050-10-24'),
-        })
+        .addValidityInfo({ signed, validUntil })
         .addDeviceKeyInfo({ deviceKey: publicKeyJWK })
         .sign(
           {
@@ -238,9 +239,10 @@ describe('issuing a device response with MAC authentication', () => {
       const { validityInfo } =
         parsedDocument.issuerSigned.issuerAuth.decodedPayload;
       expect(validityInfo).toBeDefined();
-      expect(validityInfo.signed).toEqual(new Date('2023-10-24'));
-      expect(validityInfo.validFrom).toEqual(new Date('2023-10-24'));
-      expect(validityInfo.validUntil).toEqual(new Date('2050-10-24'));
+      expect(validityInfo.signed).toEqual(signed);
+      expect(validityInfo.validFrom).toEqual(signed);
+      expect(validityInfo.validUntil).toEqual(validUntil);
+      expect(validityInfo.expectedUpdate).toBeUndefined();
     });
 
     it('should contain the device namespaces', () => {
@@ -391,9 +393,10 @@ describe('issuing a device response with MAC authentication', () => {
       const { validityInfo } =
         parsedDocument.issuerSigned.issuerAuth.decodedPayload;
       expect(validityInfo).toBeDefined();
-      expect(validityInfo.signed).toEqual(new Date('2023-10-24'));
-      expect(validityInfo.validFrom).toEqual(new Date('2023-10-24'));
-      expect(validityInfo.validUntil).toEqual(new Date('2050-10-24'));
+      expect(validityInfo.signed).toEqual(signed);
+      expect(validityInfo.validFrom).toEqual(signed);
+      expect(validityInfo.validUntil).toEqual(validUntil);
+      expect(validityInfo.expectedUpdate).toBeUndefined();
     });
 
     it('should contain the device namespaces', () => {
