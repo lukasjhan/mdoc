@@ -1,4 +1,4 @@
-import { addExtension } from 'cbor-x';
+import { addExtension } from './cbor-x/index.js';
 import { cborDecode, cborEncode } from './index.js';
 
 export type DataItemParams<T = unknown> =

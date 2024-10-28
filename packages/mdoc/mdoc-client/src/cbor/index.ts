@@ -1,9 +1,11 @@
-import type { Options } from 'cbor-x';
-import { addExtension, Encoder } from 'cbor-x';
+import type { Options } from './cbor-x/index.js';
+import { addExtension } from './cbor-x/index.js';
+
+import { Encoder } from './cbor-x/encode.js';
 
 export { DataItem } from './data-item.js';
 
-export { addExtension } from 'cbor-x';
+export { addExtension } from './cbor-x/index.js';
 
 const customInspectSymbol = Symbol.for('nodejs.util.inspect.custom');
 export class DateOnly extends Date {

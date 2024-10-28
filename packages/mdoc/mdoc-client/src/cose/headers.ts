@@ -1,5 +1,5 @@
-import { TypedMap } from '@jfromaniello/typedmap';
 import { cborEncode } from '../cbor/index.js';
+import { TypedMap } from './typed-map';
 /**
  * COSE Header labels registered in the IANA "COSE Header Parameters" registry.
  * Reference: https://www.iana.org/assignments/cose/cose.xhtml#header-parameters

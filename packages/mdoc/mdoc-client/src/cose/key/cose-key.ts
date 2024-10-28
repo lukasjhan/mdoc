@@ -1,4 +1,3 @@
-import { TypedMap } from '@jfromaniello/typedmap';
 import {
   base64UrlToUint8Array,
   concatUint8Array,
@@ -8,6 +7,7 @@ import {
 import type { JWK } from 'jose';
 import { cborDecode, cborEncode } from '../../cbor/index.js';
 import { Algorithms } from '../headers.js';
+import { TypedMap } from '../typed-map.js';
 import { Curve } from './curve.js';
 import type { KeyOps } from './key-ops.js';
 import { JWKKeyOps, JWKKeyOpsToCOSE } from './key-ops.js';

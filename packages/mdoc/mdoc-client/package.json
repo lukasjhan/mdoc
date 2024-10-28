@@ -23,12 +23,10 @@
     "build:cjs": "tsc --module commonjs --moduleResolution node --verbatimModuleSyntax false --outDir dist/cjs",
     "format": "prettier --check . --ignore-path ../../../.gitignore",
     "lint": "echo 'TODO: FIX AND ENABLE'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --verbatimModuleSyntax false"
   },
   "dependencies": {
-    "@jfromaniello/typedmap": "^1.4.0",
     "@protokoll/core": "workspace:*",
-    "cbor-x": "^1.6.0",
     "compare-versions": "^6.1.1"
   },
   "devDependencies": {
