@@ -1,5 +1,12 @@
 # @protokoll/mdoc-client
 
+## 0.2.34
+
+### Patch Changes
+
+- 12bf656: fix: react-native
+  - @protokoll/core@0.2.34
+
 ## 0.2.33
 
 ### Patch Changes
