@@ -1,5 +1,12 @@
 # @protokoll/mdoc-client
 
+## 0.2.33
+
+### Patch Changes
+
+- 349775e: fix: cjs compatibility
+  - @protokoll/core@0.2.33
+
 ## 0.2.32
 
 ### Patch Changes
