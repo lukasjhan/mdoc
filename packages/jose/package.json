@@ -3,7 +3,7 @@
   "description": "Protokoll Jose",
   "author": "Martin Auer",
   "private": false,
-  "version": "0.2.32",
+  "version": "0.2.33",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/cjs/src/index.js",
   "types": "./dist/cjs/src/index.d.ts",

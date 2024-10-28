@@ -2,7 +2,7 @@
   "name": "@protokoll/crypto",
   "description": "Protokoll subtle-crypto Functionality",
   "author": "Martin Auer",
-  "version": "0.2.32",
+  "version": "0.2.33",
   "private": false,
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/cjs/src/index.js",
