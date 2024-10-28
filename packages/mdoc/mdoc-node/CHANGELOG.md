@@ -1,5 +1,14 @@
 # @protokoll/mdoc-node
 
+## 0.2.35
+
+### Patch Changes
+
+- Updated dependencies [fc118b3]
+  - @protokoll/mdoc-client@0.2.35
+  - @protokoll/core@0.2.35
+  - @protokoll/crypto@0.2.35
+
 ## 0.2.34
 
 ### Patch Changes
