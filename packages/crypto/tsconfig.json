@@ -2,7 +2,8 @@
   "extends": "@ausweis/typescript/internal-package.json",
   "include": ["src"],
   "compilerOptions": {
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "verbatimModuleSyntax": false
   },
   "exclude": ["node_modules"]
 }

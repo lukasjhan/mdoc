@@ -4,15 +4,14 @@
   "author": "Martin Auer",
   "private": false,
   "version": "0.2.32",
-  "type": "module",
   "main": "./dist/cjs/src/index.js",
-  "module": "./dist/esm/src/index.js",
-  "types": "./dist/esm/src/index.d.ts",
+  "module": "./dist/cjs/src/index.js",
+  "types": "./dist/cjs/src/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/esm/src/index.js",
+      "import": "./dist/cjs/src/index.js",
       "require": "./dist/cjs/src/index.js",
-      "types": "./dist/esm/src/index.d.ts"
+      "types": "./dist/cjs/src/index.d.ts"
     }
   },
   "files": [
@@ -20,9 +19,8 @@
   ],
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
-    "build": "pnpm build:cjs && pnpm build:esm",
+    "build": "pnpm build:cjs",
     "build:cjs": "tsc --module commonjs --moduleResolution node --verbatimModuleSyntax false --outDir dist/cjs",
-    "build:esm": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
