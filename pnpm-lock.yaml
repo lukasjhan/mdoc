@@ -40,14 +40,6 @@ catalogs:
       specifier: 0.37.0
       version: 0.37.0
 
-patchedDependencies:
-  '@jfromaniello/typedmap':
-    hash: iqtwhjmpali32ffx7juqllginm
-    path: packages/mdoc/mdoc-client/patches/@jfromaniello__typedmap.patch
-  cbor-x:
-    hash: tzam6invsc2vziqfn2e4wzr2wa
-    path: packages/mdoc/mdoc-client/patches/cbor-x.patch
-
 importers:
 
   .:
@@ -223,13 +215,13 @@ importers:
     dependencies:
       '@jfromaniello/typedmap':
         specifier: ^1.4.0
-        version: 1.4.0(patch_hash=iqtwhjmpali32ffx7juqllginm)
+        version: 1.4.0
       '@protokoll/core':
         specifier: workspace:*
         version: link:../../core
       cbor-x:
         specifier: ^1.6.0
-        version: 1.6.0(patch_hash=tzam6invsc2vziqfn2e4wzr2wa)
+        version: 1.6.0
       compare-versions:
         specifier: ^6.1.1
         version: 6.1.1
@@ -4750,7 +4742,7 @@ snapshots:
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
-  '@jfromaniello/typedmap@1.4.0(patch_hash=iqtwhjmpali32ffx7juqllginm)': {}
+  '@jfromaniello/typedmap@1.4.0': {}
 
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
@@ -5652,7 +5644,7 @@ snapshots:
       '@cbor-extract/cbor-extract-win32-x64': 2.2.0
     optional: true
 
-  cbor-x@1.6.0(patch_hash=tzam6invsc2vziqfn2e4wzr2wa):
+  cbor-x@1.6.0:
     optionalDependencies:
       cbor-extract: 2.2.0
 
