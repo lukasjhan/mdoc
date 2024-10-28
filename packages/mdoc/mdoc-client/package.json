@@ -64,5 +64,11 @@
     "m-doc-cbor-iso-18013-5-validator",
     "m-doc-cbor-iso-18013-5-encoder",
     "m-doc-cbor-iso-18013-5-decoder"
-  ]
+  ],
+  "pnpm": {
+    "patchedDependencies": {
+      "@jfromaniello/typedmap": "patches/@jfromaniello__typedmap.patch",
+      "cbor-x": "patches/cbor-x.patch"
+    }
+  }
 }

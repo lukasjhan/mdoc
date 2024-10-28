@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+index edb94e5fff7b72e6bcde7158ee7bc8ade160541b..4f1bbee187981cc8d1275e3a00a805175fb17e15 100644
+--- a/package.json
++++ b/package.json
+@@ -6,6 +6,7 @@
+   "license": "MIT",
+   "types": "./index.d.ts",
+   "main": "./dist/node.cjs",
++  "react-native": "./dist/index.js",
+   "module": "./index.js",
+   "keywords": [
+     "CBOR",

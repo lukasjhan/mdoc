@@ -1,0 +1,13 @@
+diff --git a/package.json b/package.json
+index 4b5bd8a15821e3e669abd674879b3511a5af80a7..07d04b3ce626b627916212adee2f5a6aac273bb6 100644
+--- a/package.json
++++ b/package.json
+@@ -2,7 +2,7 @@
+   "name": "@jfromaniello/typedmap",
+   "version": "1.4.0",
+   "description": "",
+-  "main": "dist/index.js",
++  "main": "dist/cjs/index.js",
+   "types": "./dist/types/index.d.ts",
+   "files": [
+     "dist"
