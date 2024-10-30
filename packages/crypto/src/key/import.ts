@@ -213,7 +213,7 @@ export async function importJWK(
     throw new TypeError('JWK must be an object');
   }
 
-  alg ||= jwk.alg;
+  alg ??= jwk.alg;
 
   const ctx = withCryptoContext(_ctx ?? {});
   switch (jwk.kty) {
