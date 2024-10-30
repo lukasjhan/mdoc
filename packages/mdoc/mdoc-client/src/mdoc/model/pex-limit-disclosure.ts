@@ -1,46 +1,58 @@
 import type { IssuerSignedItem } from '../issuer-signed-item.js';
+import type { DeviceRequestNameSpaces } from './device-request.js';
 import type { IssuerSignedDocument } from './issuer-signed-document.js';
+import type { MDoc } from './mdoc.js';
 import type { InputDescriptor } from './presentation-definition.js';
+import type { DocType, IssuerNameSpaces } from './types.js';
 
-export const limitDisclosureToInputDescriptor = (input: {
-  mdoc: IssuerSignedDocument;
-  inputDescriptor: InputDescriptor;
-}) => {
-  const { mdoc, inputDescriptor } = input;
+export const limitDisclosureToDeviceRequestNameSpaces = (
+  mdoc: IssuerSignedDocument,
+  deviceRequestNameSpaces: DeviceRequestNameSpaces
+): Record<string, IssuerSignedItem[]> => {
   const nameSpaces: Record<string, IssuerSignedItem[]> = {};
 
-  for (const field of inputDescriptor.constraints.fields) {
-    const result = prepareDigest(field.path, mdoc);
-    if (!result) {
-      // TODO: Do we add an entry to DocumentErrors if not found?
-      console.log(`No matching field found for '${field.path.join('.')}'`);
-      continue;
-    }
+  for (const [nameSpace, nameSpaceFields] of Object.entries(
+    deviceRequestNameSpaces
+  )) {
+    const nsAttrs = mdoc.issuerSigned.nameSpaces[nameSpace] ?? [];
+    const digests = Object.entries(nameSpaceFields)
+      .filter(([_, disclose]) => disclose)
+      .map(([elementIdentifier, _]) => {
+        const digest = prepareDigest(elementIdentifier, nsAttrs);
+        if (!digest) {
+          throw new Error(`No matching field found for '${elementIdentifier}'`);
+        }
+        return digest;
+      });
 
-    const { nameSpace, digest } = result;
-    if (!nameSpaces[nameSpace]) nameSpaces[nameSpace] = [];
-    nameSpaces[nameSpace].push(digest);
+    nameSpaces[nameSpace] = digests;
   }
-
   return nameSpaces;
 };
 
 const prepareDigest = (
+  elementIdentifier: string,
+  nsAttrs: IssuerSignedItem[]
+): IssuerSignedItem | null => {
+  if (elementIdentifier.startsWith('age_over_')) {
+    const digest = handleAgeOverNN(elementIdentifier, nsAttrs);
+    return digest;
+  }
+
+  const digest = nsAttrs.find(d => d.elementIdentifier === elementIdentifier);
+  return digest ?? null;
+};
+
+const prepareDigestForInputDescriptor = (
   paths: string[],
-  document: IssuerSignedDocument
+  issuerNameSpaces: IssuerNameSpaces
 ): { nameSpace: string; digest: IssuerSignedItem } | null => {
   for (const path of paths) {
     const { nameSpace, elementIdentifier } = parsePath(path);
-    const nsAttrs = document.issuerSigned.nameSpaces[nameSpace] ?? [];
+    const nsAttrs = issuerNameSpaces[nameSpace] ?? [];
 
-    if (elementIdentifier.startsWith('age_over_')) {
-      return handleAgeOverNN(elementIdentifier, nameSpace, nsAttrs);
-    }
-
-    const digest = nsAttrs.find(d => d.elementIdentifier === elementIdentifier);
-    if (digest) {
-      return { nameSpace, digest };
-    }
+    const digest = prepareDigest(elementIdentifier, nsAttrs);
+    if (digest) return { nameSpace, digest };
   }
   return null;
 };
@@ -76,9 +88,8 @@ const parsePath = (
 
 const handleAgeOverNN = (
   request: string,
-  nameSpace: string,
   attributes: IssuerSignedItem[]
-): { nameSpace: string; digest: IssuerSignedItem } | null => {
+): IssuerSignedItem | null => {
   const ageOverList = attributes
     .map((a, i) => {
       const { elementIdentifier: key, elementValue: value } = a;
@@ -108,9 +119,52 @@ const handleAgeOverNN = (
     return null;
   }
 
-  return {
-    nameSpace,
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    digest: attributes[item.index]!,
-  };
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return attributes[item.index]!;
+};
+
+export const findMdocMatchingDocType = (mdoc: MDoc, docType: DocType) => {
+  const matchingMdoc = mdoc.documents.filter(
+    document => document.docType === docType
+  );
+
+  if (!matchingMdoc[0]) {
+    // TODO; probl need to create a DocumentError here, but let's just throw for now
+    throw new Error(
+      `Cannot limit the disclosure. No credential is matching the requested DocType '${docType}'`
+    );
+  }
+
+  if (matchingMdoc.length > 1) {
+    throw new Error(
+      `Cannot limit the disclosure. Multiple credentials are matching the requested DocType '${docType}'`
+    );
+  }
+
+  return matchingMdoc[0];
+};
+
+export const limitDisclosureToInputDescriptor = (
+  mdoc: IssuerSignedDocument,
+  inputDescriptor: InputDescriptor
+): Record<string, IssuerSignedItem[]> => {
+  const nameSpaces: Record<string, IssuerSignedItem[]> = {};
+
+  for (const field of inputDescriptor.constraints.fields) {
+    const result = prepareDigestForInputDescriptor(
+      field.path,
+      mdoc.issuerSigned.nameSpaces
+    );
+    if (!result) {
+      // TODO: Do we add an entry to DocumentErrors if not found?
+      console.log(`No matching field found for '${field.path.join('.')}'`);
+      continue;
+    }
+
+    const { nameSpace, digest } = result;
+    if (!nameSpaces[nameSpace]) nameSpaces[nameSpace] = [];
+    nameSpaces[nameSpace].push(digest);
+  }
+
+  return nameSpaces;
 };

@@ -1,18 +1,19 @@
 import { X509Certificate } from '@peculiar/x509';
 import type { DeviceSignedDocument } from '@protokoll/mdoc-client';
 import {
+  cborEncode,
   DataItem,
   DeviceResponse,
   Document,
   MDoc,
-  Verifier,
-  cborEncode,
   parseDeviceResponse,
+  Verifier,
 } from '@protokoll/mdoc-client';
 import { randomFillSync } from 'node:crypto';
 import { mdocContext } from '../../src/index.js';
 import {
   DEVICE_JWK,
+  deviceRequest,
   ISSUER_CERTIFICATE,
   ISSUER_PRIVATE_KEY_JWK,
   PRESENTATION_DEFINITION_1,
@@ -133,44 +134,21 @@ describe('issuing a device response', () => {
     });
 
     describe('should not be verifiable', () => {
-      [
-        [
-          'clientId',
-          {
-            clientId: 'wrong',
-            responseUri,
-            verifierGeneratedNonce,
-            mdocGeneratedNonce,
-          },
-        ] as const,
-        [
-          'responseUri',
-          {
-            clientId,
-            responseUri: 'wrong',
-            verifierGeneratedNonce,
-            mdocGeneratedNonce,
-          },
-        ] as const,
-        [
-          'verifierGeneratedNonce',
-          {
-            clientId,
-            responseUri,
-            verifierGeneratedNonce: 'wrong',
-            mdocGeneratedNonce,
-          },
-        ] as const,
-        [
-          'mdocGeneratedNonce',
-          {
-            clientId,
-            responseUri,
-            verifierGeneratedNonce,
-            mdocGeneratedNonce: 'wrong',
-          },
-        ] as const,
-      ].forEach(([name, values]) => {
+      const testCases = [
+        'clientId',
+        'responseUri',
+        'verifierGeneratedNonce',
+        'mdocGeneratedNonce',
+      ];
+
+      testCases.forEach(name => {
+        const values = {
+          clientId,
+          responseUri,
+          verifierGeneratedNonce,
+          mdocGeneratedNonce,
+          [name]: 'wrong',
+        };
         it(`with a different ${name}`, async () => {
           try {
             const verifier = new Verifier();
@@ -292,32 +270,151 @@ describe('issuing a device response', () => {
 
     describe('should not be verifiable', () => {
       const wrong = randomFillSync(Buffer.alloc(32));
-      [
-        [
-          'readerEngagementBytes',
-          {
-            readerEngagementBytes: wrong,
+      const testCases = [
+        'eReaderKeyBytes',
+        'deviceEngagementBytes',
+        'readerEngagementBytes',
+      ];
+
+      testCases.forEach(name => {
+        const values = {
+          eReaderKeyBytes,
+          deviceEngagementBytes,
+          readerEngagementBytes,
+          [name]: wrong,
+        };
+        it(`with a different ${name}`, async () => {
+          const verifier = new Verifier();
+          try {
+            await verifier.verifyDeviceResponse(
+              {
+                trustedCertificates: [
+                  new Uint8Array(
+                    new X509Certificate(ISSUER_CERTIFICATE).rawData
+                  ),
+                ],
+                encodedDeviceResponse,
+                encodedSessionTranscript: getSessionTranscriptBytes(
+                  values.readerEngagementBytes,
+                  values.deviceEngagementBytes,
+                  values.eReaderKeyBytes
+                ),
+              },
+              mdocContext
+            );
+            throw new Error('should not validate with different transcripts');
+          } catch (error) {
+            expect((error as Error).message).toMatch(
+              'Unable to verify deviceAuth signature (ECDSA/EdDSA): Device signature must be valid'
+            );
+          }
+        });
+      });
+    });
+
+    it('should contain the validity info', () => {
+      const { validityInfo } =
+        parsedDocument.issuerSigned.issuerAuth.decodedPayload;
+      expect(validityInfo).toBeDefined();
+      expect(validityInfo.signed).toEqual(signed);
+      expect(validityInfo.validFrom).toEqual(signed);
+      expect(validityInfo.validUntil).toEqual(validUntil);
+      expect(validityInfo.expectedUpdate).toBeUndefined();
+    });
+
+    it('should contain the device namespaces', () => {
+      expect(parsedDocument.getDeviceNameSpace('com.foobar-device')).toEqual({
+        test: 1234,
+      });
+    });
+
+    it('should generate the signature without payload', () => {
+      expect(
+        parsedDocument.deviceSigned.deviceAuth.deviceSignature?.payload
+      ).toBeUndefined();
+    });
+  });
+
+  describe('using Device Request instead of presentation definition', () => {
+    // The actual value for the engagements & the key do not matter,
+    // as long as the device and the reader agree on what value to use.
+    const eReaderKeyBytes: Buffer = randomFillSync(Buffer.alloc(32));
+    const readerEngagementBytes = randomFillSync(Buffer.alloc(32));
+    const deviceEngagementBytes = randomFillSync(Buffer.alloc(32));
+
+    const getSessionTranscriptBytes = (
+      rdrEngtBytes: Buffer,
+      devEngtBytes: Buffer,
+      eRdrKeyBytes: Buffer
+    ) =>
+      cborEncode(
+        DataItem.fromData([
+          new DataItem({ buffer: devEngtBytes }),
+          new DataItem({ buffer: eRdrKeyBytes }),
+          rdrEngtBytes,
+        ])
+      );
+
+    beforeAll(async () => {
+      // Nothing more to do on the verifier side.
+
+      // This is the Device side
+      {
+        const devicePrivateKey = DEVICE_JWK;
+        const deviceResponseMDoc = await DeviceResponse.from(mdoc)
+          .usingDeviceRequest(deviceRequest)
+          .usingSessionTranscriptForWebAPI({
             deviceEngagementBytes,
-            eReaderKeyBytes,
-          },
-        ] as const,
-        [
-          'deviceEngagementBytes',
-          {
             readerEngagementBytes,
-            deviceEngagementBytes: wrong,
             eReaderKeyBytes,
-          },
-        ] as const,
-        [
-          'eReaderKeyBytes',
-          {
-            readerEngagementBytes,
-            deviceEngagementBytes,
-            eReaderKeyBytes: wrong,
-          },
-        ] as const,
-      ].forEach(([name, values]) => {
+          })
+          .authenticateWithSignature(devicePrivateKey, 'ES256')
+          .addDeviceNameSpace('com.foobar-device', { test: 1234 })
+          .sign(mdocContext);
+        encodedDeviceResponse = deviceResponseMDoc.encode();
+      }
+
+      const parsedMDOC = parseDeviceResponse(encodedDeviceResponse);
+      [parsedDocument] = parsedMDOC.documents as [
+        DeviceSignedDocument,
+        ...DeviceSignedDocument[],
+      ];
+    });
+
+    it('should be verifiable', async () => {
+      const verifier = new Verifier();
+      await verifier.verifyDeviceResponse(
+        {
+          trustedCertificates: [
+            new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
+          ],
+          encodedDeviceResponse,
+          encodedSessionTranscript:
+            DeviceResponse.calculateSessionTranscriptForWebApi({
+              readerEngagementBytes,
+              deviceEngagementBytes,
+              eReaderKeyBytes,
+            }),
+        },
+        mdocContext
+      );
+    });
+
+    describe('should not be verifiable', () => {
+      const wrong = randomFillSync(Buffer.alloc(32));
+      const testCases = [
+        'readerEngagementBytes',
+        'deviceEngagementBytes',
+        'eReaderKeyBytes',
+      ];
+
+      testCases.forEach(name => {
+        const values = {
+          eReaderKeyBytes,
+          deviceEngagementBytes,
+          readerEngagementBytes,
+          [name]: wrong,
+        };
         it(`with a different ${name}`, async () => {
           const verifier = new Verifier();
           try {

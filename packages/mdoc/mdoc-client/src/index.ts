@@ -1,3 +1,5 @@
+export { DateOnly } from './cbor/index.js';
+
 export * from './c-mdoc.js';
 export {
   DataItem,
@@ -12,6 +14,7 @@ export {
   type VerificationCallback,
 } from './mdoc/check-callback.js';
 export { IssuerSignedItem } from './mdoc/issuer-signed-item.js';
+export { DeviceRequest } from './mdoc/model/device-request.js';
 export { DeviceResponse } from './mdoc/model/device-response.js';
 export { DeviceSignedDocument } from './mdoc/model/device-signed-document.js';
 export { Document } from './mdoc/model/document.js';

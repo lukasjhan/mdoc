@@ -160,44 +160,21 @@ describe('issuing a device response with MAC authentication', () => {
     });
 
     describe('should not be verifiable', () => {
-      [
-        [
-          'clientId',
-          {
-            clientId: 'wrong',
-            responseUri,
-            verifierGeneratedNonce,
-            mdocGeneratedNonce,
-          },
-        ] as const,
-        [
-          'responseUri',
-          {
-            clientId,
-            responseUri: 'wrong',
-            verifierGeneratedNonce,
-            mdocGeneratedNonce,
-          },
-        ] as const,
-        [
-          'verifierGeneratedNonce',
-          {
-            clientId,
-            responseUri,
-            verifierGeneratedNonce: 'wrong',
-            mdocGeneratedNonce,
-          },
-        ] as const,
-        [
-          'mdocGeneratedNonce',
-          {
-            clientId,
-            responseUri,
-            verifierGeneratedNonce,
-            mdocGeneratedNonce: 'wrong',
-          },
-        ] as const,
-      ].forEach(([name, values]) => {
+      const testCases = [
+        'clientId',
+        'responseUri',
+        'verifierGeneratedNonce',
+        'mdocGeneratedNonce',
+      ];
+
+      testCases.forEach(name => {
+        const values = {
+          clientId,
+          responseUri,
+          verifierGeneratedNonce,
+          mdocGeneratedNonce,
+          [name]: 'wrong',
+        };
         it(`with a different ${name}`, async () => {
           try {
             const verifier = new Verifier();
@@ -326,32 +303,19 @@ describe('issuing a device response with MAC authentication', () => {
 
     describe('should not be verifiable', () => {
       const wrong = randomFillSync(Buffer.alloc(32));
-      [
-        [
-          'readerEngagementBytes',
-          {
-            readerEngagementBytes: wrong,
-            deviceEngagementBytes,
-            eReaderKeyBytes,
-          },
-        ] as const,
-        [
-          'deviceEngagementBytes',
-          {
-            readerEngagementBytes,
-            deviceEngagementBytes: wrong,
-            eReaderKeyBytes,
-          },
-        ] as const,
-        [
-          'eReaderKeyBytes',
-          {
-            readerEngagementBytes,
-            deviceEngagementBytes,
-            eReaderKeyBytes: wrong,
-          },
-        ] as const,
-      ].forEach(([name, values]) => {
+      const testCases = [
+        'eReaderKeyBytes',
+        'deviceEngagementBytes',
+        'readerEngagementBytes',
+      ];
+
+      testCases.forEach(name => {
+        const values = {
+          eReaderKeyBytes,
+          deviceEngagementBytes,
+          readerEngagementBytes,
+          [name]: wrong,
+        };
         it(`with a different ${name}`, async () => {
           const verifier = new Verifier();
 

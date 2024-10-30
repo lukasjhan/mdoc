@@ -1,3 +1,4 @@
+import { DeviceRequest } from '@protokoll/mdoc-client';
 //  All the keys here are randomly generated for the purpose of this test.
 export const DEVICE_JWK = {
   kty: 'EC',
@@ -102,6 +103,30 @@ export const PRESENTATION_DEFINITION_1 = {
     },
   ],
 };
+
+export const deviceRequest = DeviceRequest.from('1.0', [
+  {
+    itemsRequestData: {
+      docType: 'org.iso.18013.5.1.mDL',
+      nameSpaces: {
+        'org.iso.18013.5.1': {
+          family_name: true,
+          given_name: true,
+          birth_date: true,
+          issue_date: true,
+          expiry_date: true,
+          issuing_country: true,
+          issuing_authority: true,
+          issuing_jurisdiction: true,
+          document_number: true,
+          portrait: true,
+          driving_privileges: true,
+          un_distinguishing_sign: true,
+        },
+      },
+    },
+  },
+]);
 
 export const PRESENTATION_DEFINITION_2 = {
   id: 'mdl-test-age-over-18',

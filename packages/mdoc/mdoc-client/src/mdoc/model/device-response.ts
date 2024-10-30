@@ -13,12 +13,22 @@ import {
 import { COSEKey, COSEKeyToRAW } from '../../cose/key/cose-key.js';
 import { Mac0 } from '../../cose/mac0.js';
 import { Sign1 } from '../../cose/sign1.js';
+import type { IssuerSignedItem } from '../issuer-signed-item.js';
 import { parseDeviceResponse } from '../parser.js';
 import { calculateDeviceAutenticationBytes } from '../utils.js';
+import type { DeviceRequest, DocRequest } from './device-request.js';
 import { DeviceSignedDocument } from './device-signed-document.js';
+import type { IssuerSignedDocument } from './issuer-signed-document.js';
 import { MDoc } from './mdoc.js';
-import { limitDisclosureToInputDescriptor } from './pex-limit-disclosure.js';
-import type { PresentationDefinition } from './presentation-definition.js';
+import {
+  findMdocMatchingDocType,
+  limitDisclosureToDeviceRequestNameSpaces,
+  limitDisclosureToInputDescriptor,
+} from './pex-limit-disclosure.js';
+import type {
+  InputDescriptor,
+  PresentationDefinition,
+} from './presentation-definition.js';
 import type {
   DeviceAuth,
   DeviceSigned,
@@ -30,8 +40,9 @@ import type {
  * A builder class for creating a device response.
  */
 export class DeviceResponse {
-  private mdoc?: MDoc;
+  private mdoc: MDoc;
   private pd?: PresentationDefinition;
+  private deviceRequest?: DeviceRequest;
   private sessionTranscriptBytes?: Uint8Array;
   private useMac = true;
   private devicePrivateKey?: JWK;
@@ -83,6 +94,22 @@ export class DeviceResponse {
     }
 
     this.pd = pd;
+    return this;
+  }
+
+  /**
+   *
+   * @param deviceRequest - The device request
+   * @returns {DeviceResponse}
+   */
+  public usingDeviceRequest(deviceRequest: DeviceRequest): DeviceResponse {
+    if (!deviceRequest.docRequests.length) {
+      throw new Error(
+        'The deviceRequest must have at least one docRequest object.'
+      );
+    }
+
+    this.deviceRequest = deviceRequest;
     return this;
   }
 
@@ -253,9 +280,9 @@ export class DeviceResponse {
     crypto: MdocContext['crypto'];
     cose: MdocContext['cose'];
   }): Promise<MDoc> {
-    if (!this.pd) {
+    if (!this.pd && !this.deviceRequest) {
       throw new Error(
-        'Must provide a presentation definition with .usingPresentationDefinition()'
+        'Must provide a presentation definition or device request with .usingPresentationDefinition() or .usingDeviceRequest()'
       );
     }
 
@@ -266,29 +293,28 @@ export class DeviceResponse {
     }
 
     const limitedDeviceSignedDocuments = await Promise.all(
-      this.pd.input_descriptors.map(async inputDescriptor => {
-        const mdocMatchingInputDescriptor = this.mdoc?.documents.filter(
-          document => document.docType === inputDescriptor.id
-        );
+      (
+        this.pd?.input_descriptors ??
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain, no-unsafe-optional-chaining
+        this.deviceRequest?.docRequests!
+      ).map(async request => {
+        const isDeviceRequest = (
+          r: InputDescriptor | DocRequest
+        ): r is DocRequest => 'itemsRequest' in request;
 
-        if (!mdocMatchingInputDescriptor?.[0]) {
-          // TODO; probl need to create a DocumentError here, but let's just throw for now
-          throw new Error(
-            `Cannot limit the disclosure to a presentation definition. No credential is matching the input descriptor with DocType '${inputDescriptor.id}'`
+        let mdoc: IssuerSignedDocument;
+        let disclosedNameSpaces: Record<string, IssuerSignedItem[]>;
+        if (isDeviceRequest(request)) {
+          const docType = request.itemsRequest.data.docType;
+          mdoc = findMdocMatchingDocType(this.mdoc, docType);
+          disclosedNameSpaces = limitDisclosureToDeviceRequestNameSpaces(
+            mdoc,
+            request.itemsRequest.data.nameSpaces
           );
+        } else {
+          mdoc = findMdocMatchingDocType(this.mdoc, request.id);
+          disclosedNameSpaces = limitDisclosureToInputDescriptor(mdoc, request);
         }
-
-        if (mdocMatchingInputDescriptor.length > 1) {
-          throw new Error(
-            `Cannot limit the disclosure to a presentation definition. Multiple credentials are matching a single input descriptor. DocType '${inputDescriptor.id}'`
-          );
-        }
-
-        const mdoc = mdocMatchingInputDescriptor[0];
-        const disclosedNameSpaces = limitDisclosureToInputDescriptor({
-          mdoc,
-          inputDescriptor,
-        });
 
         return new DeviceSignedDocument(
           mdoc.docType,
