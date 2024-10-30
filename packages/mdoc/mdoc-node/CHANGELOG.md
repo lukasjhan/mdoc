@@ -1,5 +1,15 @@
 # @protokoll/mdoc-node
 
+## 0.2.36
+
+### Patch Changes
+
+- 599dbcd: feat: add Device-Request
+- Updated dependencies [599dbcd]
+  - @protokoll/mdoc-client@0.2.36
+  - @protokoll/core@0.2.36
+  - @protokoll/crypto@0.2.36
+
 ## 0.2.35
 
 ### Patch Changes
