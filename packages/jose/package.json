@@ -4,14 +4,14 @@
   "author": "Martin Auer",
   "private": false,
   "version": "0.2.34",
-  "main": "./dist/cjs/src/index.js",
-  "module": "./dist/cjs/src/index.js",
-  "types": "./dist/cjs/src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/cjs/src/index.js",
-      "require": "./dist/cjs/src/index.js",
-      "types": "./dist/cjs/src/index.d.ts"
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "files": [
@@ -19,12 +19,11 @@
   ],
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules dist",
-    "build": "pnpm build:cjs",
-    "build:cjs": "tsc --module commonjs --moduleResolution node --verbatimModuleSyntax false --outDir dist/cjs",
+    "build": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "node --test"
   },
   "dependencies": {
     "@protokoll/core": "workspace:*",
@@ -40,7 +39,6 @@
     "jose": "catalog:",
     "msw": "catalog:",
     "prettier": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@ausweis/prettier",

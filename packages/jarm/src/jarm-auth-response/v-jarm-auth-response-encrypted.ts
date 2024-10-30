@@ -7,7 +7,7 @@ export const vJarmAuthResponseEncrypted = v.looseObject({
   ...v.omit(vJarmAuthResponse, ['iss', 'aud', 'exp']).entries,
   ...v.partial(v.pick(vJarmAuthResponse, ['iss', 'aud', 'exp'])).entries,
 
-  vp_token: v.string(),
+  vp_token: v.union([v.string(), v.array(v.string())]),
   presentation_submission: v.unknown(),
   nonce: v.optional(v.string()),
 });
