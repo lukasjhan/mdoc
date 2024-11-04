@@ -129,7 +129,6 @@ export const findMdocMatchingDocType = (mdoc: MDoc, docType: DocType) => {
   );
 
   if (!matchingMdoc[0]) {
-    // TODO; probl need to create a DocumentError here, but let's just throw for now
     throw new Error(
       `Cannot limit the disclosure. No credential is matching the requested DocType '${docType}'`
     );
@@ -156,9 +155,9 @@ export const limitDisclosureToInputDescriptor = (
       mdoc.issuerSigned.nameSpaces
     );
     if (!result) {
-      // TODO: Do we add an entry to DocumentErrors if not found?
-      console.log(`No matching field found for '${field.path.join('.')}'`);
-      continue;
+      throw new Error(
+        `Cannot limit the disclosure to the input descriptor. No matching field found for '${field.path.join('.')}'`
+      );
     }
 
     const { nameSpace, digest } = result;
