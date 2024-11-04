@@ -1,5 +1,12 @@
 # @protokoll/mdoc-client
 
+## 0.2.36
+
+### Patch Changes
+
+- 599dbcd: feat: add Device-Request
+  - @protokoll/core@0.2.36
+
 ## 0.2.35
 
 ### Patch Changes
