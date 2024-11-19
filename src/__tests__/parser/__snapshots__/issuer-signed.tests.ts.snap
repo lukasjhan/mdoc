@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parse an issuer signed mdoc should match the snapshot 1`] = `
+exports[`parse an issuer signed mdoc > should match the snapshot 1`] = `
 MDoc {
   "documentErrors": [],
   "documents": [

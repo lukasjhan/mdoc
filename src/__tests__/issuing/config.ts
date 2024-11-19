@@ -110,7 +110,7 @@ export const deviceRequest = DeviceRequest.from('1.0', [
       docType: 'org.iso.18013.5.1.mDL',
       nameSpaces: {
         'org.iso.18013.5.1': {
-          family_name: true,
+          family_name: false,
           given_name: true,
           birth_date: true,
           issue_date: true,

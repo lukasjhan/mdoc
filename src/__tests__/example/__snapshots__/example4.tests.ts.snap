@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`example 4: device response with device attributes should get the right diagnostic info 1`] = `
+exports[`example 4: device response with device attributes > should get the right diagnostic info 1`] = `
 {
   "attributes": [
     {

@@ -292,6 +292,7 @@ describe('issuing a device response', () => {
     const eReaderKeyBytes: Buffer = randomFillSync(Buffer.alloc(32))
     const readerEngagementBytes = randomFillSync(Buffer.alloc(32))
     const deviceEngagementBytes = randomFillSync(Buffer.alloc(32))
+    let encodedDeviceResponse: Uint8Array
 
     const getSessionTranscriptBytes = (rdrEngtBytes: Buffer, devEngtBytes: Buffer, eRdrKeyBytes: Buffer) =>
       cborEncode(
@@ -384,6 +385,26 @@ describe('issuing a device response', () => {
       expect(validityInfo.validFrom).toEqual(signed)
       expect(validityInfo.validUntil).toEqual(validUntil)
       expect(validityInfo.expectedUpdate).toBeUndefined()
+    })
+
+    it('should contain all requested claims', () => {
+      const namespaces = parsedDocument.allIssuerSignedNamespaces
+      expect(namespaces).toStrictEqual({
+        'org.iso.18013.5.1': {
+          family_name: 'Jones',
+          birth_date: '2007-03-25',
+          document_number: '01-856-5050',
+          given_name: 'Ava',
+          driving_privileges: [expect.any(Map)],
+          expiry_date: '2028-09-30',
+          issue_date: '2023-09-01',
+          issuing_authority: 'NY DMV',
+          issuing_country: 'US',
+          issuing_jurisdiction: 'New York',
+          portrait: 'bstr',
+          un_distinguishing_sign: 'tbd-us.ny.dmv',
+        },
+      })
     })
 
     it('should contain the device namespaces', () => {

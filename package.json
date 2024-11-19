@@ -23,7 +23,7 @@
     "style:check": "biome check --unsafe",
     "style:fix": "biome check --write --unsafe",
     "build": "tsup src/index.ts --format cjs,esm --dts --clean --sourcemap",
-    "test": "jest --verbose"
+    "test": "vitest"
   },
   "dependencies": {
     "compare-versions": "^6.1.1"

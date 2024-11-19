@@ -13,15 +13,13 @@ export const limitDisclosureToDeviceRequestNameSpaces = (
 
   for (const [nameSpace, nameSpaceFields] of Object.entries(deviceRequestNameSpaces)) {
     const nsAttrs = mdoc.issuerSigned.nameSpaces[nameSpace] ?? []
-    const digests = Object.entries(nameSpaceFields)
-      .filter(([_, disclose]) => disclose)
-      .map(([elementIdentifier, _]) => {
-        const digest = prepareDigest(elementIdentifier, nsAttrs)
-        if (!digest) {
-          throw new Error(`No matching field found for '${elementIdentifier}'`)
-        }
-        return digest
-      })
+    const digests = Object.entries(nameSpaceFields).map(([elementIdentifier, _]) => {
+      const digest = prepareDigest(elementIdentifier, nsAttrs)
+      if (!digest) {
+        throw new Error(`No matching field found for '${elementIdentifier}'`)
+      }
+      return digest
+    })
 
     nameSpaces[nameSpace] = digests
   }
