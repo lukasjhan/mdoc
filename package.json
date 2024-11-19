@@ -5,6 +5,7 @@
   "author": "Martin Auer",
   "exports": "./src/index.ts",
   "version": "0.2.37",
+  "files": ["dist"],
   "publishConfig": {
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
