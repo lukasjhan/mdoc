@@ -1,31 +1,67 @@
-# mDL
+<p align="center">
+  <picture>
+   <source media="(prefers-color-scheme: light)" srcset="https://res.cloudinary.com/animo-solutions/image/upload/v1656578320/animo-logo-light-no-text_ok9auy.svg">
+   <source media="(prefers-color-scheme: dark)" srcset="https://res.cloudinary.com/animo-solutions/image/upload/v1656578320/animo-logo-dark-no-text_fqqdq9.svg">
+   <img alt="Animo Logo" height="250px" />
+  </picture>
+</p>
+
+<h1 align="center" ><b>mDOC and mDL - TypeScript</b></h1>
 
 [ISO 18013-5](https://www.iso.org/standard/69084.html) defines mDL (mobile Driver Licenses): an ISO standard for digital driver licenses.
 
-This is a Node.js library to issue and verify mDL [CBOR encoded](https://cbor.io/) documents in accordance with **ISO 18013-7 (draft's date: 2023-08-02)**.
+This is a JavaScript library for Node.JS, browers and React Native to issue and verify mDL [CBOR encoded](https://cbor.io/) documents in accordance with **ISO 18013-7 (draft's date: 2023-08-02)**.
+
+<h4 align="center">Powered by &nbsp; 
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://res.cloudinary.com/animo-solutions/image/upload/v1656579715/animo-logo-light-text_cma2yo.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://res.cloudinary.com/animo-solutions/image/upload/v1656579715/animo-logo-dark-text_uccvqa.svg">
+    <img alt="Animo Logo" height="12px" />
+  </picture>
+</h4><br>
+
+<p align="center">
+  <a href="https://typescriptlang.org">
+    <img src="https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="#installation">Installation</a> 
+  &nbsp;|&nbsp;
+  <a href="#usage">Usage</a> 
+  &nbsp;|&nbsp;
+  <a href="#contributing">Contributing</a>
+  &nbsp;|&nbsp;
+  <a href="#license">License</a>
+  &nbsp;|&nbsp;
+  <a href="#credits">Credits</a>
+</p>
 
 ## Installation
 
 ```bash
-npm i @auth0/mdl
+npm i @animo-id/mdoc
 ```
 
-## Verifying a credential
+## Usage
+
+### Verifying a credential
 
 ```javascript
-import { Verifier } from '@auth0/mdl';
-import { inspect } from 'node:util';
-import fs from 'node:fs';
+import { Verifier } from "@auth0/mdl";
+import { inspect } from "node:util";
+import fs from "node:fs";
 
 (async () => {
-  const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, 'hex');
+  const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, "hex");
   const encodedSessionTranscript = Buffer.from(
     encodedSessionTranscriptHex,
-    'hex'
+    "hex"
   );
-  const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, 'hex');
+  const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, "hex");
 
-  const trustedCerts = [fs.readFileSync('./caCert1.pem') /*, ... */];
+  const trustedCerts = [fs.readFileSync("./caCert1.pem") /*, ... */];
   const verifier = new Verifier(trustedCerts);
   const mdoc = await verifier.verify(encodedDeviceResponse, {
     ephemeralReaderKey,
@@ -37,22 +73,22 @@ import fs from 'node:fs';
 })();
 ```
 
-## Getting diagnostic information
+### Getting diagnostic information
 
 ```javascript
-import { Verifier } from '@auth0/mdl';
-import { inspect } from 'node:util';
-import fs from 'node:fs';
+import { Verifier } from "@auth0/mdl";
+import { inspect } from "node:util";
+import fs from "node:fs";
 
 (async () => {
-  const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, 'hex');
+  const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, "hex");
   const encodedSessionTranscript = Buffer.from(
     encodedSessionTranscriptHex,
-    'hex'
+    "hex"
   );
-  const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, 'hex');
+  const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, "hex");
 
-  const trustedCerts = [fs.readFileSync('./caCert1.pem') /*, ... */];
+  const trustedCerts = [fs.readFileSync("./caCert1.pem") /*, ... */];
   const verifier = new Verifier(trustedCerts);
 
   const diagnosticInfo = await verifier.getDiagnosticInformation(
@@ -67,20 +103,20 @@ import fs from 'node:fs';
 })();
 ```
 
-## Issuing a credential
+##$ Issuing a credential
 
 ```js
-import { MDoc, Document } from '@auth0/mdl';
-import { inspect } from 'node:util';
+import { MDoc, Document } from "@auth0/mdl";
+import { inspect } from "node:util";
 
 (async () => {
-  const document = await new Document('org.iso.18013.5.1.mDL')
-    .addIssuerNameSpace('org.iso.18013.5.1', {
-      family_name: 'Jones',
-      given_name: 'Ava',
-      birth_date: '2007-03-25',
+  const document = await new Document("org.iso.18013.5.1.mDL")
+    .addIssuerNameSpace("org.iso.18013.5.1", {
+      family_name: "Jones",
+      given_name: "Ava",
+      birth_date: "2007-03-25",
     })
-    .useDigestAlgorithm('SHA-256')
+    .useDigestAlgorithm("SHA-256")
     .addValidityInfo({
       signed: new Date(),
     })
@@ -96,10 +132,10 @@ import { inspect } from 'node:util';
 })();
 ```
 
-## Generating a device response
+##$ Generating a device response
 
 ```js
-import { DeviceResponse, MDoc } from '@auth0/mdl';
+import { DeviceResponse, MDoc } from "@auth0/mdl";
 
 (async () => {
   let issuerMDoc;
@@ -113,13 +149,13 @@ import { DeviceResponse, MDoc } from '@auth0/mdl';
     let issuerCertificate;
     let devicePublicKey; // the public key for the device, as a JWK
 
-    const document = await new Document('org.iso.18013.5.1.mDL')
-      .addIssuerNameSpace('org.iso.18013.5.1', {
-        family_name: 'Jones',
-        given_name: 'Ava',
-        birth_date: '2007-03-25',
+    const document = await new Document("org.iso.18013.5.1.mDL")
+      .addIssuerNameSpace("org.iso.18013.5.1", {
+        family_name: "Jones",
+        given_name: "Ava",
+        birth_date: "2007-03-25",
       })
-      .useDigestAlgorithm('SHA-256')
+      .useDigestAlgorithm("SHA-256")
       .addValidityInfo({
         signed: new Date(),
       })
@@ -127,7 +163,7 @@ import { DeviceResponse, MDoc } from '@auth0/mdl';
       .sign({
         issuerPrivateKey,
         issuerCertificate,
-        alg: 'ES256',
+        alg: "ES256",
       });
 
     issuerMDoc = new MDoc([document]).encode();
@@ -142,13 +178,13 @@ import { DeviceResponse, MDoc } from '@auth0/mdl';
     // Parameters coming from the OID4VP transaction
     let mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce;
     let presentationDefinition = {
-      id: 'family_name_only',
+      id: "family_name_only",
       input_descriptors: [
         {
-          id: 'org.iso.18013.5.1.mDL',
-          format: { mso_mdoc: { alg: ['EdDSA', 'ES256'] } },
+          id: "org.iso.18013.5.1.mDL",
+          format: { mso_mdoc: { alg: ["EdDSA", "ES256"] } },
           constraints: {
-            limit_disclosure: 'required',
+            limit_disclosure: "required",
             fields: [
               {
                 path: ["$['org.iso.18013.5.1']['family_name']"],
@@ -168,12 +204,24 @@ import { DeviceResponse, MDoc } from '@auth0/mdl';
         responseUri,
         verifierGeneratedNonce
       )
-      .authenticateWithSignature(devicePrivateKey, 'ES256')
+      .authenticateWithSignature(devicePrivateKey, "ES256")
       .sign();
   }
 })();
 ```
 
+## Contributing
+
+Is there something you'd like to fix or add? Great, we love community
+contributions! To get involved, please follow our [contribution guidelines](./CONTRIBUTING.md).
+
 ## License
 
-Apache-2.0
+This project is licensed under the Apache License Version 2.0 (Apache-2.0).
+
+## Credits
+
+Thanks to:
+
+- [auth0/mdl](https://github.com/auth0-lab/mdl) for the mdl implementation on which this repository is based.
+- [auer-martin](https://github.com/auer-martin) for removing node.js dependencies and providing a pluggable crypto interface

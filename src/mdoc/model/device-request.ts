@@ -1,10 +1,10 @@
-import { cborDecode, cborEncode } from '../../cbor';
-import type { ItemsRequestData } from '../items-request';
-import { ItemsRequest } from '../items-request';
+import { cborDecode, cborEncode } from '../../cbor'
+import type { ItemsRequestData } from '../items-request'
+import { ItemsRequest } from '../items-request'
 
 export interface DocRequest {
-  itemsRequest: ItemsRequest;
-  readerAuth?: ReaderAuth;
+  itemsRequest: ItemsRequest
+  readerAuth?: ReaderAuth
 }
 
 export type ReaderAuth = [
@@ -12,26 +12,26 @@ export type ReaderAuth = [
   Uint8Array | undefined,
   Uint8Array | undefined,
   Uint8Array | undefined,
-];
+]
 
-export type DeviceRequestNameSpaces = Record<string, Record<string, boolean>>;
+export type DeviceRequestNameSpaces = Record<string, Record<string, boolean>>
 
 export class DeviceRequest {
   constructor(
-    public version = '1.0',
+    public version: string,
     public docRequests: DocRequest[]
   ) {}
 
   public static from(
     version: string,
     docRequests: {
-      itemsRequestData: ItemsRequestData;
-      readerAuth?: ReaderAuth;
+      itemsRequestData: ItemsRequestData
+      readerAuth?: ReaderAuth
     }[]
   ) {
     return new DeviceRequest(
       version,
-      docRequests.map(docRequest => {
+      docRequests.map((docRequest) => {
         return {
           ...docRequest,
           itemsRequest: ItemsRequest.create(
@@ -39,9 +39,9 @@ export class DeviceRequest {
             docRequest.itemsRequestData.nameSpaces,
             docRequest.itemsRequestData.requestInfo
           ),
-        };
+        }
       })
-    );
+    )
   }
 
   public static parse(cbor: Uint8Array) {
@@ -49,32 +49,32 @@ export class DeviceRequest {
       tagUint8Array: false,
       useRecords: true,
       mapsAsObjects: true,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as { version: string; docRequests: any[] };
+      // biome-ignore lint/suspicious/noExplicitAny:
+    }) as { version: string; docRequests: any[] }
 
-    const { version, docRequests } = res;
+    const { version, docRequests } = res
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const parsedDocRequests: DocRequest[] = docRequests.map(docRequest => {
+    const parsedDocRequests: DocRequest[] = docRequests.map((docRequest) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-      const itemsRequest = new ItemsRequest(docRequest.itemsRequest);
+      const itemsRequest = new ItemsRequest(docRequest.itemsRequest)
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return {
         ...docRequest,
         itemsRequest,
-      };
-    });
+      }
+    })
 
-    return new DeviceRequest(version, parsedDocRequests);
+    return new DeviceRequest(version, parsedDocRequests)
   }
 
   public static encodeDocRequest(r: DocRequest) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny:
     return new Map<string, any>([
       ['itemsRequest', r.itemsRequest.dataItem],
       ['readerAuth', r.readerAuth],
-    ]);
+    ])
   }
 
   encode() {
@@ -82,6 +82,6 @@ export class DeviceRequest {
       version: this.version,
       // eslint-disable-next-line @typescript-eslint/unbound-method
       docRequests: this.docRequests.map(DeviceRequest.encodeDocRequest),
-    });
+    })
   }
 }

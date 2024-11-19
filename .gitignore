@@ -30,6 +30,3 @@ yarn-error.log*
 # typescript
 dist/
 .cache
-
-# turbo
-.turbo

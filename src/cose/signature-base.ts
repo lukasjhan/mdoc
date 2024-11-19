@@ -1,13 +1,13 @@
-import { COSEBase } from './cose-base.js';
-import { CoseError } from './e-cose.js';
-import type { Algorithms } from './headers.js';
-import { AlgorithmNames, Headers } from './headers.js';
-import { validateAlgorithms } from './validate-algorithms.js';
+import { COSEBase } from './cose-base.js'
+import { CoseError } from './e-cose.js'
+import type { Algorithms } from './headers.js'
+import { AlgorithmNames, Headers } from './headers.js'
+import { validateAlgorithms } from './validate-algorithms.js'
 
 export interface VerifyOptions {
-  externalAAD?: Uint8Array;
-  detachedPayload?: Uint8Array;
-  algorithms?: Algorithms[];
+  externalAAD?: Uint8Array
+  detachedPayload?: Uint8Array
+  algorithms?: Algorithms[]
 }
 
 export class SignatureBase extends COSEBase {
@@ -16,19 +16,19 @@ export class SignatureBase extends COSEBase {
     unprotectedHeaders: Map<number, unknown>,
     private _signature?: Uint8Array
   ) {
-    super(protectedHeaders, unprotectedHeaders);
+    super(protectedHeaders, unprotectedHeaders)
   }
 
   public get signature() {
     if (!this._signature) {
-      throw new Error('No signature present');
+      throw new Error('No signature present')
     }
 
-    return this._signature;
+    return this._signature
   }
 
   public set signature(sig: Uint8Array) {
-    this._signature = sig;
+    this._signature = sig
   }
 
   /**
@@ -43,15 +43,13 @@ export class SignatureBase extends COSEBase {
    */
   public get alg(): Algorithms | undefined {
     return (
-      (this.protectedHeaders.get(Headers.Algorithm) as
-        | Algorithms
-        | undefined) ??
+      (this.protectedHeaders.get(Headers.Algorithm) as Algorithms | undefined) ??
       (this.unprotectedHeaders.get(Headers.Algorithm) as Algorithms)
-    );
+    )
   }
 
   public get algName(): string | undefined {
-    return this.alg ? AlgorithmNames.get(this.alg) : undefined;
+    return this.alg ? AlgorithmNames.get(this.alg) : undefined
   }
 
   /**
@@ -72,54 +70,41 @@ export class SignatureBase extends COSEBase {
     return (
       (this.protectedHeaders.get(Headers.KeyID) as Uint8Array | undefined) ??
       (this.unprotectedHeaders.get(Headers.KeyID) as Uint8Array)
-    );
+    )
   }
 
   public get x5chain(): [Uint8Array, ...Uint8Array[]] | undefined {
     const x5chain =
-      (this.protectedHeaders.get(Headers.X5Chain) as
-        | Uint8Array
-        | Uint8Array[]
-        | undefined) ??
-      (this.unprotectedHeaders.get(Headers.X5Chain) as
-        | Uint8Array
-        | Uint8Array[]
-        | undefined);
+      (this.protectedHeaders.get(Headers.X5Chain) as Uint8Array | Uint8Array[] | undefined) ??
+      (this.unprotectedHeaders.get(Headers.X5Chain) as Uint8Array | Uint8Array[] | undefined)
 
     if (!x5chain?.[0]) {
-      return undefined;
+      return undefined
     }
-    return Array.isArray(x5chain)
-      ? (x5chain as [Uint8Array, ...Uint8Array[]])
-      : [x5chain];
+    return Array.isArray(x5chain) ? (x5chain as [Uint8Array, ...Uint8Array[]]) : [x5chain]
   }
 
-  protected internalGetRawVerificationData(
-    payload: Uint8Array,
-    options?: VerifyOptions
-  ) {
+  protected internalGetRawVerificationData(payload: Uint8Array, options?: VerifyOptions) {
     if (!this.alg || !this.algName || !AlgorithmNames.has(this.alg)) {
       throw new CoseError({
         code: 'COSE_UNSUPPORTED_ALG',
         message: `Unsupported alg '${this.alg}'`,
-      });
+      })
     }
 
-    const algorithms =
-      options?.algorithms &&
-      validateAlgorithms('algorithms', options.algorithms);
+    const algorithms = options?.algorithms && validateAlgorithms('algorithms', options.algorithms)
 
     if (algorithms && !algorithms.has(this.alg)) {
       throw new CoseError({
         code: 'COSE_INVALID_ALG',
         message: `[${Headers.Algorithm}] (algorithm) Header Parameter not allowed`,
-      });
+      })
     }
 
     return {
       alg: this.algName,
       signature: this.signature,
       data: payload,
-    };
+    }
   }
 }

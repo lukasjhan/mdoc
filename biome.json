@@ -1,0 +1,78 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "files": {
+    "maxSize": 10000000
+  },
+  "formatter": {
+    "lineWidth": 120,
+    "indentStyle": "space"
+  },
+  "javascript": {
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    },
+    "formatter": {
+      "semicolons": "asNeeded",
+      "quoteStyle": "single",
+      "trailingCommas": "es5",
+      "lineWidth": 120,
+      "indentStyle": "space"
+    }
+  },
+  "json": {
+    "parser": {
+      "allowComments": true
+    }
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "style": {
+        "useLiteralEnumMembers": "off"
+      },
+      "suspicious": {
+        "noExportsInTest": "off"
+      },
+      "performance": {
+        "noAccumulatingSpread": "off"
+      },
+      "recommended": true,
+      "complexity": {
+        "noForEach": "off"
+      },
+      "correctness": {
+        "recommended": true,
+        "noUnusedImports": "error"
+      }
+    }
+  },
+  "vcs": {
+    "useIgnoreFile": true,
+    "clientKind": "git",
+    "enabled": true
+  },
+  "overrides": [
+    {
+      "include": ["*.d.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noBannedTypes": "off"
+          },
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["*.js"],
+      "linter": {
+        "enabled": false
+      }
+    }
+  ]
+}

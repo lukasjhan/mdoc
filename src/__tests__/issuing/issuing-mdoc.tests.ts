@@ -1,35 +1,24 @@
-import { X509Certificate } from '@peculiar/x509';
-import type { JWK } from 'jose';
-import { mdocContext } from '..';
-import type { DeviceSignedDocument, IssuerSignedDocument } from '../..';
-import {
-  COSEKey,
-  Document,
-  MDoc,
-  Verifier,
-  defaultCallback,
-  parseDeviceResponse,
-} from '../..';
-import {
-  DEVICE_JWK,
-  ISSUER_CERTIFICATE,
-  ISSUER_PRIVATE_KEY_JWK,
-} from './config.js';
-
-const { d, ...publicKeyJWK } = DEVICE_JWK as JWK;
+import { X509Certificate } from '@peculiar/x509'
+import type { JWK } from 'jose'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { mdocContext } from '..'
+import type { DeviceSignedDocument, IssuerSignedDocument } from '../..'
+import { COSEKey, Document, MDoc, Verifier, defaultCallback, parseDeviceResponse } from '../..'
+import { DEVICE_JWK, ISSUER_CERTIFICATE, ISSUER_PRIVATE_KEY_JWK } from './config.js'
+const { d, ...publicKeyJWK } = DEVICE_JWK as JWK
 
 describe('issuing an MDOC', () => {
-  let encodedDeviceResponse: Uint8Array;
-  let parsedDocument: IssuerSignedDocument;
+  let encodedDeviceResponse: Uint8Array
+  let parsedDocument: IssuerSignedDocument
 
-  const signed = new Date('2023-10-24T14:55:18Z');
-  const validFrom = new Date(signed);
-  validFrom.setMinutes(signed.getMinutes() + 5);
-  const validUntil = new Date(signed);
-  validUntil.setFullYear(signed.getFullYear() + 30);
+  const signed = new Date('2023-10-24T14:55:18Z')
+  const validFrom = new Date(signed)
+  validFrom.setMinutes(signed.getMinutes() + 5)
+  const validUntil = new Date(signed)
+  validUntil.setFullYear(signed.getFullYear() + 30)
 
   beforeAll(async () => {
-    const issuerPrivateKey = ISSUER_PRIVATE_KEY_JWK;
+    const issuerPrivateKey = ISSUER_PRIVATE_KEY_JWK
 
     const document = await new Document('org.iso.18013.5.1.mDL', mdocContext)
       .addIssuerNameSpace('org.iso.18013.5.1', {
@@ -65,66 +54,57 @@ describe('issuing an MDOC', () => {
           alg: 'ES256',
         },
         mdocContext
-      );
+      )
 
-    const mdoc = new MDoc([document]);
-    encodedDeviceResponse = mdoc.encode();
+    const mdoc = new MDoc([document])
+    encodedDeviceResponse = mdoc.encode()
 
-    const parsedMDOC = parseDeviceResponse(encodedDeviceResponse);
-    parsedDocument = parsedMDOC.documents[0] as DeviceSignedDocument;
-  });
+    const parsedMDOC = parseDeviceResponse(encodedDeviceResponse)
+    parsedDocument = parsedMDOC.documents[0] as DeviceSignedDocument
+  })
 
   it('should be verifiable', async () => {
-    const verifier = new Verifier();
+    const verifier = new Verifier()
     await verifier.verifyDeviceResponse(
       {
-        trustedCertificates: [
-          new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData),
-        ],
+        trustedCertificates: [new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData)],
         encodedDeviceResponse,
-        onCheck: verification => {
+        onCheck: (verification) => {
           if (verification.category === 'DEVICE_AUTH') {
-            return;
+            return
           }
-          defaultCallback(verification);
+          defaultCallback(verification)
         },
       },
       mdocContext
-    );
-  });
+    )
+  })
 
   it('should contain the validity info', () => {
-    const { validityInfo } =
-      parsedDocument.issuerSigned.issuerAuth.decodedPayload;
-    expect(validityInfo).toBeDefined();
-    expect(validityInfo.signed).toEqual(signed);
-    expect(validityInfo.validFrom).toEqual(validFrom);
-    expect(validityInfo.validUntil).toEqual(validUntil);
-    expect(validityInfo.expectedUpdate).toBeUndefined();
-  });
+    const { validityInfo } = parsedDocument.issuerSigned.issuerAuth.decodedPayload
+    expect(validityInfo).toBeDefined()
+    expect(validityInfo.signed).toEqual(signed)
+    expect(validityInfo.validFrom).toEqual(validFrom)
+    expect(validityInfo.validUntil).toEqual(validUntil)
+    expect(validityInfo.expectedUpdate).toBeUndefined()
+  })
 
   it('should use the correct digest alg', () => {
-    const { digestAlgorithm } =
-      parsedDocument.issuerSigned.issuerAuth.decodedPayload;
-    expect(digestAlgorithm).toEqual('SHA-512');
-  });
+    const { digestAlgorithm } = parsedDocument.issuerSigned.issuerAuth.decodedPayload
+    expect(digestAlgorithm).toEqual('SHA-512')
+  })
 
   it('should include the device public key', () => {
-    const { deviceKeyInfo } =
-      parsedDocument.issuerSigned.issuerAuth.decodedPayload;
-    expect(deviceKeyInfo?.deviceKey).toBeDefined();
-    const actual =
-      typeof deviceKeyInfo !== 'undefined' &&
-      COSEKey.import(deviceKeyInfo.deviceKey).toJWK();
-    expect(actual).toEqual(publicKeyJWK);
-  });
+    const { deviceKeyInfo } = parsedDocument.issuerSigned.issuerAuth.decodedPayload
+    expect(deviceKeyInfo?.deviceKey).toBeDefined()
+    const actual = typeof deviceKeyInfo !== 'undefined' && COSEKey.import(deviceKeyInfo.deviceKey).toJWK()
+    expect(actual).toEqual(publicKeyJWK)
+  })
 
   it('should include the namespace and attributes', () => {
-    const attrValues = parsedDocument.getIssuerNameSpace('org.iso.18013.5.1');
+    const attrValues = parsedDocument.getIssuerNameSpace('org.iso.18013.5.1')
     // @ts-expect error this will work
-    const currentAge =
-      new Date(Date.now() - new Date('2007-03-25').getTime()).getFullYear() -
-      1970;
+    const currentAge = new Date(Date.now() - new Date('2007-03-25').getTime()).getFullYear() - 1970
     expect(attrValues).toMatchInlineSnapshot(`
 {
   "age_over_${currentAge}": true,
@@ -151,6 +131,6 @@ describe('issuing an MDOC', () => {
   "issuing_country": "US",
   "portrait": "bstr",
 }
-`);
-  });
-});
+`)
+  })
+})

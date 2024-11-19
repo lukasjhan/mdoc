@@ -1,9 +1,16 @@
 {
-  "extends": "@ausweis/typescript/monorepo-package.json",
-  "include": ["src"],
   "compilerOptions": {
-    "verbatimModuleSyntax": false,
-    "checkJs": false
+    "module": "Node16",
+    "target": "ES2020",
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "lib": ["ES2020"],
+    "types": [],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
-  "exclude": ["node_modules"]
+  "exclude": ["dist"]
 }

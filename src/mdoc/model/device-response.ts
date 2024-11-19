@@ -1,6 +1,6 @@
-import type { JWK } from 'jose';
-import type { MdocContext } from '../../c-mdoc.js';
-import { DataItem, cborEncode } from '../../cbor/index.js';
+import type { JWK } from 'jose'
+import type { MdocContext } from '../../c-mdoc.js'
+import { DataItem, cborEncode } from '../../cbor/index.js'
 import {
   Algorithms,
   Headers,
@@ -8,48 +8,40 @@ import {
   MacProtectedHeaders,
   ProtectedHeaders,
   UnprotectedHeaders,
-} from '../../cose/headers.js';
-import { COSEKey, COSEKeyToRAW } from '../../cose/key/cose-key.js';
-import { Mac0 } from '../../cose/mac0.js';
-import { Sign1 } from '../../cose/sign1.js';
-import { stringToUint8Array } from '../../u-uint8-array.js';
-import type { IssuerSignedItem } from '../issuer-signed-item.js';
-import { parseDeviceResponse } from '../parser.js';
-import { calculateDeviceAutenticationBytes } from '../utils.js';
-import type { DeviceRequest, DocRequest } from './device-request.js';
-import { DeviceSignedDocument } from './device-signed-document.js';
-import type { IssuerSignedDocument } from './issuer-signed-document.js';
-import { MDoc } from './mdoc.js';
+} from '../../cose/headers.js'
+import { COSEKey, COSEKeyToRAW } from '../../cose/key/cose-key.js'
+import { Mac0 } from '../../cose/mac0.js'
+import { Sign1 } from '../../cose/sign1.js'
+import { stringToUint8Array } from '../../u-uint8-array.js'
+import type { IssuerSignedItem } from '../issuer-signed-item.js'
+import { parseDeviceResponse } from '../parser.js'
+import { calculateDeviceAutenticationBytes } from '../utils.js'
+import type { DeviceRequest, DocRequest } from './device-request.js'
+import { DeviceSignedDocument } from './device-signed-document.js'
+import type { IssuerSignedDocument } from './issuer-signed-document.js'
+import { MDoc } from './mdoc.js'
 import {
   findMdocMatchingDocType,
   limitDisclosureToDeviceRequestNameSpaces,
   limitDisclosureToInputDescriptor,
-} from './pex-limit-disclosure.js';
-import type {
-  InputDescriptor,
-  PresentationDefinition,
-} from './presentation-definition.js';
-import type {
-  DeviceAuth,
-  DeviceSigned,
-  MacSupportedAlgs,
-  SupportedAlgs,
-} from './types.js';
+} from './pex-limit-disclosure.js'
+import type { InputDescriptor, PresentationDefinition } from './presentation-definition.js'
+import type { DeviceAuth, DeviceSigned, MacSupportedAlgs, SupportedAlgs } from './types.js'
 
 /**
  * A builder class for creating a device response.
  */
 export class DeviceResponse {
-  private mdoc: MDoc;
-  private pd?: PresentationDefinition;
-  private deviceRequest?: DeviceRequest;
-  private sessionTranscriptBytes?: Uint8Array;
-  private useMac = true;
-  private devicePrivateKey?: JWK;
-  public nameSpaces: Record<string, Record<string, unknown>> = {};
-  private alg?: SupportedAlgs;
-  private macAlg?: MacSupportedAlgs;
-  private ephemeralPublicKey?: JWK;
+  private mdoc: MDoc
+  private pd?: PresentationDefinition
+  private deviceRequest?: DeviceRequest
+  private sessionTranscriptBytes?: Uint8Array
+  private useMac = true
+  private devicePrivateKey?: JWK
+  public nameSpaces: Record<string, Record<string, unknown>> = {}
+  private alg?: SupportedAlgs
+  private macAlg?: MacSupportedAlgs
+  private ephemeralPublicKey?: JWK
 
   /**
    * Create a DeviceResponse builder.
@@ -60,13 +52,13 @@ export class DeviceResponse {
    */
   public static from(mdoc: MDoc | Uint8Array): DeviceResponse {
     if (mdoc instanceof Uint8Array) {
-      return new DeviceResponse(parseDeviceResponse(mdoc));
+      return new DeviceResponse(parseDeviceResponse(mdoc))
     }
-    return new DeviceResponse(mdoc);
+    return new DeviceResponse(mdoc)
   }
 
   constructor(mdoc: MDoc) {
-    this.mdoc = mdoc;
+    this.mdoc = mdoc
   }
 
   /**
@@ -74,27 +66,20 @@ export class DeviceResponse {
    * @param pd - The presentation definition to use for the device response.
    * @returns {DeviceResponse}
    */
-  public usingPresentationDefinition(
-    pd: PresentationDefinition
-  ): DeviceResponse {
+  public usingPresentationDefinition(pd: PresentationDefinition): DeviceResponse {
     if (!pd.input_descriptors.length) {
-      throw new Error(
-        'The Presentation Definition must have at least one Input Descriptor object.'
-      );
+      throw new Error('The Presentation Definition must have at least one Input Descriptor object.')
     }
 
     const hasDuplicates = pd.input_descriptors.some(
-      (id1, idx) =>
-        pd.input_descriptors.findIndex(id2 => id2.id === id1.id) !== idx
-    );
+      (id1, idx) => pd.input_descriptors.findIndex((id2) => id2.id === id1.id) !== idx
+    )
     if (hasDuplicates) {
-      throw new Error(
-        'Each Input Descriptor object must have a unique id property.'
-      );
+      throw new Error('Each Input Descriptor object must have a unique id property.')
     }
 
-    this.pd = pd;
-    return this;
+    this.pd = pd
+    return this
   }
 
   /**
@@ -104,13 +89,11 @@ export class DeviceResponse {
    */
   public usingDeviceRequest(deviceRequest: DeviceRequest): DeviceResponse {
     if (!deviceRequest.docRequests.length) {
-      throw new Error(
-        'The deviceRequest must have at least one docRequest object.'
-      );
+      throw new Error('The deviceRequest must have at least one docRequest object.')
     }
 
-    this.deviceRequest = deviceRequest;
-    return this;
+    this.deviceRequest = deviceRequest
+    return this
   }
 
   /**
@@ -126,16 +109,14 @@ export class DeviceResponse {
    * @param {Uint8Array} sessionTranscriptBytes - The sessionTranscriptBytes data to use in the session transcript.
    * @returns {DeviceResponse}
    */
-  public usingSessionTranscriptBytes(
-    sessionTranscriptBytes: Uint8Array
-  ): DeviceResponse {
+  public usingSessionTranscriptBytes(sessionTranscriptBytes: Uint8Array): DeviceResponse {
     if (this.sessionTranscriptBytes) {
       throw new Error(
         'A session transcript has already been set, either with .usingSessionTranscriptForOID4VP, .usingSessionTranscriptForWebAPI or .usingSessionTranscriptBytes'
-      );
+      )
     }
-    this.sessionTranscriptBytes = sessionTranscriptBytes;
-    return this;
+    this.sessionTranscriptBytes = sessionTranscriptBytes
+    return this
   }
 
   /**
@@ -150,28 +131,23 @@ export class DeviceResponse {
    * @returns {DeviceResponse}
    */
   public usingSessionTranscriptForOID4VP(input: {
-    mdocGeneratedNonce: string;
-    clientId: string;
-    responseUri: string;
-    verifierGeneratedNonce: string;
+    mdocGeneratedNonce: string
+    clientId: string
+    responseUri: string
+    verifierGeneratedNonce: string
   }): DeviceResponse {
-    const bytes = DeviceResponse.calculateSessionTranscriptForOID4VP(input);
-    this.usingSessionTranscriptBytes(bytes);
-    return this;
+    const bytes = DeviceResponse.calculateSessionTranscriptForOID4VP(input)
+    this.usingSessionTranscriptBytes(bytes)
+    return this
   }
 
   public static calculateSessionTranscriptForOID4VP(input: {
-    mdocGeneratedNonce: string;
-    clientId: string;
-    responseUri: string;
-    verifierGeneratedNonce: string;
+    mdocGeneratedNonce: string
+    clientId: string
+    responseUri: string
+    verifierGeneratedNonce: string
   }) {
-    const {
-      mdocGeneratedNonce,
-      clientId,
-      responseUri,
-      verifierGeneratedNonce,
-    } = input;
+    const { mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce } = input
 
     return cborEncode(
       DataItem.fromData([
@@ -179,7 +155,7 @@ export class DeviceResponse {
         null, // eReaderKeyBytes
         [mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce],
       ])
-    );
+    )
   }
 
   /**
@@ -193,22 +169,21 @@ export class DeviceResponse {
    * @returns {DeviceResponse}
    */
   public usingSessionTranscriptForWebAPI(input: {
-    deviceEngagementBytes: Uint8Array;
-    readerEngagementBytes: Uint8Array;
-    eReaderKeyBytes: Uint8Array;
+    deviceEngagementBytes: Uint8Array
+    readerEngagementBytes: Uint8Array
+    eReaderKeyBytes: Uint8Array
   }): DeviceResponse {
-    const bytes = DeviceResponse.calculateSessionTranscriptForWebApi(input);
-    this.usingSessionTranscriptBytes(bytes);
-    return this;
+    const bytes = DeviceResponse.calculateSessionTranscriptForWebApi(input)
+    this.usingSessionTranscriptBytes(bytes)
+    return this
   }
 
   public static calculateSessionTranscriptForWebApi(input: {
-    deviceEngagementBytes: Uint8Array;
-    readerEngagementBytes: Uint8Array;
-    eReaderKeyBytes: Uint8Array;
+    deviceEngagementBytes: Uint8Array
+    readerEngagementBytes: Uint8Array
+    eReaderKeyBytes: Uint8Array
   }) {
-    const { deviceEngagementBytes, eReaderKeyBytes, readerEngagementBytes } =
-      input;
+    const { deviceEngagementBytes, eReaderKeyBytes, readerEngagementBytes } = input
 
     return cborEncode(
       DataItem.fromData([
@@ -216,7 +191,7 @@ export class DeviceResponse {
         new DataItem({ buffer: eReaderKeyBytes }),
         readerEngagementBytes,
       ])
-    );
+    )
   }
 
   /**
@@ -226,12 +201,9 @@ export class DeviceResponse {
    * @param {Record<string, any>} data - The data to add to the name space.
    * @returns {DeviceResponse}
    */
-  public addDeviceNameSpace(
-    nameSpace: string,
-    data: Record<string, unknown>
-  ): DeviceResponse {
-    this.nameSpaces[nameSpace] = data;
-    return this;
+  public addDeviceNameSpace(nameSpace: string, data: Record<string, unknown>): DeviceResponse {
+    this.nameSpaces[nameSpace] = data
+    return this
   }
 
   /**
@@ -241,14 +213,11 @@ export class DeviceResponse {
    * @param  {SupportedAlgs} alg - The algorithm to use for signing the device response.
    * @returns {DeviceResponse}
    */
-  public authenticateWithSignature(
-    devicePrivateKey: JWK,
-    alg: SupportedAlgs
-  ): DeviceResponse {
-    this.devicePrivateKey = devicePrivateKey;
-    this.alg = alg;
-    this.useMac = false;
-    return this;
+  public authenticateWithSignature(devicePrivateKey: JWK, alg: SupportedAlgs): DeviceResponse {
+    this.devicePrivateKey = devicePrivateKey
+    this.alg = alg
+    this.useMac = false
+    return this
   }
 
   /**
@@ -259,16 +228,12 @@ export class DeviceResponse {
    * @param  {SupportedAlgs} alg - The algorithm to use for signing the device response.
    * @returns {DeviceResponse}
    */
-  public authenticateWithMAC(
-    devicePrivateKey: JWK,
-    ephemeralPublicKey: JWK,
-    alg: MacSupportedAlgs
-  ): DeviceResponse {
-    this.devicePrivateKey = devicePrivateKey;
-    this.ephemeralPublicKey = ephemeralPublicKey;
-    this.macAlg = alg;
-    this.useMac = true;
-    return this;
+  public authenticateWithMAC(devicePrivateKey: JWK, ephemeralPublicKey: JWK, alg: MacSupportedAlgs): DeviceResponse {
+    this.devicePrivateKey = devicePrivateKey
+    this.ephemeralPublicKey = ephemeralPublicKey
+    this.macAlg = alg
+    this.useMac = true
+    return this
   }
 
   /**
@@ -277,43 +242,35 @@ export class DeviceResponse {
    * @returns {Promise<MDoc>} - The device response as an MDoc.
    */
   public async sign(ctx: {
-    crypto: MdocContext['crypto'];
-    cose: MdocContext['cose'];
+    crypto: MdocContext['crypto']
+    cose: MdocContext['cose']
   }): Promise<MDoc> {
-    if (!this.pd && !this.deviceRequest) {
+    const requests = this.pd?.input_descriptors ?? this.deviceRequest?.docRequests
+    if (!requests) {
       throw new Error(
         'Must provide a presentation definition or device request with .usingPresentationDefinition() or .usingDeviceRequest()'
-      );
+      )
     }
 
     if (!this.sessionTranscriptBytes) {
       throw new Error(
         'Must provide the session transcript with either .usingSessionTranscriptForOID4VP, .usingSessionTranscriptForWebAPI or .usingSessionTranscriptBytes'
-      );
+      )
     }
 
     const limitedDeviceSignedDocuments = await Promise.all(
-      (
-        this.pd?.input_descriptors ??
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain, no-unsafe-optional-chaining
-        this.deviceRequest?.docRequests!
-      ).map(async request => {
-        const isDeviceRequest = (
-          r: InputDescriptor | DocRequest
-        ): r is DocRequest => 'itemsRequest' in request;
+      requests.map(async (request) => {
+        const isDeviceRequest = (r: InputDescriptor | DocRequest): r is DocRequest => 'itemsRequest' in request
 
-        let mdoc: IssuerSignedDocument;
-        let disclosedNameSpaces: Record<string, IssuerSignedItem[]>;
+        let mdoc: IssuerSignedDocument
+        let disclosedNameSpaces: Record<string, IssuerSignedItem[]>
         if (isDeviceRequest(request)) {
-          const docType = request.itemsRequest.data.docType;
-          mdoc = findMdocMatchingDocType(this.mdoc, docType);
-          disclosedNameSpaces = limitDisclosureToDeviceRequestNameSpaces(
-            mdoc,
-            request.itemsRequest.data.nameSpaces
-          );
+          const docType = request.itemsRequest.data.docType
+          mdoc = findMdocMatchingDocType(this.mdoc, docType)
+          disclosedNameSpaces = limitDisclosureToDeviceRequestNameSpaces(mdoc, request.itemsRequest.data.nameSpaces)
         } else {
-          mdoc = findMdocMatchingDocType(this.mdoc, request.id);
-          disclosedNameSpaces = limitDisclosureToInputDescriptor(mdoc, request);
+          mdoc = findMdocMatchingDocType(this.mdoc, request.id)
+          disclosedNameSpaces = limitDisclosureToInputDescriptor(mdoc, request)
         }
 
         return new DeviceSignedDocument(
@@ -323,119 +280,110 @@ export class DeviceResponse {
             issuerAuth: mdoc.issuerSigned.issuerAuth,
           },
           await this.getDeviceSigned(mdoc.docType, ctx)
-        );
+        )
       })
-    );
+    )
 
-    return new MDoc(limitedDeviceSignedDocuments);
+    return new MDoc(limitedDeviceSignedDocuments)
   }
 
   private async getDeviceSigned(
     docType: string,
     ctx: {
-      cose: MdocContext['cose'];
-      crypto: MdocContext['crypto'];
+      cose: MdocContext['cose']
+      crypto: MdocContext['crypto']
     }
   ): Promise<DeviceSigned> {
     const deviceAuthenticationBytes = calculateDeviceAutenticationBytes(
       this.sessionTranscriptBytes,
       docType,
       this.nameSpaces
-    );
+    )
+
+    let deviceAuth: DeviceAuth
+    if (this.useMac) {
+      if (!this.sessionTranscriptBytes) {
+        throw new Error('Missing sessionTranscriptBytes for getDeviceSigned')
+      }
+
+      deviceAuth = await this.getDeviceAuthMac(deviceAuthenticationBytes, this.sessionTranscriptBytes, ctx)
+    } else {
+      deviceAuth = await this.getDeviceAuthSign(deviceAuthenticationBytes, ctx)
+    }
 
     const deviceSigned: DeviceSigned = {
       nameSpaces: this.nameSpaces,
-      deviceAuth: this.useMac
-        ? await this.getDeviceAuthMac(
-            deviceAuthenticationBytes,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.sessionTranscriptBytes!,
-            ctx
-          )
-        : await this.getDeviceAuthSign(deviceAuthenticationBytes, ctx),
-    };
+      deviceAuth,
+    }
 
-    return deviceSigned;
+    return deviceSigned
   }
 
   private async getDeviceAuthMac(
     deviceAuthenticationBytes: Uint8Array,
     sessionTranscriptBytes: Uint8Array,
     ctx: {
-      cose: Pick<MdocContext['cose'], 'mac0'>;
-      crypto: MdocContext['crypto'];
+      cose: Pick<MdocContext['cose'], 'mac0'>
+      crypto: MdocContext['crypto']
     }
   ): Promise<DeviceAuth> {
     if (!this.devicePrivateKey) {
-      throw new Error('Missing devicePrivateKey for getDeviceAuthMac');
+      throw new Error('Missing devicePrivateKey for getDeviceAuthMac')
     }
 
     if (!this.ephemeralPublicKey) {
-      throw new Error('Missing ephemeralPublicKey for getDeviceAuthMac');
+      throw new Error('Missing ephemeralPublicKey for getDeviceAuthMac')
     }
 
-    const { kid } = this.devicePrivateKey;
+    const { kid } = this.devicePrivateKey
     const ephemeralMacKeyJwk = await ctx.crypto.calculateEphemeralMacKeyJwk({
       privateKey: COSEKeyToRAW(COSEKey.fromJWK(this.devicePrivateKey).encode()),
-      publicKey: COSEKeyToRAW(
-        COSEKey.fromJWK(this.ephemeralPublicKey).encode()
-      ),
+      publicKey: COSEKeyToRAW(COSEKey.fromJWK(this.ephemeralPublicKey).encode()),
 
       sessionTranscriptBytes: sessionTranscriptBytes,
-    });
+    })
 
-    if (!this.macAlg) throw new Error('Missing macAlg');
+    if (!this.macAlg) throw new Error('Missing macAlg')
 
-    const protectedHeaders = MacProtectedHeaders.from([
-      [Headers.Algorithm, MacAlgorithms[this.macAlg]],
-    ]);
+    const protectedHeaders = MacProtectedHeaders.from([[Headers.Algorithm, MacAlgorithms[this.macAlg]]])
 
-    const unprotectedHeaders = kid
-      ? UnprotectedHeaders.from([[Headers.KeyID, stringToUint8Array(kid)]])
-      : undefined;
+    const unprotectedHeaders = kid ? UnprotectedHeaders.from([[Headers.KeyID, stringToUint8Array(kid)]]) : undefined
 
-    const mac0 = Mac0.create(
-      protectedHeaders,
-      unprotectedHeaders,
-      deviceAuthenticationBytes,
-      undefined
-    );
+    const mac0 = Mac0.create(protectedHeaders, unprotectedHeaders, deviceAuthenticationBytes, undefined)
 
-    const tag = await ctx.cose.mac0.sign({ mac0, jwk: ephemeralMacKeyJwk });
-    mac0.tag = tag;
-    return { deviceMac: mac0 };
+    const tag = await ctx.cose.mac0.sign({ mac0, jwk: ephemeralMacKeyJwk })
+    mac0.tag = tag
+    return { deviceMac: mac0 }
   }
 
   private async getDeviceAuthSign(
     cborData: Uint8Array,
     ctx: {
-      crypto: MdocContext['crypto'];
-      cose: MdocContext['cose'];
+      crypto: MdocContext['crypto']
+      cose: MdocContext['cose']
     }
   ): Promise<DeviceAuth> {
-    if (!this.devicePrivateKey) throw new Error('Missing devicePrivateKey');
+    if (!this.devicePrivateKey) throw new Error('Missing devicePrivateKey')
 
     if (!this.alg) {
-      throw new Error('The alg header must be set.');
+      throw new Error('The alg header must be set.')
     }
 
-    const { kid } = this.devicePrivateKey;
-    const unprotectedHeaders = kid
-      ? UnprotectedHeaders.from([[Headers.KeyID, stringToUint8Array(kid)]])
-      : undefined;
+    const { kid } = this.devicePrivateKey
+    const unprotectedHeaders = kid ? UnprotectedHeaders.from([[Headers.KeyID, stringToUint8Array(kid)]]) : undefined
 
     const sign1 = Sign1.create(
       ProtectedHeaders.from([[Headers.Algorithm, Algorithms[this.alg]]]),
       unprotectedHeaders,
       cborData
-    );
+    )
 
     const signature = await ctx.cose.sign1.sign({
       sign1,
       jwk: this.devicePrivateKey,
-    });
-    sign1.signature = signature;
+    })
+    sign1.signature = signature
 
-    return { deviceSignature: sign1 };
+    return { deviceSignature: sign1 }
   }
 }

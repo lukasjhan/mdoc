@@ -11,4 +11,4 @@ export {
   isNativeAccelerationEnabled,
   roundFloat32,
   setMaxLimits,
-} from '.';
+} from '.'

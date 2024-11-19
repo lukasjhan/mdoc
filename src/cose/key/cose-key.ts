@@ -1,75 +1,50 @@
-import type { JWK } from 'jose';
-import { cborDecode, cborEncode } from '../../cbor/index.js';
-import {
-  base64UrlToUint8Array,
-  uint8ArrayToBase64Url,
-} from '../../u-base64.js';
-import { concatUint8Array, uint8ArrayToString } from '../../u-uint8-array.js';
-import { Algorithms } from '../headers.js';
-import { TypedMap } from '../typed-map.js';
-import { Curve } from './curve.js';
-import type { KeyOps } from './key-ops.js';
-import { JWKKeyOps, JWKKeyOpsToCOSE } from './key-ops.js';
-import type { KeyType } from './kty.js';
-import { JWKKeyType } from './kty.js';
-import {
-  COSEKeyParam,
-  JWKParam,
-  KTYSpecificJWKParams,
-  KTYSpecificJWKParamsRev,
-} from './params.js';
+import type { JWK } from 'jose'
+import { cborDecode, cborEncode } from '../../cbor/index.js'
+import { base64UrlToUint8Array, uint8ArrayToBase64Url } from '../../u-base64.js'
+import { concatUint8Array, uint8ArrayToString } from '../../u-uint8-array.js'
+import { Algorithms } from '../headers.js'
+import { TypedMap } from '../typed-map.js'
+import { Curve } from './curve.js'
+import type { KeyOps } from './key-ops.js'
+import { JWKKeyOps, JWKKeyOpsToCOSE } from './key-ops.js'
+import type { KeyType } from './kty.js'
+import { JWKKeyType } from './kty.js'
+import { COSEKeyParam, JWKParam, KTYSpecificJWKParams, KTYSpecificJWKParamsRev } from './params.js'
 
-const toArray = (v: unknown | unknown[]) => (Array.isArray(v) ? v : [v]);
+const toArray = (v: unknown | unknown[]) => (Array.isArray(v) ? v : [v])
 
 function normalize(input: string | Uint8Array): string {
-  const encoded = input;
+  const encoded = input
   if (encoded instanceof Uint8Array) {
-    return uint8ArrayToString(encoded);
-  } else {
-    return encoded;
+    return uint8ArrayToString(encoded)
   }
+  return encoded
 }
 // @ts-ignore
 export const JWKFromCOSEValue = new Map<string, (v: unknown) => string>([
   ['kty', (value: KeyType) => JWKKeyType[value]],
   ['crv', (value: Curve) => Curve[value]],
   ['alg', (value: Algorithms) => Algorithms[value]],
-  [
-    'kid',
-    (v: string | Uint8Array) =>
-      typeof v === 'string' ? v : uint8ArrayToBase64Url(v),
-  ],
-  ['key_ops', v => toArray(v).map(value => JWKKeyOps.get(value))],
-  ...['x', 'y', 'd', 'k'].map(param => [
-    param,
-    (v: Uint8Array) => uint8ArrayToBase64Url(v),
-  ]),
-]);
+  ['kid', (v: string | Uint8Array) => (typeof v === 'string' ? v : uint8ArrayToBase64Url(v))],
+  ['key_ops', (v) => toArray(v).map((value) => JWKKeyOps.get(value))],
+  ...['x', 'y', 'd', 'k'].map((param) => [param, (v: Uint8Array) => uint8ArrayToBase64Url(v)]),
+])
 
-// @ts-ignore
-export const JWKToCOSEValue = new Map<
-  string,
-  (v: unknown) => KeyType | Uint8Array | Algorithms | KeyOps[]
->([
+export const JWKToCOSEValue = new Map<string, (v: unknown) => KeyType | Uint8Array | Algorithms | KeyOps[]>([
   ['kty', (value: JWKKeyType) => JWKKeyType[value]],
   ['crv', (value: Curve) => Curve[value]],
   ['alg', (value: Algorithms) => Algorithms[value]],
   ['kid', (v: unknown) => v],
-  [
-    'key_ops',
-    (v: unknown) =>
-      toArray(v)
-        .map(value => JWKKeyOpsToCOSE.get(value))
-        .flat(),
-  ],
-  ...['x', 'y', 'd', 'k'].map(label => [
+  ['key_ops', (v: unknown) => toArray(v).flatMap((value) => JWKKeyOpsToCOSE.get(value))],
+  ...['x', 'y', 'd', 'k'].map((label) => [
     label,
     (v: Uint8Array | string) => {
-      const normalized = normalize(v);
-      return base64UrlToUint8Array(normalized);
+      const normalized = normalize(v)
+      return base64UrlToUint8Array(normalized)
     },
   ]),
-] as any);
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+] as any)
 
 export class COSEKey extends TypedMap<
   | [COSEKeyParam.KeyType, KeyType]
@@ -91,10 +66,9 @@ export class COSEKey extends TypedMap<
    */
   static import(data: Uint8Array | Map<number, unknown>): COSEKey {
     if (data instanceof Uint8Array) {
-      return new COSEKey(cborDecode(data));
-    } else {
-      return new COSEKey(data as ConstructorParameters<typeof COSEKey>[0]);
+      return new COSEKey(cborDecode(data))
     }
+    return new COSEKey(data as ConstructorParameters<typeof COSEKey>[0])
   }
 
   /**
@@ -105,18 +79,16 @@ export class COSEKey extends TypedMap<
    * @returns
    */
   static fromJWK(jwk: JWK): COSEKey {
-    const coseKey = new COSEKey();
-    const kty = jwk.kty;
+    const coseKey = new COSEKey()
+    const kty = jwk.kty
     for (const [key, value] of Object.entries(jwk)) {
-      const jwkKey =
-        KTYSpecificJWKParamsRev[kty]?.get(key) ??
-        (JWKParam[key as keyof typeof JWKParam] as number);
-      const formatter = JWKToCOSEValue.get(key);
+      const jwkKey = KTYSpecificJWKParamsRev[kty]?.get(key) ?? (JWKParam[key as keyof typeof JWKParam] as number)
+      const formatter = JWKToCOSEValue.get(key)
       if (jwkKey && formatter) {
-        coseKey.set(jwkKey, formatter(value));
+        coseKey.set(jwkKey, formatter(value))
       }
     }
-    return coseKey;
+    return coseKey
   }
 
   /**
@@ -126,19 +98,19 @@ export class COSEKey extends TypedMap<
    * @returns {JWK} - The JWK representation of the COSEKey.
    */
   toJWK(): JWK {
-    const kty = JWKKeyType[this.get(COSEKeyParam.KeyType) as number]!;
-    const result: JWK = { kty };
+    const kty = JWKKeyType[this.get(COSEKeyParam.KeyType) as unknown as JWKKeyType]
+    const result: JWK = { kty }
 
     for (const [key, value] of this) {
-      const jwkKey = KTYSpecificJWKParams[kty]?.get(key) ?? JWKParam[key]!;
-      const parser = JWKFromCOSEValue.get(jwkKey);
+      const jwkKey = KTYSpecificJWKParams[kty]?.get(key) ?? JWKParam[key]
+      const parser = JWKFromCOSEValue.get(jwkKey)
       if (parser && jwkKey) {
-        const parsed = parser(value);
+        const parsed = parser(value)
         // @ts-expect-error JWK has no index signature
-        result[jwkKey] = parsed;
+        result[jwkKey] = parsed
       }
     }
-    return result;
+    return result
   }
 
   /**
@@ -148,7 +120,7 @@ export class COSEKey extends TypedMap<
    * @returns {Uint8Array} - The encoded COSEKey.
    */
   encode(): Uint8Array {
-    return cborEncode(this.esMap);
+    return cborEncode(this.esMap)
   }
 }
 
@@ -164,28 +136,22 @@ export class COSEKey extends TypedMap<
  * @param {Map<number, Uint8Array | number>} key - The COSE Key
  * @returns {Uint8Array} - The raw key
  */
-export const COSEKeyToRAW = (
-  key: Map<number, Uint8Array | number> | Uint8Array
-): Uint8Array => {
-  let decodedKey: Map<number, Uint8Array | number>;
+export const COSEKeyToRAW = (key: Map<number, Uint8Array | number> | Uint8Array): Uint8Array => {
+  let decodedKey: Map<number, Uint8Array | number>
   if (key instanceof Uint8Array) {
-    decodedKey = cborDecode(key);
+    decodedKey = cborDecode(key)
   } else {
-    decodedKey = key;
+    decodedKey = key
   }
-  const kty = decodedKey.get(1);
+  const kty = decodedKey.get(1)
   if (kty !== 2) {
-    throw new Error(`Expected COSE Key type: EC2 (2), got: ${kty}`);
+    throw new Error(`Expected COSE Key type: EC2 (2), got: ${kty}`)
   }
 
   // its a private key
   if (decodedKey.has(-4)) {
-    return decodedKey.get(-4) as Uint8Array;
+    return decodedKey.get(-4) as Uint8Array
   }
 
-  return concatUint8Array(
-    Uint8Array.from([0x04]),
-    decodedKey.get(-2) as Uint8Array,
-    decodedKey.get(-3) as Uint8Array
-  );
-};
+  return concatUint8Array(Uint8Array.from([0x04]), decodedKey.get(-2) as Uint8Array, decodedKey.get(-3) as Uint8Array)
+}

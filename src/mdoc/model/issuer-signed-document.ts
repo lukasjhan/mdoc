@@ -1,4 +1,4 @@
-import type { DocType, IssuerSigned, MdocNameSpaces } from './types.js';
+import type { DocType, IssuerSigned, MdocNameSpaces } from './types.js'
 
 /**
  * Represents an issuer signed document.
@@ -20,9 +20,9 @@ export class IssuerSignedDocument {
   public prepare(): Map<string, unknown> {
     const nameSpaces = new Map(
       Object.entries(this.issuerSigned.nameSpaces).map(([nameSpace, items]) => {
-        return [nameSpace, items.map(item => item.dataItem)] as const;
+        return [nameSpace, items.map((item) => item.dataItem)] as const
       })
-    );
+    )
 
     // TODO: ERRORS MISSING
     const docMap = new Map(
@@ -33,8 +33,8 @@ export class IssuerSignedDocument {
           issuerAuth: this.issuerSigned.issuerAuth.getContentForEncoding(),
         },
       })
-    );
-    return docMap;
+    )
+    return docMap
   }
 
   /**
@@ -44,33 +44,29 @@ export class IssuerSignedDocument {
    * @returns {Record<string, unknown>} - The values in the namespace as an object
    */
   getIssuerNameSpace(namespace: string): Record<string, unknown> | undefined {
-    const nameSpace = this.issuerSigned.nameSpaces[namespace];
-    if (!nameSpace) return undefined;
-    return Object.fromEntries(
-      nameSpace.map(item => [item.elementIdentifier, item.elementValue])
-    );
+    const nameSpace = this.issuerSigned.nameSpaces[namespace]
+    if (!nameSpace) return undefined
+    return Object.fromEntries(nameSpace.map((item) => [item.elementIdentifier, item.elementValue]))
   }
 
   /**
    * List of namespaces in the document.
    */
   get issuerSignedNameSpaces(): string[] {
-    return Object.keys(this.issuerSigned.nameSpaces);
+    return Object.keys(this.issuerSigned.nameSpaces)
   }
 
   public get allIssuerSignedNamespaces(): MdocNameSpaces {
-    const namespaces = this.issuerSignedNameSpaces;
+    const namespaces = this.issuerSignedNameSpaces
 
     return Object.fromEntries(
-      namespaces.map(namespace => {
-        const namespaceValues = this.getIssuerNameSpace(namespace);
+      namespaces.map((namespace) => {
+        const namespaceValues = this.getIssuerNameSpace(namespace)
         if (!namespaceValues) {
-          throw new Error(
-            `Cannot extract the namespace '${namespace}' from the mdoc.`
-          );
+          throw new Error(`Cannot extract the namespace '${namespace}' from the mdoc.`)
         }
-        return [namespace, namespaceValues];
+        return [namespace, namespaceValues]
       })
-    );
+    )
   }
 }

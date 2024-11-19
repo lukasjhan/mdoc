@@ -5,4 +5,4 @@ export {
   encode,
   encodeAsAsyncIterable,
   encodeAsIterable,
-} from '.';
+} from '.'

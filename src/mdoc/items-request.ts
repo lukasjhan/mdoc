@@ -1,25 +1,25 @@
-import { DataItem } from '../cbor/data-item.js';
-import { cborDecode } from '../cbor/index.js';
-import type { DeviceRequestNameSpaces } from './model/device-request.js';
+import { DataItem } from '../cbor/data-item.js'
+import { cborDecode } from '../cbor/index.js'
+import type { DeviceRequestNameSpaces } from './model/device-request.js'
 
 export interface ItemsRequestData {
-  docType: string;
-  nameSpaces: DeviceRequestNameSpaces;
-  requestInfo?: Record<string, unknown>;
+  docType: string
+  nameSpaces: DeviceRequestNameSpaces
+  requestInfo?: Record<string, unknown>
 }
 
-export type ItemsRequestDataItem = DataItem<ItemsRequestData>;
+export type ItemsRequestDataItem = DataItem<ItemsRequestData>
 
 export class ItemsRequest {
-  #dataRecord?: ItemsRequestData;
-  readonly #dataItem: ItemsRequestDataItem;
+  #dataRecord?: ItemsRequestData
+  readonly #dataItem: ItemsRequestDataItem
 
   constructor(dataItem: ItemsRequestDataItem) {
-    this.#dataItem = dataItem;
+    this.#dataItem = dataItem
   }
 
   public get dataItem() {
-    return this.#dataItem;
+    return this.#dataItem
   }
 
   public get data(): ItemsRequestData {
@@ -28,10 +28,10 @@ export class ItemsRequest {
         tagUint8Array: false,
         useRecords: true,
         mapsAsObjects: true,
-      }) as ItemsRequestData;
+      }) as ItemsRequestData
     }
 
-    return this.#dataRecord;
+    return this.#dataRecord
   }
 
   public static create(
@@ -43,7 +43,7 @@ export class ItemsRequest {
       docType,
       nameSpaces,
       requestInfo,
-    }) as unknown as ItemsRequestDataItem;
-    return new ItemsRequest(dataItem);
+    }) as unknown as ItemsRequestDataItem
+    return new ItemsRequest(dataItem)
   }
 }

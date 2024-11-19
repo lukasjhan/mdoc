@@ -4,8 +4,7 @@
  * @param map {Map<K, V>} the original map
  * @returns {Map<V, K>} the new map
  */
-export const reverseMap = <K, V>(map: Map<K, V>): Map<V, K> =>
-  new Map(Array.from(map).map(([k, v]) => [v, k]));
+export const reverseMap = <K, V>(map: Map<K, V>): Map<V, K> => new Map(Array.from(map).map(([k, v]) => [v, k]))
 
 export enum COSEKeyParam {
   KeyType = 1,
@@ -33,10 +32,7 @@ export enum JWKParam {
   k = COSEKeyParam.k,
 }
 
-export const KTYSpecificJWKParams: Record<
-  string,
-  Map<number, string> | undefined
-> = {
+export const KTYSpecificJWKParams: Record<string, Map<number, string> | undefined> = {
   EC: new Map([
     [-1, 'crv'],
     [-2, 'x'],
@@ -50,8 +46,9 @@ export const KTYSpecificJWKParams: Record<
     [-4, 'd'],
   ]),
   oct: new Map([[-1, 'k']]),
-};
+}
 
 export const KTYSpecificJWKParamsRev = Object.fromEntries(
+  // biome-ignore lint/style/noNonNullAssertion:
   Object.entries(KTYSpecificJWKParams).map(([k, v]) => [k, reverseMap(v!)])
-);
+)

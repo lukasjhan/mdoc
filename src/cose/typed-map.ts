@@ -2,19 +2,19 @@
  * A map that has a type for its keys and values
  */
 export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
-  #map = new Map();
+  #map = new Map()
 
   constructor(entries?: Iterable<KV>) {
     if (entries) {
       for (const [key, value] of entries) {
-        this.#map.set(key, value);
+        this.#map.set(key, value)
       }
     }
   }
 
   [Symbol.iterator](): Iterator<KV, unknown, undefined> {
     // @ts-expect-error this works
-    return this.#map[Symbol.iterator]();
+    return this.#map[Symbol.iterator]()
   }
 
   /**
@@ -24,8 +24,10 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
    * @param key - The key to set the value for
    * @param value - The value to set
    */
+
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   set<K extends KV[0]>(key: K, value: Extract<KV, [K, any]>[1]) {
-    this.#map.set(key, value);
+    this.#map.set(key, value)
   }
 
   /**
@@ -37,7 +39,7 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
    */
   get<K extends KV[0]>(key: K): Extract<KV, [K, unknown]>[1] | undefined {
     // @ts-expect-error this works
-    return this.#map.get(key) as KV[K];
+    return this.#map.get(key) as KV[K]
   }
 
   /**
@@ -47,7 +49,7 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
    */
   entries(): IterableIterator<KV> {
     // @ts-expect-error this works
-    return this.#map.entries();
+    return this.#map.entries()
   }
 
   /**
@@ -57,7 +59,7 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
    */
   keys(): IterableIterator<KV[0]> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return this.#map.keys();
+    return this.#map.keys()
   }
 
   /**
@@ -67,14 +69,14 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
    */
   values(): IterableIterator<KV[1]> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return this.#map.values();
+    return this.#map.values()
   }
 
   /**
    * Clears the map
    */
   clear() {
-    this.#map.clear();
+    this.#map.clear()
   }
 
   /**
@@ -84,7 +86,7 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
    * @returns Whether the key was deleted
    */
   delete<K extends KV[0]>(key: K): boolean {
-    return this.#map.delete(key);
+    return this.#map.delete(key)
   }
 
   /**
@@ -95,33 +97,31 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
    * @returns Whether the map has an entry for the given key
    */
   has<K extends KV[0]>(key: K): boolean {
-    return this.#map.has(key);
+    return this.#map.has(key)
   }
 
   /**
    * Returns the number of entries in the map
    */
   get size() {
-    return this.#map.size;
+    return this.#map.size
   }
 
   /**
    * Returns the internal ES map
    */
   get esMap() {
-    return this.#map;
+    return this.#map
   }
 
-  static wrap<KV extends unknown[]>(
-    map: TypedMap<KV> | Iterable<KV> | undefined
-  ) {
+  static wrap<KV extends unknown[]>(map: TypedMap<KV> | Iterable<KV> | undefined) {
     if (typeof map === 'undefined') {
-      return new TypedMap<KV>();
+      return new TypedMap<KV>()
     }
     if (map instanceof TypedMap) {
-      return map;
+      return map
     }
-    return new TypedMap(map);
+    return new TypedMap(map)
   }
 
   [Symbol.for('nodejs.util.inspect.custom')](
@@ -129,22 +129,19 @@ export class TypedMap<KV extends unknown[]> implements Iterable<KV> {
     options: Record<string, unknown>,
     inspect: (obj: unknown, options: Record<string, unknown>) => string
   ) {
-    const className = this.constructor.name;
+    const className = this.constructor.name
     if (depth !== null && depth < 0) {
       // @ts-expect-error this works
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return options.stylize(`[${className}]`, 'special');
+      return options.stylize(`[${className}]`, 'special')
     }
     const newOptions = Object.assign({}, options, {
       // @ts-expect-error this works
       depth: options.depth === null ? null : options.depth - 1,
-    });
-    const padding = ' '.repeat(className.length + 2);
-    const inner = inspect(this.esMap, newOptions).replace(
-      /\n/g,
-      `\n${padding}`
-    );
+    })
+    const padding = ' '.repeat(className.length + 2)
+    const inner = inspect(this.esMap, newOptions).replace(/\n/g, `\n${padding}`)
     // @ts-expect-error this works
-    return `${options.stylize(className, 'special')}< ${inner} >`;
+    return `${options.stylize(className, 'special')}< ${inner} >`
   }
 }

@@ -23,7 +23,7 @@ export const JWKKeyOps = new Map<KeyOps, string>([
   //in JWK MAC Create and MAC Verify are sign and verify.
   [KeyOps.MACCreate, 'sign'],
   [KeyOps.MACVerify, 'verify'],
-]);
+])
 
 export const JWKKeyOpsToCOSE = new Map<string, KeyOps[]>([
   ['sign', [KeyOps.Sign, KeyOps.MACCreate]],
@@ -34,4 +34,4 @@ export const JWKKeyOpsToCOSE = new Map<string, KeyOps[]>([
   ['unwrapKey', [KeyOps.UnwrapKey]],
   ['deriveKey', [KeyOps.DeriveKey]],
   ['deriveBits', [KeyOps.DeriveBits]],
-]);
+])

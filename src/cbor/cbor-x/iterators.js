@@ -1,5 +1,5 @@
-import { Decoder } from './decode.js';
-import { Encoder } from './encode.js';
+import { Decoder } from './decode.js'
+import { Encoder } from './encode.js'
 
 /**
  * Given an Iterable first argument, returns an Iterable where each value is encoded as a Buffer
@@ -10,34 +10,28 @@ import { Encoder } from './encode.js';
  */
 export function encodeIter(objectIterator, options = {}) {
   if (!objectIterator || typeof objectIterator !== 'object') {
-    throw new Error(
-      'first argument must be an Iterable, Async Iterable, or a Promise for an Async Iterable'
-    );
-  } else if (typeof objectIterator[Symbol.iterator] === 'function') {
-    return encodeIterSync(objectIterator, options);
-  } else if (
-    typeof objectIterator.then === 'function' ||
-    typeof objectIterator[Symbol.asyncIterator] === 'function'
-  ) {
-    return encodeIterAsync(objectIterator, options);
-  } else {
-    throw new Error(
-      'first argument must be an Iterable, Async Iterable, Iterator, Async Iterator, or a Promise'
-    );
+    throw new Error('first argument must be an Iterable, Async Iterable, or a Promise for an Async Iterable')
   }
+  if (typeof objectIterator[Symbol.iterator] === 'function') {
+    return encodeIterSync(objectIterator, options)
+  }
+  if (typeof objectIterator.then === 'function' || typeof objectIterator[Symbol.asyncIterator] === 'function') {
+    return encodeIterAsync(objectIterator, options)
+  }
+  throw new Error('first argument must be an Iterable, Async Iterable, Iterator, Async Iterator, or a Promise')
 }
 
 function* encodeIterSync(objectIterator, options) {
-  const encoder = new Encoder(options);
+  const encoder = new Encoder(options)
   for (const value of objectIterator) {
-    yield encoder.encode(value);
+    yield encoder.encode(value)
   }
 }
 
 async function* encodeIterAsync(objectIterator, options) {
-  const encoder = new Encoder(options);
+  const encoder = new Encoder(options)
   for await (const value of objectIterator) {
-    yield encoder.encode(value);
+    yield encoder.encode(value)
   }
 }
 
@@ -50,45 +44,44 @@ async function* encodeIterAsync(objectIterator, options) {
  */
 export function decodeIter(bufferIterator, options = {}) {
   if (!bufferIterator || typeof bufferIterator !== 'object') {
-    throw new Error(
-      'first argument must be an Iterable, Async Iterable, Iterator, Async Iterator, or a promise'
-    );
+    throw new Error('first argument must be an Iterable, Async Iterable, Iterator, Async Iterator, or a promise')
   }
 
-  const decoder = new Decoder(options);
-  let incomplete;
-  const parser = chunk => {
-    let yields;
+  const decoder = new Decoder(options)
+  let incomplete
+  const parser = (chunk) => {
+    let yields
     // if there's incomplete data from previous chunk, concatinate and try again
     if (incomplete) {
-      chunk = Buffer.concat([incomplete, chunk]);
-      incomplete = undefined;
+      chunk = Buffer.concat([incomplete, chunk])
+      incomplete = undefined
     }
 
     try {
-      yields = decoder.decodeMultiple(chunk);
+      yields = decoder.decodeMultiple(chunk)
     } catch (err) {
       if (err.incomplete) {
-        incomplete = chunk.slice(err.lastPosition);
-        yields = err.values;
+        incomplete = chunk.slice(err.lastPosition)
+        yields = err.values
       } else {
-        throw err;
+        throw err
       }
     }
-    return yields;
-  };
+    return yields
+  }
 
   if (typeof bufferIterator[Symbol.iterator] === 'function') {
     return (function* iter() {
       for (const value of bufferIterator) {
-        yield* parser(value);
+        yield* parser(value)
       }
-    })();
-  } else if (typeof bufferIterator[Symbol.asyncIterator] === 'function') {
+    })()
+  }
+  if (typeof bufferIterator[Symbol.asyncIterator] === 'function') {
     return (async function* iter() {
       for await (const value of bufferIterator) {
-        yield* parser(value);
+        yield* parser(value)
       }
-    })();
+    })()
   }
 }

@@ -1,11 +1,6 @@
-import { DataItem } from '../../cbor/data-item.js';
-import { IssuerSignedDocument } from './issuer-signed-document.js';
-import type {
-  DeviceSigned,
-  DocType,
-  IssuerSigned,
-  MdocNameSpaces,
-} from './types.js';
+import { DataItem } from '../../cbor/data-item.js'
+import { IssuerSignedDocument } from './issuer-signed-document.js'
+import type { DeviceSigned, DocType, IssuerSigned, MdocNameSpaces } from './types.js'
 
 /**
  * Represents a device signed document.
@@ -19,22 +14,20 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
     issuerSigned: IssuerSigned,
     public readonly deviceSigned: DeviceSigned
   ) {
-    super(docType, issuerSigned);
+    super(docType, issuerSigned)
   }
 
   override prepare(): Map<string, unknown> {
-    const doc = super.prepare();
+    const doc = super.prepare()
 
-    const deviceSignature =
-      this.deviceSigned.deviceAuth.deviceSignature?.getContentForEncoding();
-    const deviceMac =
-      this.deviceSigned.deviceAuth.deviceMac?.getContentForEncoding();
+    const deviceSignature = this.deviceSigned.deviceAuth.deviceSignature?.getContentForEncoding()
+    const deviceMac = this.deviceSigned.deviceAuth.deviceMac?.getContentForEncoding()
     // detach payload
     if (deviceMac) {
-      deviceMac[2] = undefined;
+      deviceMac[2] = undefined
     }
     if (deviceSignature) {
-      deviceSignature[2] = undefined;
+      deviceSignature[2] = undefined
     }
     //
     doc.set('deviceSigned', {
@@ -46,9 +39,9 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
         deviceSignature,
         deviceMac,
       },
-    });
+    })
 
-    return doc;
+    return doc
   }
 
   /**
@@ -58,29 +51,27 @@ export class DeviceSignedDocument extends IssuerSignedDocument {
    * @returns {Record<string, unknown>} - The values in the namespace as an object
    */
   getDeviceNameSpace(namespace: string): Record<string, unknown> | undefined {
-    return this.deviceSigned.nameSpaces[namespace];
+    return this.deviceSigned.nameSpaces[namespace]
   }
 
   /**
    * List of namespaces in the document.
    */
   get deviceSignedNameSpaces(): string[] {
-    return Object.keys(this.deviceSigned.nameSpaces);
+    return Object.keys(this.deviceSigned.nameSpaces)
   }
 
   public get allDeviceSignedNamespaces(): MdocNameSpaces {
-    const namespaces = this.deviceSignedNameSpaces;
+    const namespaces = this.deviceSignedNameSpaces
 
     return Object.fromEntries(
-      namespaces.map(namespace => {
-        const namespaceValues = this.getDeviceNameSpace(namespace);
+      namespaces.map((namespace) => {
+        const namespaceValues = this.getDeviceNameSpace(namespace)
         if (!namespaceValues) {
-          throw new Error(
-            `Cannot extract the namespace '${namespace}' from the mdoc.`
-          );
+          throw new Error(`Cannot extract the namespace '${namespace}' from the mdoc.`)
         }
-        return [namespace, namespaceValues];
+        return [namespace, namespaceValues]
       })
-    );
+    )
   }
 }

@@ -1,10 +1,10 @@
-import { cborEncode } from '../../cbor/index.js';
-import type { IssuerSignedDocument } from './issuer-signed-document.js';
+import { cborEncode } from '../../cbor/index.js'
+import type { IssuerSignedDocument } from './issuer-signed-document.js'
 
-export type ErrorCode = number;
-export type ErrorItems = Record<string, ErrorCode>;
+export type ErrorCode = number
+export type ErrorItems = Record<string, ErrorCode>
 export interface DocumentError {
-  DocType: ErrorCode;
+  DocType: ErrorCode
 }
 
 export enum MDocStatus {
@@ -24,17 +24,17 @@ export class MDoc {
 
   addDocument(document: IssuerSignedDocument) {
     if (typeof document.issuerSigned === 'undefined') {
-      throw new Error('Cannot add an unsigned document');
+      throw new Error('Cannot add an unsigned document')
     }
-    this.documents.push(document);
+    this.documents.push(document)
   }
 
   encode() {
     // TODO: ERROR MISSING
     return cborEncode({
       version: this.version,
-      documents: this.documents.map(doc => doc.prepare()),
+      documents: this.documents.map((doc) => doc.prepare()),
       status: this.status,
-    });
+    })
   }
 }

@@ -1,4 +1,4 @@
-import { DeviceRequest } from '../..';
+import { DeviceRequest } from '../..'
 //  All the keys here are randomly generated for the purpose of this test.
 export const DEVICE_JWK = {
   kty: 'EC',
@@ -6,7 +6,7 @@ export const DEVICE_JWK = {
   y: 'oxS1OAORJ7XNUHNfVFGeM8E0RQVFxWA62fJj-sxW03c',
   crv: 'P-256',
   d: 'eRpAZr3eV5xMMnPG3kWjg90Y-bBff9LqmlQuk49HUtA',
-};
+}
 
 export const ISSUER_CERTIFICATE = `-----BEGIN CERTIFICATE-----
 MIICKjCCAdCgAwIBAgIUV8bM0wi95D7KN0TyqHE42ru4hOgwCgYIKoZIzj0EAwIw
@@ -21,12 +21,12 @@ GDAWgBSrbS4DuR1JIkAzj7zK3v2TM+r2xzAPBgNVHRMBAf8EBTADAQH/MCwGCWCG
 SAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAKBggqhkjO
 PQQDAgNIADBFAiAJ/Qyrl7A+ePZOdNfc7ohmjEdqCvxaos6//gfTvncuqQIhANo4
 q8mKCA9J8k/+zh//yKbN1bLAtdqPx7dnrDqV3Lg+
------END CERTIFICATE-----`;
+-----END CERTIFICATE-----`
 
 export const ISSUER_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
 MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCCjo+vMGbV0J9LCokdb
 oNWqYk4JBIgCiysI99sUkMw2ng==
------END PRIVATE KEY-----`;
+-----END PRIVATE KEY-----`
 
 export const ISSUER_PRIVATE_KEY_JWK = {
   kty: 'EC',
@@ -35,7 +35,7 @@ export const ISSUER_PRIVATE_KEY_JWK = {
   y: 'YKwXDRz8U0-uLZ3NSI93R_35eNkl6jHp6Qg8OCup7VM',
   crv: 'P-256',
   d: 'o6PrzBm1dCfSwqJHW6DVqmJOCQSIAosrCPfbFJDMNp4',
-};
+}
 
 export const PRESENTATION_DEFINITION_1 = {
   id: 'mdl-test-all-data',
@@ -102,7 +102,7 @@ export const PRESENTATION_DEFINITION_1 = {
       },
     },
   ],
-};
+}
 
 export const deviceRequest = DeviceRequest.from('1.0', [
   {
@@ -126,7 +126,7 @@ export const deviceRequest = DeviceRequest.from('1.0', [
       },
     },
   },
-]);
+])
 
 export const PRESENTATION_DEFINITION_2 = {
   id: 'mdl-test-age-over-18',
@@ -149,4 +149,4 @@ export const PRESENTATION_DEFINITION_2 = {
       },
     },
   ],
-};
+}

@@ -8,7 +8,7 @@ export {
   isNativeAccelerationEnabled,
   roundFloat32,
   setSizeLimits,
-} from './decode.js';
+} from './decode.js'
 export {
   ALWAYS,
   DECIMAL_FIT,
@@ -20,5 +20,5 @@ export {
   encode,
   encodeAsAsyncIterable,
   encodeAsIterable,
-} from './encode.js';
-export { decodeIter, encodeIter } from './iterators.js';
+} from './encode.js'
+export { decodeIter, encodeIter } from './iterators.js'

@@ -1,13 +1,13 @@
-import { addExtension } from './cbor-x/index.js';
-import { cborDecode, cborEncode } from './index.js';
+import { addExtension } from './cbor-x/index.js'
+import { cborDecode, cborEncode } from './index.js'
 
 export type DataItemParams<T = unknown> =
   | {
-      data: T;
-      buffer: Uint8Array;
+      data: T
+      buffer: Uint8Array
     }
   | { data: T }
-  | { buffer: Uint8Array };
+  | { buffer: Uint8Array }
 
 /**
  * DataItem is an extension defined https://www.rfc-editor.org/rfc/rfc8949.html#name-encoded-cbor-data-item
@@ -21,33 +21,31 @@ export type DataItemParams<T = unknown> =
  *
  */
 export class DataItem<T = unknown> {
-  #data?: T;
-  #buffer: Uint8Array;
+  #data?: T
+  #buffer: Uint8Array
 
   constructor(params: DataItemParams<T>) {
     if (!('data' in params) && !('buffer' in params)) {
-      throw new Error(
-        'DataItem must be initialized with either the data or a buffer'
-      );
+      throw new Error('DataItem must be initialized with either the data or a buffer')
     }
 
-    if ('data' in params) this.#data = params.data;
-    this.#buffer = 'buffer' in params ? params.buffer : cborEncode(params.data);
+    if ('data' in params) this.#data = params.data
+    this.#buffer = 'buffer' in params ? params.buffer : cborEncode(params.data)
   }
 
   public get data(): T {
     if (!this.#data) {
-      this.#data = cborDecode(this.#buffer) as T;
+      this.#data = cborDecode(this.#buffer) as T
     }
-    return this.#data;
+    return this.#data
   }
 
   public get buffer(): Uint8Array {
-    return this.#buffer;
+    return this.#buffer
   }
 
   public static fromData<T>(data: T): DataItem<T> {
-    return new DataItem({ data });
+    return new DataItem({ data })
   }
 }
 
@@ -55,9 +53,9 @@ addExtension({
   Class: DataItem,
   tag: 24,
   encode: (instance: DataItem<unknown>, encode) => {
-    return encode(instance.buffer);
+    return encode(instance.buffer)
   },
   decode: (buffer: Uint8Array): object => {
-    return new DataItem({ buffer });
+    return new DataItem({ buffer })
   },
-});
+})

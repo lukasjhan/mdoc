@@ -1,19 +1,13 @@
-import { addExtension, cborEncode } from '../cbor/index.js';
-import { COSEBase } from './cose-base.js';
-import { CoseError } from './e-cose.js';
-import type { MacAlgorithms, SupportedMacAlg } from './headers.js';
-import {
-  Headers,
-  MacAlgorithmNames,
-  MacProtectedHeaders,
-  ProtectedHeaders,
-  UnprotectedHeaders,
-} from './headers.js';
-import { validateAlgorithms } from './validate-algorithms.js';
+import { addExtension, cborEncode } from '../cbor/index.js'
+import { COSEBase } from './cose-base.js'
+import { CoseError } from './e-cose.js'
+import type { MacAlgorithms, SupportedMacAlg } from './headers.js'
+import { Headers, MacAlgorithmNames, MacProtectedHeaders, ProtectedHeaders, UnprotectedHeaders } from './headers.js'
+import { validateAlgorithms } from './validate-algorithms.js'
 export interface VerifyOptions {
-  externalAAD?: Uint8Array;
-  detachedPayload?: Uint8Array;
-  algorithms?: MacAlgorithms[];
+  externalAAD?: Uint8Array
+  detachedPayload?: Uint8Array
+  algorithms?: MacAlgorithms[]
 }
 
 export class Mac0 extends COSEBase {
@@ -23,99 +17,80 @@ export class Mac0 extends COSEBase {
     public readonly payload: Uint8Array,
     private _tag?: Uint8Array
   ) {
-    super(protectedHeaders, unprotectedHeaders);
+    super(protectedHeaders, unprotectedHeaders)
   }
 
-  private static createMAC0(
-    protectedHeaders: Uint8Array,
-    applicationHeaders: Uint8Array,
-    payload: Uint8Array
-  ) {
-    return cborEncode(['MAC0', protectedHeaders, applicationHeaders, payload]);
+  private static createMAC0(protectedHeaders: Uint8Array, applicationHeaders: Uint8Array, payload: Uint8Array) {
+    return cborEncode(['MAC0', protectedHeaders, applicationHeaders, payload])
   }
 
   public getContentForEncoding() {
-    return [
-      this.encodedProtectedHeaders,
-      this.unprotectedHeaders,
-      this.payload,
-      this.tag,
-    ];
+    return [this.encodedProtectedHeaders, this.unprotectedHeaders, this.payload, this.tag]
   }
 
   public get tag() {
     if (!this._tag) {
-      throw new Error('No signature present');
+      throw new Error('No signature present')
     }
 
-    return this._tag;
+    return this._tag
   }
 
   public set tag(sig: Uint8Array) {
-    this._tag = sig;
+    this._tag = sig
   }
 
   public get alg(): MacAlgorithms | undefined {
-    return this.protectedHeaders.get(Headers.Algorithm) as MacAlgorithms;
+    return this.protectedHeaders.get(Headers.Algorithm) as MacAlgorithms
   }
 
   public get algName(): SupportedMacAlg | undefined {
-    return this.alg ? MacAlgorithmNames.get(this.alg) : undefined;
+    return this.alg ? MacAlgorithmNames.get(this.alg) : undefined
   }
 
   public hasSupportedAlg() {
-    return !!this.algName;
+    return !!this.algName
   }
 
   static create(
-    protectedHeaders:
-      | MacProtectedHeaders
-      | ConstructorParameters<typeof MacProtectedHeaders>[0],
-    unprotectedHeaders:
-      | UnprotectedHeaders
-      | ConstructorParameters<typeof UnprotectedHeaders>[0]
-      | undefined,
+    protectedHeaders: MacProtectedHeaders | ConstructorParameters<typeof MacProtectedHeaders>[0],
+    unprotectedHeaders: UnprotectedHeaders | ConstructorParameters<typeof UnprotectedHeaders>[0] | undefined,
     payload: Uint8Array,
     signature?: Uint8Array
   ) {
-    const wProtectedHeaders = MacProtectedHeaders.wrap(protectedHeaders);
-    const mac0AlgName = wProtectedHeaders.get(Headers.Algorithm);
-    const alg = mac0AlgName ? MacAlgorithmNames.get(mac0AlgName) : undefined;
+    const wProtectedHeaders = MacProtectedHeaders.wrap(protectedHeaders)
+    const mac0AlgName = wProtectedHeaders.get(Headers.Algorithm)
+    const alg = mac0AlgName ? MacAlgorithmNames.get(mac0AlgName) : undefined
 
     if (!alg) {
       throw new CoseError({
         code: 'COSE_INVALID_ALG',
         message: `The [${Headers.Algorithm}] (Algorithm) header must be set.`,
-      });
+      })
     }
 
-    const encodedProtectedHeaders = cborEncode(wProtectedHeaders.esMap);
-    const wUnprotectedHeaders = UnprotectedHeaders.wrap(unprotectedHeaders);
+    const encodedProtectedHeaders = cborEncode(wProtectedHeaders.esMap)
+    const wUnprotectedHeaders = UnprotectedHeaders.wrap(unprotectedHeaders)
 
-    return new Mac0(
-      encodedProtectedHeaders,
-      wUnprotectedHeaders.esMap as Map<number, unknown>,
-      payload,
-      signature
-    );
+    return new Mac0(encodedProtectedHeaders, wUnprotectedHeaders.esMap as Map<number, unknown>, payload, signature)
   }
 
   public getRawSigningData() {
-    const algName = this.algName;
+    const algName = this.algName
     if (!algName) {
       throw new CoseError({
         code: 'COSE_INVALID_ALG',
-        message: `Cannot get raw signing data. Mac alg is not defined`,
-      });
+        message: 'Cannot get raw signing data. Mac alg is not defined',
+      })
     }
 
     const toBeSigned = Mac0.createMAC0(
       cborEncode(ProtectedHeaders.wrap(this.protectedHeaders).esMap),
       new Uint8Array(),
       this.payload
-    );
+    )
 
-    return { data: toBeSigned, alg: algName };
+    return { data: toBeSigned, alg: algName }
   }
 
   public getRawVerificationData(options?: VerifyOptions) {
@@ -123,42 +98,41 @@ export class Mac0 extends COSEBase {
       this.encodedProtectedHeaders ?? new Uint8Array(),
       options?.externalAAD ?? new Uint8Array(),
       options?.detachedPayload ?? this.payload
-    );
+    )
 
     if (!this.alg || !this.algName || !MacAlgorithmNames.has(this.alg)) {
       throw new CoseError({
         code: 'COSE_UNSUPPORTED_MAC',
         message: `Unsupported MAC algorithm '${this.alg}'`,
-      });
+      })
     }
 
-    const algorithms =
-      options && validateAlgorithms('algorithms', options.algorithms);
+    const algorithms = options && validateAlgorithms('algorithms', options.algorithms)
 
     if (algorithms && !algorithms.has(this.alg)) {
       throw new CoseError({
         code: 'COSE_UNSUPPORTED_ALG',
         message: `[${Headers.Algorithm}] (algorithm) Header Parameter not allowed`,
-      });
+      })
     }
 
     return {
       alg: this.algName,
       signature: this.tag,
       data: mac0Structure,
-    };
+    }
   }
 
-  static tag = 17;
+  static tag = 17
 }
 
 addExtension({
   Class: Mac0,
   tag: Mac0.tag,
   encode(instance: Mac0, encodeFn: (obj: unknown) => Uint8Array) {
-    return encodeFn(instance.getContentForEncoding());
+    return encodeFn(instance.getContentForEncoding())
   },
   decode: (data: ConstructorParameters<typeof Mac0>) => {
-    return new Mac0(data[0], data[1], data[2], data[3]);
+    return new Mac0(data[0], data[1], data[2], data[3])
   },
-});
+})
