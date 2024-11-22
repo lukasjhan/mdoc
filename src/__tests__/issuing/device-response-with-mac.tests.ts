@@ -170,7 +170,7 @@ describe('issuing a device response with MAC authentication', () => {
     })
 
     it('should generate a device mac without payload', () => {
-      expect(parsedDocument.deviceSigned.deviceAuth.deviceMac?.payload).toBeUndefined()
+      expect(parsedDocument.deviceSigned.deviceAuth.deviceMac?.payload).toBeNull()
     })
 
     it('should contain the validity info', () => {
@@ -183,9 +183,7 @@ describe('issuing a device response with MAC authentication', () => {
     })
 
     it('should contain the device namespaces', () => {
-      expect(parsedDocument.getDeviceNameSpace('com.foobar-device')).toEqual({
-        test: 1234,
-      })
+      expect(parsedDocument.getDeviceNameSpace('com.foobar-device')).toEqual(new Map([['test', 1234]]))
     })
   })
 
@@ -287,7 +285,7 @@ describe('issuing a device response with MAC authentication', () => {
     })
 
     it('should generate a device mac without payload', () => {
-      expect(parsedDocument.deviceSigned.deviceAuth.deviceMac?.payload).toBeUndefined()
+      expect(parsedDocument.deviceSigned.deviceAuth.deviceMac?.payload).toBeNull()
     })
 
     it('should contain the validity info', () => {
@@ -300,9 +298,7 @@ describe('issuing a device response with MAC authentication', () => {
     })
 
     it('should contain the device namespaces', () => {
-      expect(parsedDocument.getDeviceNameSpace('com.foobar-device')).toEqual({
-        test: 1234,
-      })
+      expect(parsedDocument.getDeviceNameSpace('com.foobar-device')).toEqual(new Map([['test', 1234]]))
     })
   })
 })
