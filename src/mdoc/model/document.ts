@@ -1,6 +1,6 @@
 import type { JWK } from 'jose'
 import type { MdocContext } from '../../c-mdoc.js'
-import { DataItem, DateOnly, cborDecode, cborEncode } from '../../cbor/index.js'
+import { DataItem, cborDecode, cborEncode } from '../../cbor/index.js'
 import { Algorithms, Headers, ProtectedHeaders, UnprotectedHeaders } from '../../cose/headers.js'
 import { COSEKey } from '../../cose/key/cose-key.js'
 import { stringToUint8Array } from '../../u-uint8-array.js'
@@ -30,7 +30,6 @@ export default function isObject(input: unknown): input is Record<string, unknow
   }
   let proto = input
   while (Object.getPrototypeOf(proto) !== null) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     proto = Object.getPrototypeOf(proto)
   }
   return Object.getPrototypeOf(input) === proto
@@ -67,8 +66,7 @@ export class Document {
     this.ctx = ctx
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private validateValues(values: Record<string, unknown>) {
+  private validateValues(_values: Record<string, unknown>) {
     // TODO
     // validate required fields, no extra fields, data types, etc...
   }
@@ -88,29 +86,6 @@ export class Document {
     const namespaceRecord = this.#issuerNameSpaces.get(namespace) ?? []
 
     const addAttribute = (key: string, value: unknown) => {
-      let elementValue = value
-      if (namespace === DEFAULT_NS) {
-        // the following namespace attributes must be a full-date as specified in RFC 3339
-        if (['birth_date', 'issue_date', 'expiry_date'].includes(key) && typeof elementValue === 'string') {
-          elementValue = new DateOnly(elementValue)
-        }
-
-        if (key === 'driving_privileges' && Array.isArray(elementValue)) {
-          elementValue.forEach((v, i) => {
-            if (isObject(v) && typeof v.issue_date === 'string') {
-              // @ts-expect-error this works
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              elementValue[i].issue_date = new DateOnly(v.issue_date)
-            }
-            if (isObject(v) && typeof v.expiry_date === 'string') {
-              // @ts-expect-error this works
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              elementValue[i].expiry_date = new DateOnly(v.expiry_date)
-            }
-          })
-        }
-      }
-
       const digestID = namespaceRecord.length
       const issuerSignedItem = IssuerSignedItem.create(digestID, key, value, this.ctx)
       namespaceRecord.push(issuerSignedItem)
@@ -118,11 +93,6 @@ export class Document {
 
     for (const [key, value] of Object.entries(values)) {
       addAttribute(key, value)
-      if (this.docType === 'org.iso.18013.5.1.mDL' && namespace === DEFAULT_NS && key === 'birth_date') {
-        if (typeof value !== 'string') {
-          throw new Error(`Invalid type for 'birth_date'. Expected 'string', received '${typeof value}'`)
-        }
-      }
     }
 
     this.#issuerNameSpaces.set(namespace, namespaceRecord)

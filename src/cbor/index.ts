@@ -1,7 +1,6 @@
 import type { Options } from './cbor-x/index.js'
-import { addExtension } from './cbor-x/index.js'
 
-import { Encoder } from './cbor-x/encode.js'
+import { Encoder, addExtension } from './cbor-x/encode.js'
 
 export { DataItem } from './data-item.js'
 
@@ -18,8 +17,7 @@ export class DateOnly extends Date {
   override toString(): string {
     return this.toISOString()
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  override toJSON(key?: unknown): string {
+  override toJSON(_key?: unknown): string {
     return this.toISOString()
   }
   [customInspectSymbol](): string {
@@ -48,7 +46,7 @@ addExtension({
   Class: DateOnly,
   tag: 1004,
   encode: (date: DateOnly, encode) => encode(date.toISOString()),
-  decode: (isoStringDate: string): object => new DateOnly(isoStringDate),
+  decode: (isoStringDate: string) => new DateOnly(isoStringDate),
 })
 
 export const cborDecode = (
