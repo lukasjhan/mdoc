@@ -54,7 +54,7 @@ describe('Google CM Wallet mdoc implementation', () => {
           new Uint8Array(new X509Certificate(SIGNING_CERTIFICATE).rawData),
         ],
         encodedDeviceResponse: deviceResponse,
-        encodedSessionTranscript: await DeviceResponse.calculateSessionTranscriptForOID4VPDCApi({
+        encodedSessionTranscript: await DeviceResponse.calculateSessionTranscriptBytesForOID4VPDCApi({
           context: mdocContext,
           origin,
           clientId,
