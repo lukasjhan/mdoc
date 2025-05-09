@@ -1,15 +1,9 @@
-export class MDLError extends Error {
-  constructor(message?: string) {
-    super(message)
-    this.name = new.target.name
-    Object.setPrototypeOf(this, new.target.prototype)
-  }
-}
+// biome-ignore format:
+export class MdlError extends Error { constructor(message: string = new.target.name) { super(message) } }
 
-export class MDLParseError extends Error {
-  constructor(message?: string) {
-    super(message)
-    this.name = new.target.name
-    Object.setPrototypeOf(this, new.target.prototype)
-  }
-}
+export class MdlParseError extends MdlError {}
+export class PresentationDefinitionOrDocRequestsAreRequiredError extends MdlError {}
+export class SessionTranscriptOrSessionTranscriptBytesAreRequiredError extends MdlError {}
+export class DuplicateNamespaceInIssuerNamespacesError extends MdlError {}
+export class DuplicateDocumentInDeviceResponseError extends MdlError {}
+export class EitherSignatureOrMacMustBeProvidedError extends MdlError {}
