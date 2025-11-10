@@ -68,7 +68,7 @@ import fs from "node:fs";
 })();
 ```
 
-##$ Issuing a credential
+### Issuing a credential
 
 ```js
 import { MDoc, Document } from "@animo-id/mdoc";
@@ -95,7 +95,7 @@ import { MDoc, Document } from "@animo-id/mdoc";
 })();
 ```
 
-##$ Generating a device response
+### Generating a device response
 
 ```js
 import { DeviceResponse, MDoc } from "@animo-id/mdoc";
