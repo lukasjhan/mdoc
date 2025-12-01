@@ -1,11 +1,12 @@
-import { p256 } from '@noble/curves/p256'
-import { hmac } from '@noble/hashes/hmac'
-import { sha256 } from '@noble/hashes/sha2'
+import crypto from 'node:crypto'
+import { p256 } from '@noble/curves/nist.js'
+import { hmac } from '@noble/hashes/hmac.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 import { hkdf } from '@panva/hkdf'
 import * as x509 from '@peculiar/x509'
 import { X509Certificate } from '@peculiar/x509'
 import { exportJWK, importX509 } from 'jose'
-import { CoseKey, KeyOps, KeyType, MacAlgorithm, type MdocContext, hex, stringToBytes } from '../src'
+import { CoseKey, hex, KeyOps, KeyType, MacAlgorithm, type MdocContext, stringToBytes } from '../src'
 
 export const mdocContext: MdocContext = {
   crypto: {
@@ -18,7 +19,7 @@ export const mdocContext: MdocContext = {
     },
     calculateEphemeralMacKey: async (input) => {
       const { privateKey, publicKey, sessionTranscriptBytes, info } = input
-      const ikm = p256.getSharedSecret(hex.encode(privateKey), hex.encode(publicKey), true).slice(1)
+      const ikm = p256.getSharedSecret(privateKey, publicKey, true).slice(1)
       const salt = new Uint8Array(await crypto.subtle.digest('SHA-256', sessionTranscriptBytes))
       const infoAsBytes = stringToBytes(info)
       const digest = 'sha256'
@@ -52,11 +53,7 @@ export const mdocContext: MdocContext = {
     sign1: {
       sign: async (input) => {
         const { key, sign1 } = input
-
-        const hashed = sha256(sign1.toBeSigned)
-        const sig = p256.sign(hashed, key.privateKey)
-
-        return sig.toCompactRawBytes()
+        return p256.sign(sign1.toBeSigned, key.privateKey, { format: 'compact' })
       },
       verify: async (input) => {
         const { sign1, key } = input
@@ -66,8 +63,8 @@ export const mdocContext: MdocContext = {
           throw new Error('signature is required for sign1 verification')
         }
 
-        const hashed = sha256(toBeSigned)
-        return p256.verify(signature, hashed, key.publicKey)
+        // lowS is needed after upgrade of @noble/curves to keep existing tests passing
+        return p256.verify(signature, toBeSigned, key.publicKey, { lowS: false })
       },
     },
   },
@@ -87,9 +84,10 @@ export const mdocContext: MdocContext = {
       return CoseKey.fromJwk((await exportJWK(key)) as unknown as Record<string, unknown>)
     },
 
-    validateCertificateChain: async (input: {
+    verifyCertificateChain: async (input: {
       trustedCertificates: Array<Uint8Array>
       x5chain: Array<Uint8Array>
+      now?: Date
     }) => {
       const { trustedCertificates, x5chain: certificateChain } = input
       if (certificateChain.length === 0) throw new Error('Certificate chain is empty')
@@ -132,7 +130,7 @@ export const mdocContext: MdocContext = {
         const cert = parsedChain[i]
         const previousCertificate = parsedChain[i - 1]
         const publicKey = previousCertificate ? previousCertificate.publicKey : undefined
-        await cert?.verify({ publicKey, date: new Date() })
+        await cert?.verify({ publicKey, date: input.now ?? new Date() })
       }
     },
     getCertificateData: async (input: { certificate: Uint8Array }) => {
@@ -149,5 +147,14 @@ export const mdocContext: MdocContext = {
         notAfter: certificate.notAfter,
       }
     },
+  },
+}
+
+export const deterministicMdocContext = {
+  ...mdocContext,
+  crypto: {
+    ...mdocContext.crypto,
+    random: (len: number) =>
+      hex.decode('9bdb72498967865710108af43959f90c1b6aac9687bedd1fa53dd0d2103fa5d0').slice(0, len),
   },
 }

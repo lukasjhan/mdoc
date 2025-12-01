@@ -1,17 +1,12 @@
 import type { MdocContext } from './context.js'
 import type { CoseKey } from './cose/index.js'
 import type { VerificationCallback } from './mdoc/check-callback.js'
-import { DeviceResponse, type SessionTranscript } from './mdoc/index.js'
+import { type DeviceRequest, DeviceResponse, type SessionTranscript } from './mdoc/index.js'
 
 export class Verifier {
-  /**
-   *
-   *
-   * @todo should this check if it is also compatible with the device /pex request?
-   *
-   */
   public static async verifyDeviceResponse(
     options: {
+      deviceRequest?: DeviceRequest
       deviceResponse: Uint8Array | DeviceResponse
       sessionTranscript: SessionTranscript | Uint8Array
       ephemeralReaderKey?: CoseKey
@@ -27,6 +22,6 @@ export class Verifier {
         ? options.deviceResponse
         : DeviceResponse.decode(options.deviceResponse)
 
-    await deviceResponse.validate(options, ctx)
+    await deviceResponse.verify(options, ctx)
   }
 }

@@ -2,8 +2,8 @@ import { X509Certificate } from '@peculiar/x509'
 import { describe, expect, test } from 'vitest'
 import { CoseKey, DateOnly, type IssuerSigned, SignatureAlgorithm } from '../../src'
 import { IssuerSignedBuilder } from '../../src/mdoc/builders/issuer-signed-builder'
+import { DEVICE_JWK, ISSUER_CERTIFICATE, ISSUER_PRIVATE_KEY_JWK } from '../config'
 import { mdocContext } from '../context'
-import { DEVICE_JWK, ISSUER_CERTIFICATE, ISSUER_PRIVATE_KEY_JWK } from '../issuing/config'
 
 const claims = {
   family_name: 'Jones',
@@ -31,7 +31,6 @@ const claims = {
 
 describe('issuer signed builder', () => {
   let issuerSigned: IssuerSigned
-  let issuerSignedEncoded: Uint8Array
 
   const signed = new Date('2023-10-24T14:55:18Z')
   const validFrom = new Date(signed)
@@ -52,20 +51,19 @@ describe('issuer signed builder', () => {
       deviceKeyInfo: { deviceKey: CoseKey.fromJwk(DEVICE_JWK) },
       validityInfo: { signed, validFrom, validUntil },
     })
-    issuerSignedEncoded = issuerSigned.encode()
 
     expect(issuerSigned.issuerNamespaces).toBeDefined()
     expect(issuerSigned.issuerNamespaces?.issuerNamespaces.has('org.iso.18013.5.1')).toBeTruthy()
     expect(issuerSigned.issuerAuth.signature).toBeDefined()
 
-    const verificationResult = await issuerSigned.issuerAuth.verify({}, mdocContext)
+    const verificationResult = await issuerSigned.issuerAuth.verifySignature({}, mdocContext)
 
     expect(verificationResult).toBeTruthy()
   })
 
   test('verify issuer signature', async () => {
     await expect(
-      issuerSigned.issuerAuth.validate(
+      issuerSigned.issuerAuth.verify(
         {
           trustedCertificates: [new Uint8Array(new X509Certificate(ISSUER_CERTIFICATE).rawData)],
         },

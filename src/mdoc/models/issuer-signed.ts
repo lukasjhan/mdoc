@@ -1,7 +1,7 @@
 import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { base64url } from '../../utils'
-import { type VerificationCallback, defaultVerificationCallback, onCategoryCheck } from '../check-callback'
+import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
 import { IssuerAuth, type IssuerAuthStructure } from './issuer-auth'
 import { IssuerNamespace, type IssuerNamespaceStructure } from './issuer-namespace'
 import type { IssuerSignedItem } from './issuer-signed-item'
@@ -28,8 +28,7 @@ export class IssuerSigned extends CborStructure {
   }
 
   public getIssuerNamespace(namespace: Namespace) {
-    if (!this.issuerNamespaces) return undefined
-    return this.issuerNamespaces.issuerNamespaces.get(namespace)
+    return this.issuerNamespaces?.get(namespace)
   }
 
   public getPrettyClaims(namespace: Namespace) {
@@ -48,7 +47,7 @@ export class IssuerSigned extends CborStructure {
     return IssuerSigned.decode(base64url.decode(encoded))
   }
 
-  public async validate(
+  public async verify(
     options: { verificationCallback?: VerificationCallback },
     ctx: Pick<MdocContext, 'x509' | 'crypto'>
   ) {

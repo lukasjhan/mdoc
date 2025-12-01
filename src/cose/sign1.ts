@@ -1,5 +1,5 @@
 import { CborEncodeError } from '../cbor/error.js'
-import { type CborDecodeOptions, CborStructure, addExtension, cborDecode, cborEncode } from '../cbor/index.js'
+import { addExtension, type CborDecodeOptions, CborStructure, cborDecode, cborEncode } from '../cbor/index.js'
 import type { MdocContext } from '../context.js'
 import { CoseCertificateNotFoundError, CoseInvalidAlgorithmError, CosePayloadMustBeDefinedError } from './error.js'
 import { Header, type SignatureAlgorithm } from './headers/defaults.js'
@@ -156,7 +156,7 @@ export class Sign1 extends CborStructure {
     this.signature = signature
   }
 
-  public async verify(options: { key?: CoseKey }, ctx: Pick<MdocContext, 'cose' | 'x509'>) {
+  public async verifySignature(options: { key?: CoseKey }, ctx: Pick<MdocContext, 'cose' | 'x509'>) {
     const publicKey =
       options.key ??
       (await ctx.x509.getPublicKey({

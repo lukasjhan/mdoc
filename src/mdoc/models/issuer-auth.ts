@@ -1,8 +1,8 @@
-import { type CborDecodeOptions, DataItem, cborDecode } from '../../cbor/index.js'
+import { type CborDecodeOptions, cborDecode, DataItem } from '../../cbor/index.js'
 import type { MdocContext } from '../../context.js'
 import { CosePayloadInvalidStructureError, CosePayloadMustBeDefinedError } from '../../cose/error.js'
 import { Sign1, type Sign1Options, type Sign1Structure } from '../../cose/sign1.js'
-import { type VerificationCallback, defaultVerificationCallback, onCategoryCheck } from '../check-callback.js'
+import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback.js'
 import { MobileSecurityObject, type MobileSecurityObjectStructure } from './mobile-security-object.js'
 
 export type IssuerAuthStructure = Sign1Structure
@@ -27,7 +27,7 @@ export class IssuerAuth extends Sign1 {
     return mso
   }
 
-  public async validate(
+  public async verify(
     options: {
       verificationCallback?: VerificationCallback
       now?: Date
@@ -54,9 +54,10 @@ export class IssuerAuth extends Sign1 {
           throw new Error('No trusted certificates found. Cannot verify issuer signature.')
         }
 
-        await ctx.x509.validateCertificateChain({
+        await ctx.x509.verifyCertificateChain({
           trustedCertificates,
           x5chain: this.certificateChain,
+          now,
         })
 
         onCheck({
@@ -72,7 +73,7 @@ export class IssuerAuth extends Sign1 {
       }
     }
 
-    const isSignatureValid = await this.verify({}, ctx)
+    const isSignatureValid = await this.verifySignature({}, ctx)
 
     onCheck({
       status: isSignatureValid ? 'PASSED' : 'FAILED',
@@ -86,7 +87,7 @@ export class IssuerAuth extends Sign1 {
     })
 
     onCheck({
-      status: validityInfo.validateSigned(notBefore, notAfter) ? 'FAILED' : 'PASSED',
+      status: validityInfo.verifySigned(notBefore, notAfter) ? 'FAILED' : 'PASSED',
       check: 'The MSO signed date must be within the validity period of the certificate',
       reason: `The MSO signed date (${validityInfo.signed.toUTCString()}) must be within the validity period of the certificate (${notBefore.toUTCString()} to ${notAfter.toUTCString()})`,
     })

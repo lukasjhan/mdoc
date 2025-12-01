@@ -7,7 +7,7 @@ import {
   type SignatureAlgorithm,
   UnprotectedHeaders,
 } from '../../cose'
-import { DuplicateNamespaceInIssuerNamespacesError } from '../errors'
+import { randomUnsignedInteger } from '../../utils/randomUnsignedInteger'
 import {
   DeviceKeyInfo,
   type DeviceKeyInfoOptions,
@@ -39,15 +39,14 @@ export class IssuerSignedBuilder {
   public addIssuerNamespace(namespace: Namespace, value: Record<string | number, unknown>) {
     const issuerNamespace = this.namespaces.issuerNamespaces.get(namespace) ?? []
 
-    const issuerSignedItems = Object.entries(value).map(
-      ([k, v]) =>
-        new IssuerSignedItem({
-          digestId: issuerNamespace.length,
-          elementIdentifier: k,
-          elementValue: v,
-          random: this.ctx.crypto.random(32),
-        })
-    )
+    const issuerSignedItems = Object.entries(value).map(([k, v]) => {
+      return new IssuerSignedItem({
+        digestId: randomUnsignedInteger(this.ctx),
+        elementIdentifier: k,
+        elementValue: v,
+        random: this.ctx.crypto.random(32),
+      })
+    })
 
     issuerNamespace.push(...issuerSignedItems)
 
@@ -60,10 +59,6 @@ export class IssuerSignedBuilder {
     const valueDigests = new Map<Namespace, Map<DigestId, Digest>>()
 
     for (const [namespace, issuerSignedItems] of this.namespaces.issuerNamespaces) {
-      if (valueDigests.has(namespace)) {
-        throw new DuplicateNamespaceInIssuerNamespacesError()
-      }
-
       const digests = new Map<DigestId, Digest>()
       for (const issuerSignedItem of issuerSignedItems) {
         const digest = await this.ctx.crypto.digest({

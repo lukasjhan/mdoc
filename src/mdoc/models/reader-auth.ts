@@ -1,7 +1,7 @@
 import { type CborDecodeOptions, cborDecode } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { Sign1, type Sign1Structure } from '../../cose/sign1'
-import { type VerificationCallback, defaultVerificationCallback, onCategoryCheck } from '../check-callback'
+import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
 import { ReaderAuthentication, type ReaderAuthenticationOptions } from './reader-authentication'
 
 export type ReaderAuthStructure = Sign1Structure
@@ -21,7 +21,7 @@ export class ReaderAuth extends Sign1 {
     return ReaderAuth.fromEncodedStructure(data)
   }
 
-  public async validate(
+  public async verify(
     options: {
       readerAuthentication: ReaderAuthentication | ReaderAuthenticationOptions
       verificationCallback?: VerificationCallback
@@ -39,7 +39,7 @@ export class ReaderAuth extends Sign1 {
 
     this.detachedContent = readerAuthentication.encode({ asDataItem: true })
 
-    const isValid = await this.verify({}, ctx)
+    const isValid = await this.verifySignature({}, ctx)
 
     onCheck({
       status: isValid ? 'PASSED' : 'FAILED',

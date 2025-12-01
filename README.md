@@ -24,12 +24,13 @@ This is a JavaScript library for Node.JS, browers and React Native to issue and 
   <a href="https://typescriptlang.org">
     <img src="https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg" />
   </a>
+  <a href="https://www.npmjs.com/package/@animo-id/mdoc">
+    <img src="https://img.shields.io/npm/v/@animo-id/mdoc" />
+  </a>
 </p>
 
 <p align="center">
   <a href="#installation">Installation</a> 
-  &nbsp;|&nbsp;
-  <a href="#usage">Usage</a> 
   &nbsp;|&nbsp;
   <a href="#contributing">Contributing</a>
   &nbsp;|&nbsp;
@@ -44,134 +45,6 @@ This is a JavaScript library for Node.JS, browers and React Native to issue and 
 npm i @animo-id/mdoc
 ```
 
-## Usage
-
-### Verifying a credential
-
-```javascript
-import { Verifier } from "@animo-id/mdoc";
-import fs from "node:fs";
-
-(async () => {
-  const encodedDeviceResponse = Buffer.from(encodedDeviceResponseHex, "hex");
-  const encodedSessionTranscript = Buffer.from(
-    encodedSessionTranscriptHex,
-    "hex"
-  );
-  const ephemeralReaderKey = Buffer.from(ephemeralReaderKeyHex, "hex");
-
-  const trustedCerts = [fs.readFileSync("./caCert1.pem") /*, ... */];
-  const mdoc = await Verifier.verify(encodedDeviceResponse, {
-    ephemeralReaderKey,
-    encodedSessionTranscript,
-  });
-})();
-```
-
-##$ Issuing a credential
-
-```js
-import { MDoc, Document } from "@animo-id/mdoc";
-
-(async () => {
-  const document = await new Document("org.iso.18013.5.1.mDL")
-    .addIssuerNameSpace("org.iso.18013.5.1", {
-      family_name: "Jones",
-      given_name: "Ava",
-      birth_date: "2007-03-25",
-    })
-    .useDigestAlgorithm("SHA-256")
-    .addValidityInfo({
-      signed: new Date(),
-    })
-    .addDeviceKeyInfo({ deviceKey: publicKeyJWK })
-    .sign({
-      issuerPrivateKey,
-      issuerCertificate,
-    });
-
-  const mdoc = new MDoc([document]).encode();
-
-})();
-```
-
-##$ Generating a device response
-
-```js
-import { DeviceResponse, MDoc } from "@animo-id/mdoc";
-
-(async () => {
-  let issuerMDoc;
-  let deviceResponseMDoc;
-
-  /**
-   * This is what the MDL issuer does to generate a credential:
-   */
-  {
-    let issuerPrivateKey;
-    let issuerCertificate;
-    let devicePublicKey; // the public key for the device, as a JWK
-
-    const document = await new Document("org.iso.18013.5.1.mDL")
-      .addIssuerNameSpace("org.iso.18013.5.1", {
-        family_name: "Jones",
-        given_name: "Ava",
-        birth_date: "2007-03-25",
-      })
-      .useDigestAlgorithm("SHA-256")
-      .addValidityInfo({
-        signed: new Date(),
-      })
-      .addDeviceKeyInfo({ deviceKey: devicePublicKey })
-      .sign({
-        issuerPrivateKey,
-        issuerCertificate,
-        alg: "ES256",
-      });
-
-    issuerMDoc = new MDoc([document]).encode();
-  }
-
-  /**
-   * This is what the DEVICE does to generate a response...
-   */
-  {
-    let devicePrivateKey; // the private key for the device, as a JWK
-
-    // Parameters coming from the OID4VP transaction
-    let mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce;
-    let presentationDefinition = {
-      id: "family_name_only",
-      input_descriptors: [
-        {
-          id: "org.iso.18013.5.1.mDL",
-          format: { mso_mdoc: { alg: ["EdDSA", "ES256"] } },
-          constraints: {
-            limit_disclosure: "required",
-            fields: [
-              {
-                path: ["$['org.iso.18013.5.1']['family_name']"],
-                intent_to_retain: false,
-              },
-            ],
-          },
-        },
-      ],
-    };
-
-    deviceResponseMDoc = await DeviceResponse.from(issuerMDoc)
-      .usingPresentationDefinition(presentationDefinition)
-      .usingSessionTranscriptForOID4VP(
-        mdocGeneratedNonce,
-        clientId,
-        responseUri,
-        verifierGeneratedNonce
-      )
-      .authenticateWithSignature(devicePrivateKey, "ES256")
-      .sign();
-  }
-})();
-```
 
 ## Contributing
 

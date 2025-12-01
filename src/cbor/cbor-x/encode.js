@@ -1,4 +1,5 @@
-import { Decoder, FLOAT32_OPTIONS, Tag, addExtension as decodeAddExtension, mult10 } from './decode.js'
+import { Decoder, addExtension as decodeAddExtension, FLOAT32_OPTIONS, mult10, Tag } from './decode.js'
+
 let textEncoder
 try {
   textEncoder = new TextEncoder()
@@ -66,7 +67,6 @@ export class Encoder extends Decoder {
     this.mapEncode = function (value, encodeOptions) {
       // Experimental support for premapping keys using _keyMap instad of keyMap - not optiimised yet)
       if (this._keyMap && !this._mapped) {
-        //console.log('encoding ', value)
         switch (value.constructor.name) {
           case 'Array':
             value = value.map((r) => this.encodeKeys(r))
@@ -124,7 +124,6 @@ export class Encoder extends Decoder {
           sharedStructures.transitions = Object.create(null)
           for (let i = 0; i < sharedStructuresLength; i++) {
             const keys = sharedStructures[i]
-            //console.log('shared struct keys:', keys)
             if (!keys) continue
             let nextTransition
             let transition = sharedStructures.transitions

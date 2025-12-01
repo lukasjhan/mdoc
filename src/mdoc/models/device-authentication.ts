@@ -1,18 +1,23 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
-import { DeviceNamespaces } from './device-namespaces'
+import { type CborDecodeOptions, CborStructure, cborDecode, DataItem } from '../../cbor'
+import { DeviceNamespaces, type DeviceNamespacesStructure } from './device-namespaces'
 import type { DocType } from './doctype'
-import { SessionTranscript } from './session-transcript'
+import { SessionTranscript, type SessionTranscriptStructure } from './session-transcript'
 
-export type DeviceAuthenticationStructure = [string, Uint8Array, DocType, Uint8Array]
+export type DeviceAuthenticationStructure = [
+  string,
+  SessionTranscriptStructure,
+  DocType,
+  DataItem<DeviceNamespacesStructure>,
+]
 
 export type DeviceAuthenticationOptions = {
-  sessionTranscript: SessionTranscript
+  sessionTranscript: SessionTranscript | Uint8Array
   docType: DocType
   deviceNamespaces: DeviceNamespaces
 }
 
 export class DeviceAuthentication extends CborStructure {
-  public sessionTranscript: SessionTranscript
+  public sessionTranscript: SessionTranscript | Uint8Array
   public docType: DocType
   public deviceNamespaces: DeviceNamespaces
 
@@ -26,17 +31,19 @@ export class DeviceAuthentication extends CborStructure {
   public encodedStructure(): DeviceAuthenticationStructure {
     return [
       'DeviceAuthentication',
-      this.sessionTranscript.encode({ asDataItem: true }),
+      this.sessionTranscript instanceof SessionTranscript
+        ? this.sessionTranscript.encodedStructure()
+        : cborDecode(this.sessionTranscript),
       this.docType,
-      this.deviceNamespaces.encode({ asDataItem: true }),
+      DataItem.fromData(this.deviceNamespaces.encodedStructure()),
     ]
   }
 
   public static override fromEncodedStructure(encodedStructure: DeviceAuthenticationStructure): DeviceAuthentication {
     return new DeviceAuthentication({
-      sessionTranscript: SessionTranscript.decode(encodedStructure[1]),
+      sessionTranscript: SessionTranscript.fromEncodedStructure(encodedStructure[1]),
       docType: encodedStructure[2],
-      deviceNamespaces: DeviceNamespaces.decode(encodedStructure[3]),
+      deviceNamespaces: DeviceNamespaces.fromEncodedStructure(encodedStructure[3].data),
     })
   }
 

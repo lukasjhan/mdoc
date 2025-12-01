@@ -1,9 +1,8 @@
 import { X509Certificate } from '@peculiar/x509'
 import { describe, expect, test } from 'vitest'
-import { CoseKey, IssuerSigned, SignatureAlgorithm } from '../src'
-import { IssuerSignedBuilder } from '../src/mdoc/builders'
-import { mdocContext } from './context'
-import { DEVICE_JWK, ISSUER_CERTIFICATE, ISSUER_PRIVATE_KEY_JWK } from './issuing/config'
+import { CoseKey, IssuerSigned, IssuerSignedBuilder, SignatureAlgorithm } from '../../src'
+import { DEVICE_JWK, ISSUER_CERTIFICATE, ISSUER_PRIVATE_KEY_JWK } from '../config'
+import { mdocContext } from '../context'
 
 const signed = new Date('2023-10-24T14:55:18Z')
 const validFrom = new Date(signed)
@@ -11,10 +10,10 @@ validFrom.setMinutes(signed.getMinutes() + 5)
 const validUntil = new Date(signed)
 validUntil.setFullYear(signed.getFullYear() + 30)
 
-describe('Issue And Verify', () => {
+describe('Issuer signed', () => {
   let encodedIssuerSigned: string
 
-  test('issue mdoc with signature', async () => {
+  test('Create issuer signed and verify', async () => {
     const isb = new IssuerSignedBuilder('org.iso.18013.5.1', mdocContext)
 
     isb.addIssuerNamespace('org.iso.18013.5.1.mDL', {
@@ -36,15 +35,13 @@ describe('Issue And Verify', () => {
       family_name: 'Doe',
     })
 
-    const isSignatureValid = await issuerSigned.issuerAuth.verify({}, mdocContext)
+    const isSignatureValid = await issuerSigned.issuerAuth.verifySignature({}, mdocContext)
 
     expect(isSignatureValid).toBeTruthy()
-  })
 
-  test('receive mdoc', async () => {
-    const issuerSigned = IssuerSigned.fromEncodedForOid4Vci(encodedIssuerSigned)
+    const issuerSignedDecoded = IssuerSigned.fromEncodedForOid4Vci(encodedIssuerSigned)
 
-    const isSignatureValid = await issuerSigned.issuerAuth.verify({}, mdocContext)
-    expect(isSignatureValid).toBeTruthy()
+    const isSignatureValidFromDecoded = await issuerSignedDecoded.issuerAuth.verifySignature({}, mdocContext)
+    expect(isSignatureValidFromDecoded).toBeTruthy()
   })
 })

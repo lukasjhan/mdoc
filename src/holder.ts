@@ -2,11 +2,10 @@ import { base64url } from 'jose'
 import type { MdocContext } from './context'
 import type { CoseKey } from './cose'
 import {
+  type DeviceNamespaces,
   DeviceRequest,
   DeviceResponse,
-  type Document,
   IssuerSigned,
-  type PresentationDefinition,
   SessionTranscript,
   type VerificationCallback,
 } from './mdoc'
@@ -17,7 +16,7 @@ export class Holder {
    * string should be base64url encoded as defined in openid4vci Draft 15
    *
    */
-  public static async validateIssuerSigned(
+  public static async verifyIssuerSigned(
     options: {
       issuerSigned: Uint8Array | string | IssuerSigned
       verificationCallback?: VerificationCallback
@@ -34,10 +33,10 @@ export class Holder {
           ? IssuerSigned.decode(options.issuerSigned)
           : options.issuerSigned
 
-    await issuerSigned.issuerAuth.validate(options, ctx)
+    await issuerSigned.issuerAuth.verify(options, ctx)
   }
 
-  public static async validateDeviceRequest(
+  public static async verifyDeviceRequest(
     options: {
       deviceRequest: Uint8Array | DeviceRequest
       sessionTranscript: Uint8Array | SessionTranscript
@@ -56,7 +55,7 @@ export class Holder {
         : SessionTranscript.decode(options.sessionTranscript)
 
     for (const docRequest of deviceRequest.docRequests) {
-      await docRequest.readerAuth?.validate(
+      await docRequest.readerAuth?.verify(
         {
           readerAuthentication: {
             itemsRequest: docRequest.itemsRequest,
@@ -72,8 +71,9 @@ export class Holder {
   public static async createDeviceResponseForDeviceRequest(
     options: {
       deviceRequest: DeviceRequest
-      sessionTranscript: SessionTranscript
-      documents: Array<Document>
+      sessionTranscript: SessionTranscript | Uint8Array
+      issuerSigned: Array<IssuerSigned>
+      deviceNamespaces?: DeviceNamespaces
       mac?: {
         ephemeralKey: CoseKey
         signingKey: CoseKey
@@ -85,23 +85,5 @@ export class Holder {
     context: Pick<MdocContext, 'cose' | 'crypto'>
   ) {
     return await DeviceResponse.createWithDeviceRequest(options, context)
-  }
-
-  public static async createDeviceResponseForPresentationDefinition(
-    options: {
-      presentationDefinition: PresentationDefinition
-      sessionTranscript: SessionTranscript
-      documents: Array<Document>
-      mac?: {
-        ephemeralKey: CoseKey
-        signingKey: CoseKey
-      }
-      signature?: {
-        signingKey: CoseKey
-      }
-    },
-    context: Pick<MdocContext, 'cose' | 'crypto'>
-  ) {
-    return await DeviceResponse.createWithPresentationDefinition(options, context)
   }
 }
