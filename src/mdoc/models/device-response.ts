@@ -115,28 +115,30 @@ export class DeviceResponse extends CborStructure {
     })
 
     for (const document of this.documents ?? []) {
-      await document.issuerSigned.issuerAuth.verify(
-        {
-          disableCertificateChainValidation: options.disableCertificateChainValidation,
-          now: options.now,
-          trustedCertificates: options.trustedCertificates,
-          verificationCallback: onCheck,
-          skewSeconds: options.skewSeconds,
-        },
-        ctx
-      )
+      await Promise.all([
+        document.issuerSigned.issuerAuth.verify(
+          {
+            disableCertificateChainValidation: options.disableCertificateChainValidation,
+            now: options.now,
+            trustedCertificates: options.trustedCertificates,
+            verificationCallback: onCheck,
+            skewSeconds: options.skewSeconds,
+          },
+          ctx
+        ),
 
-      await document.deviceSigned.deviceAuth.verify(
-        {
-          document,
-          ephemeralMacPrivateKey: options.ephemeralReaderKey,
-          sessionTranscript: options.sessionTranscript,
-          verificationCallback: onCheck,
-        },
-        ctx
-      )
+        document.deviceSigned.deviceAuth.verify(
+          {
+            document,
+            ephemeralMacPrivateKey: options.ephemeralReaderKey,
+            sessionTranscript: options.sessionTranscript,
+            verificationCallback: onCheck,
+          },
+          ctx
+        ),
 
-      await document.issuerSigned.verify({ verificationCallback: onCheck }, ctx)
+        document.issuerSigned.verify({ verificationCallback: onCheck }, ctx),
+      ])
     }
 
     if (options.deviceRequest?.docRequests && this.documents) {

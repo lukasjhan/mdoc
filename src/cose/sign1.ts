@@ -28,8 +28,18 @@ export class Sign1 extends CborStructure {
   public payload: Uint8Array | null
   public signature?: Uint8Array
 
-  public detachedContent?: Uint8Array
+  private _detachedContent?: Uint8Array
   public externalAad?: Uint8Array
+  private _toBeSignedCache?: Uint8Array
+
+  public get detachedContent() {
+    return this._detachedContent
+  }
+
+  public set detachedContent(value: Uint8Array | undefined) {
+    this._detachedContent = value
+    this._toBeSignedCache = undefined
+  }
 
   public constructor(options: Sign1Options) {
     super()
@@ -97,6 +107,8 @@ export class Sign1 extends CborStructure {
   }
 
   public get toBeSigned() {
+    if (this._toBeSignedCache) return this._toBeSignedCache
+
     const payload = this.detachedContent ?? this.payload
 
     if (!payload) {
@@ -110,7 +122,8 @@ export class Sign1 extends CborStructure {
       payload,
     ]
 
-    return cborEncode(toBeSigned)
+    this._toBeSignedCache = cborEncode(toBeSigned)
+    return this._toBeSignedCache
   }
 
   public get signatureAlgorithmName(): string {
