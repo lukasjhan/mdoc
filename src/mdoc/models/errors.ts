@@ -1,38 +1,38 @@
-import z from 'zod'
 import { CborStructure } from '../../cbor'
-import { ErrorItems, errorItemsSchema } from './error-items'
+import { ErrorItems, type ErrorItemsStructure } from './error-items'
+import type { Namespace } from './namespace'
 
-const errorsEncodedSchema = z.map(z.string(), errorItemsSchema)
-const errorsDecodedSchema = z.map(z.string(), z.instanceof(ErrorItems))
-
-export type ErrorsEncodedStructure = z.infer<typeof errorsEncodedSchema>
-export type ErrorsDecodedStructure = z.infer<typeof errorsDecodedSchema>
+export type ErrorsStructure = Map<Namespace, ErrorItemsStructure>
 
 export type ErrorsOptions = {
-  errors: ErrorsDecodedStructure
+  errors: Map<Namespace, ErrorItems>
 }
 
-export class Errors extends CborStructure<ErrorsEncodedStructure, ErrorsDecodedStructure> {
-  public static override get encodingSchema() {
-    return z.codec(errorsEncodedSchema, errorsDecodedSchema, {
-      encode: (decoded) => {
-        const errorsDecoded: ErrorsEncodedStructure = new Map()
+export class Errors extends CborStructure {
+  public errors: Map<Namespace, ErrorItems>
 
-        decoded.forEach((value, key) => {
-          errorsDecoded.set(key, value.encodedStructure)
-        })
+  public constructor(options: ErrorsOptions) {
+    super()
+    this.errors = options.errors
+  }
 
-        return errorsDecoded
-      },
-      decode: (encoded) => {
-        const errorsDecoded: ErrorsDecodedStructure = new Map()
+  public encodedStructure(): ErrorsStructure {
+    const map: ErrorsStructure = new Map()
 
-        encoded.forEach((value, key) => {
-          errorsDecoded.set(key, ErrorItems.fromEncodedStructure(value))
-        })
-
-        return errorsDecoded
-      },
+    this.errors.forEach((v, k) => {
+      map.set(k, v.encodedStructure())
     })
+
+    return map
+  }
+
+  public static override fromEncodedStructure(encodedStructure: ErrorsStructure): Errors {
+    const errors = new Map<Namespace, ErrorItems>()
+
+    encodedStructure.forEach((v, k) => {
+      errors.set(k, ErrorItems.fromEncodedStructure(v))
+    })
+
+    return new Errors({ errors })
   }
 }

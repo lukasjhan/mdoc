@@ -1,13 +1,26 @@
+import { type CborDecodeOptions, cborDecode } from '../../cbor'
 import type { MdocContext } from '../../context'
-import { Sign1, type Sign1DecodedStructure, type Sign1EncodedStructure, type Sign1Options } from '../../cose/sign1'
+import { Sign1, type Sign1Structure } from '../../cose/sign1'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
 import { ReaderAuthentication, type ReaderAuthenticationOptions } from './reader-authentication'
 
-export type ReaderAuthEncodedStructure = Sign1EncodedStructure
-export type ReaderAuthDecodedStructure = Sign1DecodedStructure
-export type ReaderAuthOptions = Sign1Options
+export type ReaderAuthStructure = Sign1Structure
 
 export class ReaderAuth extends Sign1 {
+  public static override fromEncodedStructure(encodedStructure: ReaderAuthStructure): ReaderAuth {
+    return new ReaderAuth({
+      protectedHeaders: encodedStructure[0],
+      unprotectedHeaders: encodedStructure[1],
+      payload: encodedStructure[2],
+      signature: encodedStructure[3],
+    })
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ReaderAuth {
+    const data = cborDecode<ReaderAuthStructure>(bytes, options)
+    return ReaderAuth.fromEncodedStructure(data)
+  }
+
   public async verify(
     options: {
       readerAuthentication: ReaderAuthentication | ReaderAuthenticationOptions
@@ -24,7 +37,7 @@ export class ReaderAuth extends Sign1 {
 
     const onCheck = onCategoryCheck(verificationCallback, 'READER_AUTH')
 
-    this.detachedPayload = readerAuthentication.encode({ asDataItem: true })
+    this.detachedContent = readerAuthentication.encode({ asDataItem: true })
 
     const isValid = await this.verifySignature({}, ctx)
 
@@ -33,10 +46,5 @@ export class ReaderAuth extends Sign1 {
       check: 'Signature is invalid on the reader auth',
       reason: 'Signature is invalid on the reader auth',
     })
-  }
-
-  // TODO: super should be generic, so we don't need this
-  public static create(options: ReaderAuthOptions, ctx: Pick<MdocContext, 'cose'>) {
-    return super.create(options, ctx) as Promise<ReaderAuth>
   }
 }

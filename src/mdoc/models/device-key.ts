@@ -1,13 +1,18 @@
-import {
-  CoseKey,
-  type CoseKeyDecodedStructure,
-  type CoseKeyEncodedStructure,
-  type CoseKeyOptions,
-} from '../../cose/key/key'
+import { type CborDecodeOptions, cborDecode } from '../../cbor'
+import { CoseKey, type CoseKeyOptions, type EncodedCoseKeyStructure } from '../../cose/key/key'
 
-export type DeviceKeyDecodedStructure = CoseKeyDecodedStructure
-export type DeviceKeyEncodedStructure = CoseKeyEncodedStructure
+export type DeviceKeyStructure = EncodedCoseKeyStructure
+
 export type DeviceKeyOptions = CoseKeyOptions
 
-// DeviceKey is just a CoseKey with a different name/type for clarity in mdoc context
-export class DeviceKey extends CoseKey {}
+export class DeviceKey extends CoseKey {
+  public static override fromEncodedStructure(encodedStructure: DeviceKeyStructure): DeviceKey {
+    const key = CoseKey.fromEncodedStructure(encodedStructure)
+    return new DeviceKey(key)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceKey {
+    const structure = cborDecode<DeviceKeyStructure>(bytes, options)
+    return DeviceKey.fromEncodedStructure(structure)
+  }
+}

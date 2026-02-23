@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { CoseKey, cborDecode, ProtectedHeaders, UnprotectedHeaders } from '../../src'
+import { CoseKey, cborDecode } from '../../src'
 import { Header } from '../../src/cose/headers/defaults'
 import { Sign1 } from '../../src/cose/sign1'
 import { hex } from '../../src/utils'
@@ -19,21 +19,17 @@ describe('sign1', () => {
     expect(sign1.payload).toBeDefined()
     expect(sign1.signature).toBeDefined()
   })
-
   ;[sign1TestVector01, sign1TestVector02].map(async (testVector) => {
     test(`${testVector.title} :: ${testVector.description}`, async () => {
       const key = CoseKey.fromJwk(testVector.key)
 
-      const sign1 = Sign1.fromDecodedStructure({
-        protected: ProtectedHeaders.fromDecodedStructure(
-          cborDecode(hex.decode(testVector['sign1::sign'].protectedHeaders.cborHex))
-        ),
-        unprotected: UnprotectedHeaders.decode(hex.decode(testVector['sign1::sign'].unprotectedHeaders.cborHex)),
+      const sign1 = new Sign1({
+        protectedHeaders: hex.decode(testVector['sign1::sign'].protectedHeaders.cborHex),
+        unprotectedHeaders: cborDecode(hex.decode(testVector['sign1::sign'].unprotectedHeaders.cborHex)),
         payload: hex.decode(testVector['sign1::sign'].payload),
+        externalAad: hex.decode(testVector['sign1::sign'].external),
         signature: cborDecode<Sign1>(hex.decode(testVector['sign1::sign'].expectedOutput.cborHex)).signature,
       })
-
-      sign1.externalAad = hex.decode(testVector['sign1::sign'].external)
 
       const tbsHex = hex.encode(sign1.toBeSigned)
 
@@ -42,18 +38,9 @@ describe('sign1', () => {
       const isValid = await sign1.verifySignature({ key }, mdocContext)
       expect(isValid).toBeTruthy()
 
-      const sign1Resigned = await Sign1.create(
-        {
-          protectedHeaders: sign1.protectedHeaders,
-          unprotectedHeaders: sign1.unprotectedHeaders,
-          payload: sign1.payload,
-          signingKey: key,
-          externalAad: sign1.externalAad,
-        },
-        mdocContext
-      )
+      await sign1.addSignature({ signingKey: key }, mdocContext)
 
-      const isValidAfterResign = await sign1Resigned.verifySignature({ key }, mdocContext)
+      const isValidAfterResign = await sign1.verifySignature({ key }, mdocContext)
       expect(isValidAfterResign).toBeTruthy()
     })
   })

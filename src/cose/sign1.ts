@@ -1,100 +1,67 @@
-import z from 'zod'
-import {
-  type AnyCborStructure,
-  addExtension,
-  CborStructure,
-  type CborStructureStaticThis,
-  cborDecode,
-  cborEncode,
-  type EncodedStructureType,
-} from '../cbor/index.js'
+import { CborEncodeError } from '../cbor/error.js'
+import { addExtension, type CborDecodeOptions, CborStructure, cborDecode, cborEncode } from '../cbor/index.js'
 import type { MdocContext } from '../context.js'
-import { zUint8Array } from '../utils/zod.js'
 import { CoseCertificateNotFoundError, CoseInvalidAlgorithmError, CosePayloadMustBeDefinedError } from './error.js'
 import { Header, type SignatureAlgorithm } from './headers/defaults.js'
-import {
-  type ProtectedHeaderOptions,
-  ProtectedHeaders,
-  protectedHeadersEncodedStructure,
-} from './headers/protected-headers.js'
-import {
-  type UnprotectedHeaderOptions,
-  UnprotectedHeaders,
-  unprotectedHeadersStructure,
-} from './headers/unprotected-headers.js'
+import { type ProtectedHeaderOptions, ProtectedHeaders } from './headers/protected-headers.js'
+import { UnprotectedHeaders, type UnprotectedHeadersOptions } from './headers/unprotected-headers.js'
 import { coseKeyToJwk } from './key/jwk.js'
 import type { CoseKey } from './key/key.js'
 
-const sign1EncodedSchema = z.tuple([
-  // protected headers
-  protectedHeadersEncodedStructure,
-  // unprotected headers
-  unprotectedHeadersStructure,
-  // payload
-  zUint8Array.nullable(),
-  // signature
-  zUint8Array,
-])
-
-const sign1DecodedSchema = z.object({
-  protected: z.instanceof(ProtectedHeaders),
-  unprotected: z.instanceof(UnprotectedHeaders),
-  payload: sign1EncodedSchema.def.items[2],
-  signature: sign1EncodedSchema.def.items[3],
-})
-
-export type Sign1EncodedStructure = z.infer<typeof sign1EncodedSchema>
-export type Sign1DecodedStructure = z.infer<typeof sign1DecodedSchema>
+export type Sign1Structure = [Uint8Array, Map<unknown, unknown>, Uint8Array | null, Uint8Array]
 
 export type Sign1Options = {
   protectedHeaders?: ProtectedHeaders | ProtectedHeaderOptions['protectedHeaders']
-  unprotectedHeaders?: UnprotectedHeaders | UnprotectedHeaderOptions['unprotectedHeaders']
-  signingKey: CoseKey
-
+  unprotectedHeaders?: UnprotectedHeaders | UnprotectedHeadersOptions['unprotectedHeaders']
   payload?: Uint8Array | null
-  detachedPayload?: Uint8Array
+  signature?: Uint8Array
 
+  detachedContent?: Uint8Array
   externalAad?: Uint8Array
 }
 
-export class Sign1 extends CborStructure<Sign1EncodedStructure, Sign1DecodedStructure> {
+export class Sign1 extends CborStructure {
   public static tag = 18
 
-  public static override get encodingSchema() {
-    return z.codec(sign1EncodedSchema, sign1DecodedSchema, {
-      encode: (decoded) =>
-        [
-          decoded.protected.encodedStructure,
-          decoded.unprotected.encodedStructure,
-          decoded.payload,
-          decoded.signature,
-        ] satisfies Sign1EncodedStructure,
-      decode: ([protectedHeaders, unprotected, payload, signature]) => ({
-        protected: ProtectedHeaders.fromEncodedStructure(protectedHeaders),
-        unprotected: UnprotectedHeaders.fromEncodedStructure(unprotected),
-        payload,
-        signature,
-      }),
-    })
-  }
+  public protectedHeaders: ProtectedHeaders
+  public unprotectedHeaders: UnprotectedHeaders
+  public payload: Uint8Array | null
+  public signature?: Uint8Array
 
-  public detachedPayload?: Uint8Array
+  public detachedContent?: Uint8Array
   public externalAad?: Uint8Array
 
-  public get protectedHeaders() {
-    return this.structure.protected
+  public constructor(options: Sign1Options) {
+    super()
+
+    this.protectedHeaders =
+      options.protectedHeaders instanceof ProtectedHeaders
+        ? options.protectedHeaders
+        : new ProtectedHeaders({ protectedHeaders: options.protectedHeaders })
+
+    this.unprotectedHeaders =
+      options.unprotectedHeaders instanceof UnprotectedHeaders
+        ? options.unprotectedHeaders
+        : new UnprotectedHeaders({ unprotectedHeaders: options.unprotectedHeaders })
+
+    this.payload = options.payload ?? null
+    this.signature = options.signature
+
+    this.detachedContent = options.detachedContent
+    this.externalAad = options.externalAad
   }
 
-  public get unprotectedHeaders() {
-    return this.structure.unprotected
-  }
+  public encodedStructure(): Sign1Structure {
+    if (!this.signature) {
+      throw new CborEncodeError('Signature must be defined when trying to encode a Sign1 structure')
+    }
 
-  public get payload() {
-    return this.structure.payload
-  }
-
-  public get signature() {
-    return this.structure.signature
+    return [
+      this.protectedHeaders.encodedStructure(),
+      this.unprotectedHeaders.encodedStructure(),
+      this.payload,
+      this.signature,
+    ]
   }
 
   public get certificateChain() {
@@ -130,54 +97,23 @@ export class Sign1 extends CborStructure<Sign1EncodedStructure, Sign1DecodedStru
   }
 
   public get toBeSigned() {
-    const payload = this.payload ?? this.detachedPayload
+    const payload = this.detachedContent ?? this.payload
 
     if (!payload) {
       throw new CosePayloadMustBeDefinedError()
     }
 
-    return Sign1.toBeSigned({
-      payload,
-      protectedHeaders: this.protectedHeaders,
-      externalAad: this.externalAad,
-    })
-  }
-
-  /**
-   * Decodes CBOR bytes into a Sign1 instance.
-   * Uses the encodingSchema's decode() method to validate and transform the decoded data.
-   */
-  public static decode<T extends AnyCborStructure>(this: CborStructureStaticThis<T>, bytes: Uint8Array): T {
-    const rawStructure = cborDecode(bytes)
-
-    // May feel weird, but using new this makes TypeScript understand we may return a subclass
-    return new this(
-      // NOTE: If decoded with Sign1 tag, the cbor decoder already transforms to the class instances
-      // In that case we create new instance based on the decoded structure, to ensure we create the
-      // instance based on this (and ensure extended classes work)
-      rawStructure instanceof Sign1
-        ? rawStructure.decodedStructure
-        : this.fromEncodedStructure(rawStructure as EncodedStructureType<T>).decodedStructure
-    )
-  }
-
-  public static toBeSigned(options: {
-    payload: Uint8Array
-    protectedHeaders: ProtectedHeaders
-    externalAad?: Uint8Array
-  }) {
-    const toBeSigned = [
+    const toBeSigned: Array<unknown> = [
       'Signature1',
-      options.protectedHeaders.encodedStructure,
-      options.externalAad ?? new Uint8Array(),
-      options.payload,
+      this.protectedHeaders.encodedStructure(),
+      this.externalAad ?? new Uint8Array(),
+      payload,
     ]
 
     return cborEncode(toBeSigned)
   }
 
   public get signatureAlgorithmName(): string {
-    // FIXME: why are we looking at the unprotected header for the alg?
     const algorithm = (this.protectedHeaders.headers?.get(Header.Algorithm) ??
       this.unprotectedHeaders.headers?.get(Header.Algorithm)) as SignatureAlgorithm | undefined
 
@@ -186,6 +122,7 @@ export class Sign1 extends CborStructure<Sign1EncodedStructure, Sign1DecodedStru
     }
 
     const algorithmName = coseKeyToJwk.algorithm(algorithm)
+
     if (!algorithmName) {
       throw new CoseInvalidAlgorithmError()
     }
@@ -194,8 +131,6 @@ export class Sign1 extends CborStructure<Sign1EncodedStructure, Sign1DecodedStru
   }
 
   public get x5chain() {
-    // TODO: typed keys for headers
-    // FIXME: why are we looking at unprotected header for x5c?
     const x5chain =
       (this.protectedHeaders.headers?.get(Header.X5Chain) as Uint8Array | Uint8Array[] | undefined) ??
       (this.unprotectedHeaders.headers?.get(Header.X5Chain) as Uint8Array | Uint8Array[] | undefined)
@@ -205,6 +140,20 @@ export class Sign1 extends CborStructure<Sign1EncodedStructure, Sign1DecodedStru
     }
 
     return Array.isArray(x5chain) ? x5chain : [x5chain]
+  }
+
+  public async addSignature(options: { signingKey: CoseKey }, ctx: Pick<MdocContext, 'cose'>) {
+    const payload = this.payload ?? this.detachedContent
+    if (!payload) {
+      throw new CosePayloadMustBeDefinedError()
+    }
+
+    const signature = await ctx.cose.sign1.sign({
+      sign1: this,
+      key: options.signingKey,
+    })
+
+    this.signature = signature
   }
 
   public async verifySignature(options: { key?: CoseKey }, ctx: Pick<MdocContext, 'cose' | 'x509'>) {
@@ -221,52 +170,36 @@ export class Sign1 extends CborStructure<Sign1EncodedStructure, Sign1DecodedStru
     })
   }
 
-  public static async create(options: Sign1Options, ctx: Pick<MdocContext, 'cose'>) {
-    const payload = options.payload ?? options.detachedPayload
-    if (!payload) {
-      throw new CosePayloadMustBeDefinedError()
-    }
+  public static fromEncodedSignature1(signature1: Uint8Array) {
+    const structure = cborDecode<[string, Uint8Array, Uint8Array, Uint8Array]>(signature1, { mapsAsObjects: false })
 
-    const protectedHeaders =
-      options.protectedHeaders instanceof ProtectedHeaders
-        ? options.protectedHeaders
-        : options.protectedHeaders
-          ? ProtectedHeaders.fromDecodedStructure(options.protectedHeaders)
-          : ProtectedHeaders.create({})
-
-    const signature = await ctx.cose.sign1.sign({
-      toBeSigned: Sign1.toBeSigned({
-        payload,
-        protectedHeaders,
-        externalAad: options.externalAad,
-      }),
-      key: options.signingKey,
+    return new Sign1({
+      protectedHeaders: ProtectedHeaders.decode(structure[1]),
+      externalAad: structure[2],
+      payload: structure[3],
     })
+  }
 
-    const sign1 = this.fromDecodedStructure({
-      payload: options.payload ?? null,
-      protected: protectedHeaders,
-      unprotected:
-        options.unprotectedHeaders instanceof UnprotectedHeaders
-          ? options.unprotectedHeaders
-          : options.unprotectedHeaders
-            ? UnprotectedHeaders.fromEncodedStructure(options.unprotectedHeaders)
-            : UnprotectedHeaders.create({}),
-      signature,
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions) {
+    return cborDecode<Sign1>(bytes, options)
+  }
+
+  public static override fromEncodedStructure(encodedStructure: Sign1Structure): Sign1 {
+    return new Sign1({
+      protectedHeaders: encodedStructure[0],
+      unprotectedHeaders: encodedStructure[1],
+      payload: encodedStructure[2],
+      signature: encodedStructure[3],
     })
-
-    sign1.detachedPayload = options.detachedPayload
-    sign1.externalAad = options.externalAad
-
-    return sign1
   }
 }
 
 addExtension({
   Class: Sign1,
   tag: Sign1.tag,
+  // TODO: why is the tag not being used?
   encode(instance: Sign1, encodeFn: (obj: unknown) => Uint8Array) {
     return encodeFn(instance)
   },
-  decode: (encoded) => Sign1.fromEncodedStructure(encoded as Sign1EncodedStructure),
+  decode: Sign1.fromEncodedStructure,
 })

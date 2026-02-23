@@ -1,46 +1,34 @@
-import { z } from 'zod'
 import { CborStructure } from '../../cbor'
 
-// WebApi = [uint, tstr, tstr] - Array structure
-const webApiEncodedSchema = z.tuple([z.number(), z.string(), z.string()])
+export type WebApiStructure = [number, string, string]
 
-// Easier structure for internal usage in class
-const webApiDecodedSchema = z.object({
-  version: z.number(),
-  issuerUrl: z.string(),
-  serverRetrievalToken: z.string(),
-})
+export type WebApiOptions = {
+  version: number
+  issuerUrl: string
+  serverRetrievalToken: string
+}
 
-export type WebApiEncodedStructure = z.infer<typeof webApiEncodedSchema>
-export type WebApiDecodedStructure = z.infer<typeof webApiDecodedSchema>
-export type WebApiOptions = WebApiDecodedStructure
+export class WebApi extends CborStructure {
+  public version: number
+  public issuerUrl: string
+  public serverRetrievalToken: string
 
-export class WebApi extends CborStructure<WebApiEncodedStructure, WebApiDecodedStructure> {
-  public static override get encodingSchema() {
-    return z.codec(webApiEncodedSchema, webApiDecodedSchema, {
-      encode: ({ version, issuerUrl, serverRetrievalToken }) =>
-        [version, issuerUrl, serverRetrievalToken] satisfies WebApiEncodedStructure,
-      decode: ([version, issuerUrl, serverRetrievalToken]) => ({
-        version,
-        issuerUrl,
-        serverRetrievalToken,
-      }),
+  public constructor(options: WebApiOptions) {
+    super()
+    this.version = options.version
+    this.issuerUrl = options.issuerUrl
+    this.serverRetrievalToken = options.serverRetrievalToken
+  }
+
+  public encodedStructure(): WebApiStructure {
+    return [this.version, this.issuerUrl, this.serverRetrievalToken]
+  }
+
+  public static override fromEncodedStructure(encodedStructure: WebApiStructure): WebApi {
+    return new WebApi({
+      version: encodedStructure[0],
+      issuerUrl: encodedStructure[1],
+      serverRetrievalToken: encodedStructure[2],
     })
-  }
-
-  public get version() {
-    return this.structure.version
-  }
-
-  public get issuerUrl() {
-    return this.structure.issuerUrl
-  }
-
-  public get serverRetrievalToken() {
-    return this.structure.serverRetrievalToken
-  }
-
-  public static create(options: WebApiOptions): WebApi {
-    return this.fromDecodedStructure(options)
   }
 }

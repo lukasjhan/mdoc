@@ -1,28 +1,26 @@
-import { z } from 'zod'
 import { CborStructure } from '../../cbor'
+import type { DocType } from './doctype'
+import type { ErrorCode } from './error-code'
 
-// Zod schema for DocumentError
-const documentErrorSchema = z.map(z.string(), z.number())
-
-export type DocumentErrorStructure = z.infer<typeof documentErrorSchema>
+export type DocumentErrorStructure = Map<DocType, ErrorCode>
 
 export type DocumentErrorOptions = {
-  documentError: DocumentErrorStructure
+  documentError: Map<DocType, ErrorCode>
 }
 
-export class DocumentError extends CborStructure<DocumentErrorStructure> {
-  public static override get encodingSchema() {
-    return documentErrorSchema
+export class DocumentError extends CborStructure {
+  public documentError: Map<DocType, ErrorCode>
+
+  public constructor(options: DocumentErrorOptions) {
+    super()
+    this.documentError = options.documentError
   }
 
-  /**
-   * Map where keys are namespaces and values are error codes
-   */
-  public get documentError() {
-    return this.structure
+  public encodedStructure(): DocumentErrorStructure {
+    return this.documentError
   }
 
-  public static create(options: DocumentErrorOptions): DocumentError {
-    return new DocumentError(options.documentError)
+  public static override fromEncodedStructure(encodedStructure: DocumentErrorStructure): DocumentError {
+    return new DocumentError({ documentError: encodedStructure })
   }
 }

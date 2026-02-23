@@ -1,8 +1,7 @@
-import { z } from 'zod'
-import { CborStructure } from '../../cbor'
+import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { type CoseKey, Header, ProtectedHeaders, UnprotectedHeaders } from '../../cose'
-import { base64url, TypedMap, typedMap } from '../../utils'
+import { base64url } from '../../utils'
 import { findIssuerSigned } from '../../utils/findIssuerSigned'
 import { limitDisclosureToDeviceRequestNameSpaces } from '../../utils/limitDisclosure'
 import { verifyDocRequestsWithIssuerSigned } from '../../utils/verifyDocRequestsWithIssuerSigned'
@@ -15,27 +14,17 @@ import { DeviceNamespaces } from './device-namespaces'
 import type { DeviceRequest } from './device-request'
 import { DeviceSignature } from './device-signature'
 import { DeviceSigned } from './device-signed'
-import { Document, type DocumentEncodedStructure } from './document'
+import { Document, type DocumentStructure } from './document'
 import { DocumentError, type DocumentErrorStructure } from './document-error'
 import { IssuerSigned } from './issuer-signed'
 import type { SessionTranscript } from './session-transcript'
 
-const deviceResponseEncodedSchema = typedMap([
-  ['version', z.string()],
-  ['status', z.number()],
-  ['documents', z.array(z.unknown()).exactOptional()],
-  ['documentErrors', z.array(z.unknown()).exactOptional()],
-] as const)
-
-const deviceResponseDecodedSchema = typedMap([
-  ['version', z.string()],
-  ['status', z.number()],
-  ['documents', z.array(z.instanceof(Document)).exactOptional()],
-  ['documentErrors', z.array(z.instanceof(DocumentError)).exactOptional()],
-] as const)
-
-export type DeviceResponseEncodedStructure = z.input<typeof deviceResponseEncodedSchema>
-export type DeviceResponseDecodedStructure = z.output<typeof deviceResponseDecodedSchema>
+export type DeviceResponseStructure = {
+  version: string
+  documents?: Array<DocumentStructure>
+  documentErrors?: Array<DocumentErrorStructure>
+  status: number
+}
 
 export type DeviceResponseOptions = {
   version?: string
@@ -44,70 +33,58 @@ export type DeviceResponseOptions = {
   status?: number
 }
 
-export class DeviceResponse extends CborStructure<DeviceResponseEncodedStructure, DeviceResponseDecodedStructure> {
-  public static override get encodingSchema() {
-    return z.codec(deviceResponseEncodedSchema.in, deviceResponseDecodedSchema.out, {
-      decode: (input) => {
-        const map = TypedMap.fromMap(input) as DeviceResponseDecodedStructure
+export class DeviceResponse extends CborStructure {
+  public version: string
+  public documents?: Array<Document>
+  public documentErrors?: Array<DocumentError>
+  public status: number
 
-        if (input.has('documents')) {
-          map.set(
-            'documents',
-            (input.get('documents') as unknown[]).map((d) =>
-              Document.fromEncodedStructure(d as DocumentEncodedStructure)
-            )
-          )
-        }
+  public constructor(options: DeviceResponseOptions) {
+    super()
+    this.version = options.version ?? '1.0'
+    this.documents = options.documents
+    this.documentErrors = options.documentErrors
+    this.status = options.status ?? 0
+  }
 
-        if (input.has('documentErrors')) {
-          map.set(
-            'documentErrors',
-            (input.get('documentErrors') as unknown[]).map((d) =>
-              DocumentError.fromEncodedStructure(d as DocumentErrorStructure)
-            )
-          )
-        }
+  public encodedStructure(): DeviceResponseStructure {
+    const structure: Partial<DeviceResponseStructure> = {
+      version: this.version,
+    }
 
-        return map
-      },
-      encode: (output) => {
-        const map: Map<unknown, unknown> = output.toMap()
+    if (this.documents) {
+      structure.documents = this.documents?.map((d) => d.encodedStructure())
+    }
 
-        const documents = output.get('documents')
-        if (documents !== undefined) {
-          map.set(
-            'documents',
-            documents.map((d) => d.encodedStructure)
-          )
-        }
+    if (this.documentErrors) {
+      structure.documentErrors = this.documentErrors?.map((d) => d.encodedStructure())
+    }
 
-        const documentErrors = output.get('documentErrors')
-        if (documentErrors !== undefined) {
-          map.set(
-            'documentErrors',
-            documentErrors.map((d) => d.encodedStructure)
-          )
-        }
+    structure.status = this.status
 
-        return map
-      },
+    return structure as DeviceResponseStructure
+  }
+
+  public static override fromEncodedStructure(
+    encodedStructure: DeviceResponseStructure | Map<unknown, unknown>
+  ): DeviceResponse {
+    let structure = encodedStructure as DeviceResponseStructure
+
+    if (encodedStructure instanceof Map) {
+      structure = Object.fromEntries(encodedStructure.entries()) as DeviceResponseStructure
+    }
+
+    return new DeviceResponse({
+      version: structure.version,
+      status: structure.status,
+      documents: structure.documents?.map(Document.fromEncodedStructure),
+      documentErrors: structure.documentErrors?.map(DocumentError.fromEncodedStructure),
     })
   }
 
-  public get version() {
-    return this.structure.get('version')
-  }
-
-  public get documents() {
-    return this.structure.get('documents')
-  }
-
-  public get documentErrors() {
-    return this.structure.get('documentErrors')
-  }
-
-  public get status() {
-    return this.structure.get('status')
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceResponse {
+    const structure = cborDecode<DeviceResponseStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
+    return DeviceResponse.fromEncodedStructure(structure)
   }
 
   public async verify(
@@ -125,21 +102,19 @@ export class DeviceResponse extends CborStructure<DeviceResponseEncodedStructure
   ) {
     const onCheck = options.onCheck ?? defaultVerificationCallback
 
-    const version = this.structure.get('version')
     onCheck({
-      status: version ? 'PASSED' : 'FAILED',
+      status: this.version ? 'PASSED' : 'FAILED',
       check: 'Device Response must include "version" element.',
       category: 'DOCUMENT_FORMAT',
     })
 
-    const documents = this.structure.get('documents')
     onCheck({
-      status: !documents || documents.length > 0 ? 'PASSED' : 'FAILED',
+      status: !this.documents || (this.documents && this.documents.length > 0) ? 'PASSED' : 'FAILED',
       check: 'Device Response must not include documents or at least one document.',
       category: 'DOCUMENT_FORMAT',
     })
 
-    for (const document of documents ?? []) {
+    for (const document of this.documents ?? []) {
       await document.issuerSigned.issuerAuth.verify(
         {
           disableCertificateChainValidation: options.disableCertificateChainValidation,
@@ -164,11 +139,11 @@ export class DeviceResponse extends CborStructure<DeviceResponseEncodedStructure
       await document.issuerSigned.verify({ verificationCallback: onCheck }, ctx)
     }
 
-    if (options.deviceRequest?.docRequests && documents) {
+    if (options.deviceRequest?.docRequests && this.documents) {
       try {
         verifyDocRequestsWithIssuerSigned(
           options.deviceRequest.docRequests,
-          documents.map((d) => d.issuerSigned)
+          this.documents.map((d) => d.issuerSigned)
         )
         onCheck({
           status: 'PASSED',
@@ -223,44 +198,45 @@ export class DeviceResponse extends CborStructure<DeviceResponseEncodedStructure
 
         const docType = docRequest.itemsRequest.docType
 
-        const deviceNamespaces = options.deviceNamespaces ?? DeviceNamespaces.create({ deviceNamespaces: new Map() })
+        const deviceNamespaces = options.deviceNamespaces ?? new DeviceNamespaces({ deviceNamespaces: new Map() })
 
-        const deviceAuthenticationBytes = DeviceAuthentication.create({
+        const deviceAuthenticationBytes = new DeviceAuthentication({
           sessionTranscript: options.sessionTranscript,
           docType,
           deviceNamespaces,
         }).encode({ asDataItem: true })
 
         const unprotectedHeaders = signingKey.keyId
-          ? UnprotectedHeaders.create({ unprotectedHeaders: new Map([[Header.KeyId, signingKey.keyId]]) })
-          : UnprotectedHeaders.create({})
+          ? new UnprotectedHeaders({ unprotectedHeaders: new Map([[Header.KeyId, signingKey.keyId]]) })
+          : new UnprotectedHeaders({})
 
-        const protectedHeaders = ProtectedHeaders.create({
+        const protectedHeaders = new ProtectedHeaders({
           protectedHeaders: new Map([[Header.Algorithm, signingKey.algorithm]]),
         })
 
         const deviceAuthOptions: DeviceAuthOptions = {}
         if (useSignature) {
-          const deviceSignature = await DeviceSignature.create(
-            {
-              unprotectedHeaders,
-              protectedHeaders,
-              detachedPayload: deviceAuthenticationBytes,
-              signingKey,
-            },
-            ctx
-          )
+          const deviceSignature = new DeviceSignature({
+            unprotectedHeaders,
+            protectedHeaders,
+            detachedContent: deviceAuthenticationBytes,
+          })
+
+          await deviceSignature.addSignature({ signingKey }, ctx)
 
           deviceAuthOptions.deviceSignature = deviceSignature
         } else {
+          const deviceMac = new DeviceMac({
+            protectedHeaders,
+            unprotectedHeaders,
+            detachedContent: deviceAuthenticationBytes,
+          })
+
           const ephemeralKey = options.mac?.ephemeralKey
           if (!ephemeralKey) throw new Error('Ephemeral key is missing')
 
-          const deviceMac = await DeviceMac.create(
+          await deviceMac.addTag(
             {
-              protectedHeaders,
-              unprotectedHeaders,
-              detachedPayload: deviceAuthenticationBytes,
               privateKey: signingKey,
               ephemeralKey: ephemeralKey,
               sessionTranscript: options.sessionTranscript,
@@ -271,27 +247,23 @@ export class DeviceResponse extends CborStructure<DeviceResponseEncodedStructure
           deviceAuthOptions.deviceMac = deviceMac
         }
 
-        return Document.create({
+        return new Document({
           docType,
-          issuerSigned: IssuerSigned.create({
+          issuerSigned: new IssuerSigned({
             issuerNamespaces: disclosedIssuerNamespace,
             issuerAuth: issuerSigned.issuerAuth,
           }),
-          deviceSigned: DeviceSigned.create({
+          deviceSigned: new DeviceSigned({
             deviceNamespaces,
-            deviceAuth: DeviceAuth.create(deviceAuthOptions),
+            deviceAuth: new DeviceAuth(deviceAuthOptions),
           }),
         })
       })
     )
 
-    const map: DeviceResponseDecodedStructure = new TypedMap([
-      ['version', '1.0'],
-      ['status', 0],
-      ['documents', documents],
-    ])
-
-    return DeviceResponse.fromDecodedStructure(map)
+    return new DeviceResponse({
+      documents,
+    })
   }
 
   public static async createWithDeviceRequest(
@@ -311,22 +283,5 @@ export class DeviceResponse extends CborStructure<DeviceResponseEncodedStructure
     ctx: Pick<MdocContext, 'crypto' | 'cose'>
   ) {
     return await DeviceResponse.create(options, ctx)
-  }
-
-  public static createSimple(options: DeviceResponseOptions): DeviceResponse {
-    const map: DeviceResponseDecodedStructure = new TypedMap([
-      ['version', options.version ?? '1.0'],
-      ['status', options.status ?? 0],
-    ])
-
-    if (options.documents !== undefined) {
-      map.set('documents', options.documents)
-    }
-
-    if (options.documentErrors !== undefined) {
-      map.set('documentErrors', options.documentErrors)
-    }
-
-    return this.fromDecodedStructure(map)
   }
 }

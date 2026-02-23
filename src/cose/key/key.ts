@@ -1,7 +1,5 @@
-import { z } from 'zod'
-import { CborStructure } from '../../cbor'
-import { bytesToString, concatBytes, stringToBytes, TypedMap, typedMap } from '../../utils'
-import { zUint8Array } from '../../utils/zod'
+import { concatBytes } from '@noble/curves/utils.js'
+import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
 import {
   CoseDNotDefinedError,
   CoseInvalidKtyForRawError,
@@ -11,9 +9,9 @@ import {
   CoseXNotDefinedError,
   CoseYNotDefinedError,
 } from '../error'
-import { Curve } from './curve'
+import type { Curve } from './curve'
 import { coseKeyToJwk, coseOptionsJwkMap, jwkCoseOptionsMap, jwkToCoseKey } from './jwk'
-import { KeyOps } from './key-operation'
+import type { KeyOps } from './key-operation'
 import { KeyType } from './key-type'
 
 export enum CoseKeyParameter {
@@ -30,43 +28,24 @@ export enum CoseKeyParameter {
   D = -4,
 }
 
-// Zod schema for CoseKey validation
-const coseKeySchema = typedMap([
-  [CoseKeyParameter.KeyType, z.union([z.enum(KeyType), z.string()])],
-  [
-    CoseKeyParameter.KeyId,
-    // NOTE: string is NOT allowed, but seems mDocs issued with v0.5 of this library
-    // do include string keyIds. We need to ensure we don't break interop. For newly
-    // created keys we ensure correct encoding.
-    zUint8Array
-      .or(z.string())
-      .exactOptional(),
-  ],
-  [
-    CoseKeyParameter.Algorithm,
-    z
-      .union([
-        z.string({ error: 'Cose algorithm must be a string' }),
-        z.number({ error: 'Cose algorithm must be a number' }),
-      ])
-      .exactOptional(),
-  ],
-  [CoseKeyParameter.KeyOps, z.array(z.union([z.enum(KeyOps), z.string()])).exactOptional()],
-  [CoseKeyParameter.BaseIv, zUint8Array.exactOptional()],
-  [CoseKeyParameter.CurveOrK, z.union([z.enum(Curve), zUint8Array]).exactOptional()],
-  [CoseKeyParameter.X, zUint8Array.exactOptional()],
-  [CoseKeyParameter.Y, zUint8Array.exactOptional()],
-  [CoseKeyParameter.D, zUint8Array.exactOptional()],
-] as const)
+export type EncodedCoseKeyStructure = Map<unknown, unknown>
+export type CoseKeyStructure = {
+  [CoseKeyParameter.KeyType]: KeyType | string
+  [CoseKeyParameter.KeyId]?: Uint8Array
+  [CoseKeyParameter.Algorithm]?: string | number
+  [CoseKeyParameter.KeyOps]?: Array<KeyOps | string>
+  [CoseKeyParameter.BaseIv]?: Uint8Array
 
-// Infer structure type from Zod schema
-export type CoseKeyDecodedStructure = z.output<typeof coseKeySchema>
-export type CoseKeyEncodedStructure = z.input<typeof coseKeySchema>
+  [CoseKeyParameter.CurveOrK]?: Curve | Uint8Array
+  [CoseKeyParameter.X]?: Uint8Array
+  [CoseKeyParameter.Y]?: Uint8Array
 
-// Manual options type (user-facing API)
+  [CoseKeyParameter.D]?: Uint8Array
+}
+
 export type CoseKeyOptions = {
   keyType: KeyType | string
-  keyId?: string
+  keyId?: Uint8Array
   algorithm?: string | number
   keyOps?: Array<KeyOps | string>
   baseIv?: Uint8Array
@@ -80,123 +59,129 @@ export type CoseKeyOptions = {
   k?: Uint8Array
 }
 
-export class CoseKey extends CborStructure<CoseKeyEncodedStructure, CoseKeyDecodedStructure> {
-  public static override get encodingSchema() {
-    return coseKeySchema
+export class CoseKey extends CborStructure {
+  public keyType: KeyType | string
+  public keyId?: Uint8Array
+  public algorithm?: string | number
+  public keyOps?: Array<KeyOps | string>
+  public baseIv?: Uint8Array
+
+  public curve?: Curve
+  public x?: Uint8Array
+  public y?: Uint8Array
+
+  public d?: Uint8Array
+
+  public k?: Uint8Array
+
+  public constructor(options: CoseKeyOptions) {
+    super()
+
+    this.keyType = options.keyType
+    this.keyId = options.keyId
+    this.algorithm = options.algorithm
+    this.keyOps = options.keyOps
+    this.baseIv = options.baseIv
+
+    this.curve = options.curve
+    this.x = options.x
+    this.y = options.y
+    this.d = options.d
+
+    this.k = options.k as Uint8Array
   }
 
-  public get keyType() {
-    return this.structure.get(CoseKeyParameter.KeyType)
-  }
+  public encodedStructure(): EncodedCoseKeyStructure {
+    // We need to use map, as keys are non-string
+    const structure = new Map()
 
-  public get keyId() {
-    const keyId = this.structure.get(CoseKeyParameter.KeyId)
-    return keyId instanceof Uint8Array ? bytesToString(keyId) : keyId
-  }
+    structure.set(CoseKeyParameter.KeyType, this.keyType)
 
-  public get algorithm() {
-    return this.structure.get(CoseKeyParameter.Algorithm)
-  }
-
-  public get keyOps() {
-    return this.structure.get(CoseKeyParameter.KeyOps)
-  }
-
-  public get baseIv() {
-    return this.structure.get(CoseKeyParameter.BaseIv)
-  }
-
-  public get curve() {
-    if (this.keyType === KeyType.Ec || this.keyType === KeyType.Okp) {
-      // Casting is needed, as it can be both Curve or K
-      return this.structure.get(CoseKeyParameter.CurveOrK) as Curve | undefined
+    if (this.keyId) {
+      structure.set(CoseKeyParameter.KeyId, this.keyId)
     }
 
-    return undefined
+    if (this.algorithm) {
+      structure.set(CoseKeyParameter.Algorithm, this.algorithm)
+    }
+
+    if (this.keyOps) {
+      structure.set(CoseKeyParameter.KeyOps, this.keyOps)
+    }
+
+    if (this.baseIv) {
+      structure.set(CoseKeyParameter.BaseIv, this.baseIv)
+    }
+
+    if (this.curve) {
+      structure.set(CoseKeyParameter.CurveOrK, this.curve)
+    }
+
+    if (this.x) {
+      structure.set(CoseKeyParameter.X, this.x)
+    }
+
+    if (this.y) {
+      structure.set(CoseKeyParameter.Y, this.y)
+    }
+
+    if (this.d) {
+      structure.set(CoseKeyParameter.D, this.d)
+    }
+
+    if (this.k) {
+      structure.set(CoseKeyParameter.CurveOrK, this.k)
+    }
+
+    return structure
   }
 
-  public get x() {
-    return this.structure.get(CoseKeyParameter.X)
-  }
-
-  public get y() {
-    return this.structure.get(CoseKeyParameter.Y)
-  }
-
-  public get d() {
-    return this.structure.get(CoseKeyParameter.D)
-  }
-
-  public get k() {
-    if (this.keyType === KeyType.Oct) {
-      return this.structure.get(CoseKeyParameter.CurveOrK) as Uint8Array | undefined
-    }
-    return undefined
-  }
-
-  public static create(options: CoseKeyOptions): CoseKey {
-    const map: CoseKeyDecodedStructure = new TypedMap([[CoseKeyParameter.KeyType, options.keyType]])
-
-    if (options.keyId !== undefined) {
-      map.set(CoseKeyParameter.KeyId, stringToBytes(options.keyId))
-    }
-
-    if (options.algorithm !== undefined) {
-      map.set(CoseKeyParameter.Algorithm, options.algorithm)
-    }
-
-    if (options.keyOps !== undefined) {
-      map.set(CoseKeyParameter.KeyOps, options.keyOps)
-    }
-
-    if (options.baseIv !== undefined) {
-      map.set(CoseKeyParameter.BaseIv, options.baseIv)
-    }
-
-    if (options.curve !== undefined) {
-      map.set(CoseKeyParameter.CurveOrK, options.curve)
-    }
-
-    if (options.x !== undefined) {
-      map.set(CoseKeyParameter.X, options.x)
-    }
-
-    if (options.y !== undefined) {
-      map.set(CoseKeyParameter.Y, options.y)
-    }
-
-    if (options.d !== undefined) {
-      map.set(CoseKeyParameter.D, options.d)
-    }
-
-    if (options.k !== undefined) {
-      map.set(CoseKeyParameter.CurveOrK, options.k)
-    }
-
-    return this.fromDecodedStructure(map)
-  }
-
-  // TODO: add jwk zod schema
   public static fromJwk(jwk: Record<string, unknown>) {
     if (!('kty' in jwk)) {
       throw new CoseInvalidValueForKtyError('JWK does not contain required kty value')
     }
 
-    const options = Object.entries(jwk).reduce((prev, [key, value]) => {
-      const mappedKey = jwkCoseOptionsMap[key] ?? key
+    const options = Object.entries(jwk).reduce(
+      (prev, [key, value]) => ({
+        ...prev,
+        [jwkCoseOptionsMap[key] ?? key]:
+          typeof jwkToCoseKey[key as keyof typeof jwkToCoseKey] === 'function'
+            ? jwkToCoseKey[key as keyof typeof jwkToCoseKey](value)
+            : undefined,
+      }),
+      {} as CoseKeyOptions
+    )
 
-      const mapFunction = jwkToCoseKey[key as keyof typeof jwkToCoseKey]
-      const convertedValue = mapFunction ? mapFunction(value) : value
+    return new CoseKey(options)
+  }
 
-      // Only include if value is not undefined
-      if (convertedValue !== undefined) {
-        return { ...prev, [mappedKey]: convertedValue }
-      }
+  public static override fromEncodedStructure(encodedStructure: EncodedCoseKeyStructure): CoseKey {
+    const keyType = encodedStructure.get(CoseKeyParameter.KeyType) as KeyType | undefined
+    if (!keyType) {
+      throw new CoseInvalidValueForKtyError()
+    }
 
-      return prev
-    }, {} as CoseKeyOptions)
+    const curve = keyType === KeyType.Ec ? (encodedStructure.get(CoseKeyParameter.CurveOrK) as Curve) : undefined
 
-    return this.create(options)
+    const k = keyType === KeyType.Oct ? (encodedStructure.get(CoseKeyParameter.CurveOrK) as Uint8Array) : undefined
+
+    return new CoseKey({
+      keyType,
+      keyId: encodedStructure.get(CoseKeyParameter.KeyId) as Uint8Array | undefined,
+      algorithm: encodedStructure.get(CoseKeyParameter.Algorithm) as string | number | undefined,
+      keyOps: encodedStructure.get(CoseKeyParameter.KeyOps) as Array<string | KeyOps> | undefined,
+      baseIv: encodedStructure.get(CoseKeyParameter.BaseIv) as Uint8Array | undefined,
+      curve,
+      x: encodedStructure.get(CoseKeyParameter.X) as Uint8Array | undefined,
+      y: encodedStructure.get(CoseKeyParameter.Y) as Uint8Array | undefined,
+      d: encodedStructure.get(CoseKeyParameter.D) as Uint8Array | undefined,
+      k,
+    })
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): CoseKey {
+    const structure = cborDecode<EncodedCoseKeyStructure>(bytes, options)
+    return CoseKey.fromEncodedStructure(structure)
   }
 
   public get publicKey() {
@@ -212,7 +197,7 @@ export class CoseKey extends CborStructure<CoseKeyEncodedStructure, CoseKeyDecod
       throw new CoseYNotDefinedError()
     }
 
-    return concatBytes([Uint8Array.from([0x04]), this.x, this.y])
+    return concatBytes(Uint8Array.from([0x04]), this.x, this.y)
   }
 
   public get privateKey() {
@@ -236,21 +221,7 @@ export class CoseKey extends CborStructure<CoseKeyEncodedStructure, CoseKeyDecod
   }
 
   public get jwk(): Record<string, unknown> {
-    // Convert CoseKey properties to JWK format
-    const options: CoseKeyOptions = {
-      keyType: this.keyType,
-      keyId: this.keyId,
-      algorithm: this.algorithm,
-      keyOps: this.keyOps,
-      baseIv: this.baseIv,
-      curve: this.curve,
-      x: this.x,
-      y: this.y,
-      d: this.d,
-      k: this.k,
-    }
-
-    return Object.entries(options).reduce(
+    return Object.entries(this).reduce(
       (prev, [key, value]) => ({
         ...prev,
         [coseOptionsJwkMap[key] ?? key]:

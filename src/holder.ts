@@ -1,3 +1,4 @@
+import { base64url } from 'jose'
 import type { MdocContext } from './context'
 import type { CoseKey } from './cose'
 import {
@@ -8,7 +9,6 @@ import {
   SessionTranscript,
   type VerificationCallback,
 } from './mdoc'
-import { base64url } from './utils'
 
 export class Holder {
   /**

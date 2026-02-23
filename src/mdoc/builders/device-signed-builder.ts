@@ -28,13 +28,13 @@ export class DeviceSignedBuilder {
 
   public constructor(docType: DocType, ctx: Pick<MdocContext, 'cose' | 'crypto'>) {
     this.docType = docType
-    this.namespaces = DeviceNamespaces.create({ deviceNamespaces: new Map() })
+    this.namespaces = new DeviceNamespaces({ deviceNamespaces: new Map() })
     this.ctx = ctx
   }
 
   public addDeviceNamespace(namespace: Namespace, value: Record<string, unknown>) {
     const deviceSignedItems =
-      this.namespaces.deviceNamespaces.get(namespace) ?? DeviceSignedItems.create({ deviceSignedItems: new Map() })
+      this.namespaces.deviceNamespaces.get(namespace) ?? new DeviceSignedItems({ deviceSignedItems: new Map() })
 
     for (const [k, v] of Object.entries(value)) {
       deviceSignedItems.deviceSignedItems.set(k, v)
@@ -51,11 +51,11 @@ export class DeviceSignedBuilder {
     sessionTranscript: SessionTranscript
     derCertificate: string
   }): Promise<DeviceSigned> {
-    const protectedHeaders = ProtectedHeaders.create({
+    const protectedHeaders = new ProtectedHeaders({
       protectedHeaders: new Map([[Header.Algorithm, options.algorithm]]),
     })
 
-    const unprotectedHeaders = UnprotectedHeaders.create({
+    const unprotectedHeaders = new UnprotectedHeaders({
       unprotectedHeaders: new Map([[Header.X5Chain, base64.decode(options.derCertificate)]]),
     })
 
@@ -63,25 +63,28 @@ export class DeviceSignedBuilder {
       unprotectedHeaders.headers?.set(Header.KeyId, options.signingKey.keyId)
     }
 
-    const deviceAuthentication = DeviceAuthentication.create({
+    const deviceAuthentication = new DeviceAuthentication({
       sessionTranscript: options.sessionTranscript,
       deviceNamespaces: this.namespaces,
       docType: this.docType,
     })
 
-    const deviceSignature = await DeviceSignature.create(
+    const deviceSignature = new DeviceSignature({
+      unprotectedHeaders,
+      protectedHeaders,
+      detachedContent: deviceAuthentication.encode({ asDataItem: true }),
+    })
+
+    await deviceSignature.addSignature(
       {
-        unprotectedHeaders,
-        protectedHeaders,
-        detachedPayload: deviceAuthentication.encode({ asDataItem: true }),
         signingKey: options.signingKey,
       },
       this.ctx
     )
 
-    return DeviceSigned.create({
+    return new DeviceSigned({
       deviceNamespaces: this.namespaces,
-      deviceAuth: DeviceAuth.create({
+      deviceAuth: new DeviceAuth({
         deviceSignature,
       }),
     })
@@ -94,11 +97,11 @@ export class DeviceSignedBuilder {
     algorithm: MacAlgorithm
     derCertificate: string
   }): Promise<DeviceSigned> {
-    const protectedHeaders = ProtectedHeaders.create({
+    const protectedHeaders = new ProtectedHeaders({
       protectedHeaders: new Map([[Header.Algorithm, options.algorithm]]),
     })
 
-    const unprotectedHeaders = UnprotectedHeaders.create({
+    const unprotectedHeaders = new UnprotectedHeaders({
       unprotectedHeaders: new Map([[Header.X5Chain, base64.decode(options.derCertificate)]]),
     })
 
@@ -106,17 +109,20 @@ export class DeviceSignedBuilder {
       unprotectedHeaders.headers?.set(Header.KeyId, options.privateKey.keyId)
     }
 
-    const deviceAuthentication = DeviceAuthentication.create({
+    const deviceAuthentication = new DeviceAuthentication({
       sessionTranscript: options.sessionTranscript,
       deviceNamespaces: this.namespaces,
       docType: this.docType,
     })
 
-    const deviceMac = await DeviceMac.create(
+    const deviceMac = new DeviceMac({
+      unprotectedHeaders,
+      protectedHeaders,
+      detachedContent: deviceAuthentication.encode({ asDataItem: true }),
+    })
+
+    await deviceMac.addTag(
       {
-        unprotectedHeaders,
-        protectedHeaders,
-        detachedPayload: deviceAuthentication.encode({ asDataItem: true }),
         privateKey: options.privateKey,
         ephemeralKey: options.publicKey,
         sessionTranscript: options.sessionTranscript,
@@ -124,9 +130,9 @@ export class DeviceSignedBuilder {
       this.ctx
     )
 
-    return DeviceSigned.create({
+    return new DeviceSigned({
       deviceNamespaces: this.namespaces,
-      deviceAuth: DeviceAuth.create({
+      deviceAuth: new DeviceAuth({
         deviceMac,
       }),
     })

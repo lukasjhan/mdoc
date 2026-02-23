@@ -1,11 +1,10 @@
+import { type CborDecodeOptions, cborDecode } from '../../cbor'
 import type { MdocContext } from '../../context'
-import type { CoseKey, Mac0Options } from '../../cose'
-import { Mac0, type Mac0DecodedStructure, type Mac0EncodedStructure } from '../../cose/mac0'
+import type { CoseKey } from '../../cose'
+import { Mac0, type Mac0Structure } from '../../cose/mac0'
 import { SessionTranscript } from './session-transcript'
 
-export type DeviceMacEncodedStructure = Mac0EncodedStructure
-export type DeviceMacDecodedStructure = Mac0DecodedStructure
-export type DeviceMacOptions = Mac0Options
+export type DeviceMacStructure = Mac0Structure
 
 export class DeviceMac extends Mac0 {
   public async verify(
@@ -33,7 +32,17 @@ export class DeviceMac extends Mac0 {
     })
   }
 
-  public static async create(options: DeviceMacOptions, ctx: Pick<MdocContext, 'cose' | 'crypto'>) {
-    return super.create(options, ctx) as Promise<DeviceMac>
+  public static override fromEncodedStructure(encodedStructure: DeviceMacStructure): DeviceMac {
+    return new DeviceMac({
+      protectedHeaders: encodedStructure[0],
+      unprotectedHeaders: encodedStructure[1],
+      payload: encodedStructure[2],
+      tag: encodedStructure[3],
+    })
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceMac {
+    const data = cborDecode<DeviceMacStructure>(bytes, options)
+    return DeviceMac.fromEncodedStructure(data)
   }
 }

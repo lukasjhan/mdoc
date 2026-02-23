@@ -1,21 +1,26 @@
-import z from 'zod'
 import { CborStructure } from '../../cbor'
 import type { DataElementIdentifier } from './data-element-identifier'
 import type { ErrorCode } from './error-code'
 
-export const errorItemsSchema = z.map(z.string(), z.number())
 export type ErrorItemsStructure = Map<DataElementIdentifier, ErrorCode>
 
 export type ErrorItemsOptions = {
-  errorItems: ErrorItemsStructure
+  errorItems: Map<DataElementIdentifier, ErrorCode>
 }
 
-export class ErrorItems extends CborStructure<ErrorItemsStructure> {
-  public static override get encodingSchema() {
-    return errorItemsSchema
+export class ErrorItems extends CborStructure {
+  public errorItems: Map<DataElementIdentifier, ErrorCode>
+
+  public constructor(options: ErrorItemsOptions) {
+    super()
+    this.errorItems = options.errorItems
   }
 
-  public static create(options: ErrorItemsOptions) {
-    return this.fromDecodedStructure(options.errorItems)
+  public encodedStructure(): ErrorItemsStructure {
+    return this.errorItems
+  }
+
+  public static fromEncodedStructure(encodedStructure: ErrorItemsStructure): ErrorItems {
+    return new ErrorItems({ errorItems: encodedStructure })
   }
 }
