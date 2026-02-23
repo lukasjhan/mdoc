@@ -9,7 +9,11 @@ export type IssuerAuthStructure = Sign1Structure
 export type IssuerAuthOptions = Sign1Options
 
 export class IssuerAuth extends Sign1 {
+  private _mso?: MobileSecurityObject
+
   public get mobileSecurityObject(): MobileSecurityObject {
+    if (this._mso) return this._mso
+
     if (!this.payload) {
       throw new CosePayloadMustBeDefinedError()
     }
@@ -22,9 +26,8 @@ export class IssuerAuth extends Sign1 {
       throw new CosePayloadInvalidStructureError()
     }
 
-    const mso = MobileSecurityObject.decode(dataItem.buffer)
-
-    return mso
+    this._mso = MobileSecurityObject.decode(dataItem.buffer)
+    return this._mso
   }
 
   public async verify(

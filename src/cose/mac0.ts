@@ -29,7 +29,17 @@ export class Mac0 extends CborStructure {
   public tag?: Uint8Array
 
   public externalAad?: Uint8Array
-  public detachedContent?: Uint8Array
+  private _detachedContent?: Uint8Array
+  private _toBeAuthenticatedCache?: Uint8Array
+
+  public get detachedContent() {
+    return this._detachedContent
+  }
+
+  public set detachedContent(value: Uint8Array | undefined) {
+    this._detachedContent = value
+    this._toBeAuthenticatedCache = undefined
+  }
 
   public constructor(options: Mac0Options) {
     super()
@@ -66,6 +76,8 @@ export class Mac0 extends CborStructure {
   }
 
   public get toBeAuthenticated() {
+    if (this._toBeAuthenticatedCache) return this._toBeAuthenticatedCache
+
     const payload = this.detachedContent ?? this.payload
 
     if (!payload) {
@@ -78,7 +90,8 @@ export class Mac0 extends CborStructure {
 
     toBeAuthenticated.push(payload)
 
-    return cborEncode(toBeAuthenticated)
+    this._toBeAuthenticatedCache = cborEncode(toBeAuthenticated)
+    return this._toBeAuthenticatedCache
   }
 
   public get signatureAlgorithmName(): MacAlgorithm {
