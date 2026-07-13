@@ -6,6 +6,8 @@ import type {
   DocType,
   IssuerSigned,
   Namespace,
+  Status,
+  StatusOptions,
   ValidityInfo,
   ValidityInfoOptions,
 } from './mdoc'
@@ -30,6 +32,7 @@ export class Issuer {
     validityInfo: ValidityInfo | ValidityInfoOptions
     deviceKeyInfo: DeviceKeyInfo | DeviceKeyInfoOptions
     certificate: Uint8Array
+    status?: Status | StatusOptions
   }): Promise<IssuerSigned> {
     const signingKey = options.signingKey instanceof CoseKey ? options.signingKey : CoseKey.fromJwk(options.signingKey)
     return await this.isb.sign({ ...options, signingKey })

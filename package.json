@@ -1,10 +1,10 @@
 {
   "name": "@lukas.j.han/mdoc",
-  "description": "Animo Mdoc and MDL",
+  "description": "mdoc / mDL (ISO/IEC 18013-5 & 18013-7) issuance and verification for TypeScript",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd",
-  "author": "Animo Solutions",
-  "version": "0.5.11",
+  "author": "Lukas J. Han <lukas@hopae.com>",
+  "version": "0.6.0",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.cts",
@@ -51,7 +51,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/animo/mdoc"
+    "url": "git+https://github.com/lukasjhan/mdoc.git"
   },
   "keywords": [
     "mdl",

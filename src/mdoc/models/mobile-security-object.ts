@@ -2,6 +2,7 @@ import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
 import type { DigestAlgorithm } from '../../cose'
 import { DeviceKeyInfo, type DeviceKeyInfoStructure } from './device-key-info'
 import type { DocType } from './doctype'
+import { Status, type StatusOptions, type StatusStructure } from './status'
 import { ValidityInfo, type ValidityInfoStructure } from './validity-info'
 import { ValueDigests, type ValueDigestsStructure } from './value-digests'
 
@@ -12,6 +13,7 @@ export type MobileSecurityObjectStructure = {
   valueDigests: ValueDigestsStructure
   deviceKeyInfo: DeviceKeyInfoStructure
   validityInfo: ValidityInfoStructure
+  status?: StatusStructure
 }
 
 export type MobileSecurityObjectOptions = {
@@ -21,6 +23,7 @@ export type MobileSecurityObjectOptions = {
   valueDigests: ValueDigests
   validityInfo: ValidityInfo
   deviceKeyInfo: DeviceKeyInfo
+  status?: Status | StatusOptions
 }
 
 export class MobileSecurityObject extends CborStructure {
@@ -30,6 +33,7 @@ export class MobileSecurityObject extends CborStructure {
   public validityInfo: ValidityInfo
   public valueDigests: ValueDigests
   public deviceKeyInfo: DeviceKeyInfo
+  public status?: Status
 
   public constructor(options: MobileSecurityObjectOptions) {
     super()
@@ -39,10 +43,15 @@ export class MobileSecurityObject extends CborStructure {
     this.validityInfo = options.validityInfo
     this.valueDigests = options.valueDigests
     this.deviceKeyInfo = options.deviceKeyInfo
+    this.status = options.status
+      ? options.status instanceof Status
+        ? options.status
+        : new Status(options.status)
+      : undefined
   }
 
   public encodedStructure(): MobileSecurityObjectStructure {
-    return {
+    const structure: MobileSecurityObjectStructure = {
       version: this.version,
       digestAlgorithm: this.digestAlgorithm,
       valueDigests: this.valueDigests.encodedStructure(),
@@ -50,6 +59,12 @@ export class MobileSecurityObject extends CborStructure {
       docType: this.docType,
       validityInfo: this.validityInfo.encodedStructure(),
     }
+
+    if (this.status) {
+      structure.status = this.status.encodedStructure()
+    }
+
+    return structure
   }
 
   public static override fromEncodedStructure(
@@ -68,6 +83,7 @@ export class MobileSecurityObject extends CborStructure {
       validityInfo: ValidityInfo.fromEncodedStructure(structure.validityInfo),
       valueDigests: ValueDigests.fromEncodedStructure(structure.valueDigests),
       deviceKeyInfo: DeviceKeyInfo.fromEncodedStructure(structure.deviceKeyInfo),
+      status: structure.status ? Status.fromEncodedStructure(structure.status) : undefined,
     })
   }
 
