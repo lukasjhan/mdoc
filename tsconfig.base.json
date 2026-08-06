@@ -11,6 +11,5 @@
     "types": ["node"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
-  },
-  "exclude": ["dist"]
+  }
 }

@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": "./commit",
   "privatePackages": false,
-  "fixed": [["@animo-id/*"]],
+  "fixed": [["@m-doc/*"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

@@ -1,76 +1,25 @@
 {
-  "name": "@lukas.j.han/mdoc",
-  "description": "mdoc / mDL (ISO/IEC 18013-5 & 18013-7) issuance and verification for TypeScript",
+  "name": "m-doc",
+  "private": true,
   "license": "Apache-2.0",
-  "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd",
   "author": "Lukas J. Han <lukas@hopae.com>",
-  "version": "0.6.0",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
-  "files": [
-    "dist"
-  ],
-  "publishConfig": {
-    "exports": {
-      ".": {
-        "import": {
-          "types": "./dist/index.d.mts",
-          "default": "./dist/index.mjs"
-        },
-        "require": {
-          "types": "./dist/index.d.cts",
-          "default": "./dist/index.cjs"
-        },
-        "default": "./dist/index.mjs"
-      },
-      "./package.json": "./package.json"
-    }
-  },
+  "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd",
   "scripts": {
-    "types:check": "tsc --noEmit",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "types:check": "pnpm -r types:check",
     "style:check": "biome check --unsafe",
     "style:fix": "biome check --write --unsafe",
-    "build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap",
-    "test": "vitest",
     "release": "pnpm build && pnpm changeset publish --no-git-tag",
     "changeset-version": "pnpm changeset version && pnpm style:fix"
-  },
-  "dependencies": {
-    "cbor-x": "^1.6.5",
-    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",
     "@changesets/cli": "^2.29.7",
-    "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1",
-    "@panva/hkdf": "^1.2.1",
-    "@peculiar/x509": "^1.14.0",
-    "@types/node": "^24.10.0",
-    "jose": "^6.1.0",
-    "tsdown": "^0.19.0",
-    "typescript": "~5.9.3",
-    "vitest": "^4.0.7"
+    "typescript": "~5.9.3"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lukasjhan/mdoc.git"
-  },
-  "keywords": [
-    "mdl",
-    "iso-18013-5",
-    "iso-18013-7",
-    "m-doc",
-    "m-doc-cbor",
-    "m-doc-cbor-parser",
-    "m-doc-cbor-validator",
-    "m-doc-cbor-encoder",
-    "m-doc-cbor-decoder",
-    "m-doc-cbor-iso-18013-5",
-    "m-doc-cbor-iso-18013-5-parser",
-    "m-doc-cbor-iso-18013-5-validator",
-    "m-doc-cbor-iso-18013-5-encoder",
-    "m-doc-cbor-iso-18013-5-decoder"
-  ]
+  }
 }
