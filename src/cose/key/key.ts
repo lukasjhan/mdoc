@@ -1,5 +1,6 @@
 import { concatBytes } from '@noble/curves/utils.js'
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
 import {
   CoseDNotDefinedError,
   CoseInvalidKtyForRawError,
@@ -29,19 +30,26 @@ export enum CoseKeyParameter {
 }
 
 export type EncodedCoseKeyStructure = Map<unknown, unknown>
-export type CoseKeyStructure = {
-  [CoseKeyParameter.KeyType]: KeyType | string
-  [CoseKeyParameter.KeyId]?: Uint8Array
-  [CoseKeyParameter.Algorithm]?: string | number
-  [CoseKeyParameter.KeyOps]?: Array<KeyOps | string>
-  [CoseKeyParameter.BaseIv]?: Uint8Array
 
-  [CoseKeyParameter.CurveOrK]?: Curve | Uint8Array
-  [CoseKeyParameter.X]?: Uint8Array
-  [CoseKeyParameter.Y]?: Uint8Array
-
-  [CoseKeyParameter.D]?: Uint8Array
-}
+/**
+ * RFC 8152 gives label -1 two meanings: the curve for EC2 and OKP keys, and the
+ * key material for Symmetric ones. One slot, so `curve` and `k` read from it and
+ * decide by key type.
+ */
+const schema = cborMap([
+  [CoseKeyParameter.KeyType, z.union([z.number(), z.string()])],
+  // RFC 8152 defines kid as a bstr, but implementations in the wild put a text
+  // string there -- the Animo test vector carries a UUID. Reading both keeps
+  // those credentials verifiable; this library still writes bytes.
+  [CoseKeyParameter.KeyId, z.union([z.instanceof(Uint8Array), z.string()]).optional()],
+  [CoseKeyParameter.Algorithm, z.union([z.string(), z.number()]).optional()],
+  [CoseKeyParameter.KeyOps, z.array(z.union([z.string(), z.number()])).optional()],
+  [CoseKeyParameter.BaseIv, z.instanceof(Uint8Array).optional()],
+  [CoseKeyParameter.CurveOrK, z.union([z.number(), z.string(), z.instanceof(Uint8Array)]).optional()],
+  [CoseKeyParameter.X, z.instanceof(Uint8Array).optional()],
+  [CoseKeyParameter.Y, z.instanceof(Uint8Array).optional()],
+  [CoseKeyParameter.D, z.instanceof(Uint8Array).optional()],
+])
 
 export type CoseKeyOptions = {
   keyType: KeyType | string
@@ -60,80 +68,71 @@ export type CoseKeyOptions = {
 }
 
 export class CoseKey extends CborStructure {
-  public keyType: KeyType | string
-  public keyId?: Uint8Array
-  public algorithm?: string | number
-  public keyOps?: Array<KeyOps | string>
-  public baseIv?: Uint8Array
-
-  public curve?: Curve
-  public x?: Uint8Array
-  public y?: Uint8Array
-
-  public d?: Uint8Array
-
-  public k?: Uint8Array
+  public static override schema = schema
 
   public constructor(options: CoseKeyOptions) {
-    super()
-
-    this.keyType = options.keyType
-    this.keyId = options.keyId
-    this.algorithm = options.algorithm
-    this.keyOps = options.keyOps
-    this.baseIv = options.baseIv
-
-    this.curve = options.curve
-    this.x = options.x
-    this.y = options.y
-    this.d = options.d
-
-    this.k = options.k as Uint8Array
+    super(
+      buildStructure([
+        [CoseKeyParameter.KeyType, options.keyType],
+        [CoseKeyParameter.KeyId, options.keyId],
+        [CoseKeyParameter.Algorithm, options.algorithm],
+        [CoseKeyParameter.KeyOps, options.keyOps],
+        [CoseKeyParameter.BaseIv, options.baseIv],
+        [CoseKeyParameter.CurveOrK, options.curve ?? options.k],
+        [CoseKeyParameter.X, options.x],
+        [CoseKeyParameter.Y, options.y],
+        [CoseKeyParameter.D, options.d],
+      ])
+    )
   }
 
-  public encodedStructure(): EncodedCoseKeyStructure {
-    // We need to use map, as keys are non-string
-    const structure = new Map()
+  public override encodedStructure(): EncodedCoseKeyStructure {
+    return super.encodedStructure() as EncodedCoseKeyStructure
+  }
 
-    structure.set(CoseKeyParameter.KeyType, this.keyType)
+  public get keyType(): KeyType | string {
+    return this.structure.get(CoseKeyParameter.KeyType) as KeyType | string
+  }
 
-    if (this.keyId) {
-      structure.set(CoseKeyParameter.KeyId, this.keyId)
-    }
+  /** A `string` only when the source encoded a non-conformant text-string kid. */
+  public get keyId(): Uint8Array | string | undefined {
+    return this.structure.get(CoseKeyParameter.KeyId) as Uint8Array | string | undefined
+  }
 
-    if (this.algorithm) {
-      structure.set(CoseKeyParameter.Algorithm, this.algorithm)
-    }
+  public get algorithm(): string | number | undefined {
+    return this.structure.get(CoseKeyParameter.Algorithm) as string | number | undefined
+  }
 
-    if (this.keyOps) {
-      structure.set(CoseKeyParameter.KeyOps, this.keyOps)
-    }
+  public get keyOps(): Array<KeyOps | string> | undefined {
+    return this.structure.get(CoseKeyParameter.KeyOps) as Array<KeyOps | string> | undefined
+  }
 
-    if (this.baseIv) {
-      structure.set(CoseKeyParameter.BaseIv, this.baseIv)
-    }
+  public get baseIv(): Uint8Array | undefined {
+    return this.structure.get(CoseKeyParameter.BaseIv) as Uint8Array | undefined
+  }
 
-    if (this.curve) {
-      structure.set(CoseKeyParameter.CurveOrK, this.curve)
-    }
+  public get curve(): Curve | undefined {
+    if (this.keyType === KeyType.Oct) return undefined
 
-    if (this.x) {
-      structure.set(CoseKeyParameter.X, this.x)
-    }
+    return this.structure.get(CoseKeyParameter.CurveOrK) as Curve | undefined
+  }
 
-    if (this.y) {
-      structure.set(CoseKeyParameter.Y, this.y)
-    }
+  public get k(): Uint8Array | undefined {
+    if (this.keyType !== KeyType.Oct) return undefined
 
-    if (this.d) {
-      structure.set(CoseKeyParameter.D, this.d)
-    }
+    return this.structure.get(CoseKeyParameter.CurveOrK) as Uint8Array | undefined
+  }
 
-    if (this.k) {
-      structure.set(CoseKeyParameter.CurveOrK, this.k)
-    }
+  public get x(): Uint8Array | undefined {
+    return this.structure.get(CoseKeyParameter.X) as Uint8Array | undefined
+  }
 
-    return structure
+  public get y(): Uint8Array | undefined {
+    return this.structure.get(CoseKeyParameter.Y) as Uint8Array | undefined
+  }
+
+  public get d(): Uint8Array | undefined {
+    return this.structure.get(CoseKeyParameter.D) as Uint8Array | undefined
   }
 
   public static fromJwk(jwk: Record<string, unknown>) {
@@ -155,33 +154,14 @@ export class CoseKey extends CborStructure {
     return new CoseKey(options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: EncodedCoseKeyStructure): CoseKey {
-    const keyType = encodedStructure.get(CoseKeyParameter.KeyType) as KeyType | undefined
-    if (!keyType) {
-      throw new CoseInvalidValueForKtyError()
-    }
+  public static override fromEncodedStructure(encodedStructure: unknown): CoseKey {
+    assertKeyType(encodedStructure)
 
-    const curve = keyType === KeyType.Ec ? (encodedStructure.get(CoseKeyParameter.CurveOrK) as Curve) : undefined
-
-    const k = keyType === KeyType.Oct ? (encodedStructure.get(CoseKeyParameter.CurveOrK) as Uint8Array) : undefined
-
-    return new CoseKey({
-      keyType,
-      keyId: encodedStructure.get(CoseKeyParameter.KeyId) as Uint8Array | undefined,
-      algorithm: encodedStructure.get(CoseKeyParameter.Algorithm) as string | number | undefined,
-      keyOps: encodedStructure.get(CoseKeyParameter.KeyOps) as Array<string | KeyOps> | undefined,
-      baseIv: encodedStructure.get(CoseKeyParameter.BaseIv) as Uint8Array | undefined,
-      curve,
-      x: encodedStructure.get(CoseKeyParameter.X) as Uint8Array | undefined,
-      y: encodedStructure.get(CoseKeyParameter.Y) as Uint8Array | undefined,
-      d: encodedStructure.get(CoseKeyParameter.D) as Uint8Array | undefined,
-      k,
-    })
+    return fromEncoded(CoseKey, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): CoseKey {
-    const structure = cborDecode<EncodedCoseKeyStructure>(bytes, options)
-    return CoseKey.fromEncodedStructure(structure)
+    return decodeBytes(CoseKey, bytes, options)
   }
 
   public get publicKey() {
@@ -221,7 +201,22 @@ export class CoseKey extends CborStructure {
   }
 
   public get jwk(): Record<string, unknown> {
-    return Object.entries(this).reduce(
+    // Enumerated rather than read off the instance: the values live in the
+    // decoded structure now, not as own properties.
+    const claims: Record<string, unknown> = {
+      keyType: this.keyType,
+      keyId: this.keyId,
+      algorithm: this.algorithm,
+      keyOps: this.keyOps,
+      baseIv: this.baseIv,
+      curve: this.curve,
+      x: this.x,
+      y: this.y,
+      d: this.d,
+      k: this.k,
+    }
+
+    return Object.entries(claims).reduce(
       (prev, [key, value]) => ({
         ...prev,
         [coseOptionsJwkMap[key] ?? key]:
@@ -232,5 +227,12 @@ export class CoseKey extends CborStructure {
       }),
       {}
     )
+  }
+}
+
+/** Preserves the dedicated error this class has always thrown for a missing kty. */
+export const assertKeyType = (encodedStructure: unknown) => {
+  if (encodedStructure instanceof Map && !encodedStructure.get(CoseKeyParameter.KeyType)) {
+    throw new CoseInvalidValueForKtyError()
   }
 }

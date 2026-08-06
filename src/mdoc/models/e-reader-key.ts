@@ -1,5 +1,12 @@
-import { type CborDecodeOptions, type CborEncodeOptions, cborDecode, cborEncode, DataItem } from '../../cbor'
-import { CoseKey, type CoseKeyOptions, type EncodedCoseKeyStructure } from '../../cose/key/key'
+import {
+  type CborDecodeOptions,
+  type CborEncodeOptions,
+  cborEncode,
+  DataItem,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
+import { assertKeyType, CoseKey, type CoseKeyOptions, type EncodedCoseKeyStructure } from '../../cose/key/key'
 
 export type EReaderKeyStructure = EncodedCoseKeyStructure
 
@@ -7,29 +14,31 @@ export type EReaderKeyOptions = CoseKeyOptions
 
 export class EReaderKey extends CoseKey {
   /**
-   * Original CBOR bytes (preserved when decoding to ensure encode() returns identical bytes)
+   * Original CBOR bytes, kept when decoding so that encode() reproduces them.
+   * A plain property rather than a private field: decoded structures are built
+   * without running the constructor, which never installs private fields.
    */
-  #rawBytes?: Uint8Array
+  protected rawBytes?: Uint8Array
 
   public override encode(options?: CborEncodeOptions): Uint8Array {
-    if (this.#rawBytes) {
+    if (this.rawBytes) {
       if (options?.asDataItem) {
-        return cborEncode(new DataItem({ buffer: this.#rawBytes }))
+        return cborEncode(new DataItem({ buffer: this.rawBytes }))
       }
-      return this.#rawBytes
+      return this.rawBytes
     }
     return super.encode(options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: EReaderKeyStructure): EReaderKey {
-    const key = CoseKey.fromEncodedStructure(encodedStructure)
-    return new EReaderKey(key)
+  public static override fromEncodedStructure(encodedStructure: unknown): EReaderKey {
+    assertKeyType(encodedStructure)
+
+    return fromEncoded(EReaderKey, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): EReaderKey {
-    const structure = cborDecode<EReaderKeyStructure>(bytes, options)
-    const key = EReaderKey.fromEncodedStructure(structure)
-    key.#rawBytes = bytes
+    const key = decodeBytes(EReaderKey, bytes, options)
+    key.rawBytes = bytes
     return key
   }
 }

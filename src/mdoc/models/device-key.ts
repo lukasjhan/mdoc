@@ -1,18 +1,18 @@
-import { type CborDecodeOptions, cborDecode } from '../../cbor'
-import { CoseKey, type CoseKeyOptions, type EncodedCoseKeyStructure } from '../../cose/key/key'
+import { type CborDecodeOptions, decodeBytes, fromEncoded } from '../../cbor'
+import { assertKeyType, CoseKey, type CoseKeyOptions, type EncodedCoseKeyStructure } from '../../cose/key/key'
 
 export type DeviceKeyStructure = EncodedCoseKeyStructure
 
 export type DeviceKeyOptions = CoseKeyOptions
 
 export class DeviceKey extends CoseKey {
-  public static override fromEncodedStructure(encodedStructure: DeviceKeyStructure): DeviceKey {
-    const key = CoseKey.fromEncodedStructure(encodedStructure)
-    return new DeviceKey(key)
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceKey {
+    assertKeyType(encodedStructure)
+
+    return fromEncoded(DeviceKey, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceKey {
-    const structure = cborDecode<DeviceKeyStructure>(bytes, options)
-    return DeviceKey.fromEncodedStructure(structure)
+    return decodeBytes(DeviceKey, bytes, options)
   }
 }
