@@ -1,5 +1,12 @@
 import { z } from 'zod'
-import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
+import {
+  buildStructure,
+  CborStructure,
+  type CborToJsonOptions,
+  cborMap,
+  cborStructure,
+  type JsonValue,
+} from '../../cbor'
 import { DeviceSigned, type DeviceSignedStructure } from './device-signed'
 import type { DocType } from './doctype'
 import type { ErrorItems } from './error-items'
@@ -73,6 +80,11 @@ export class Document extends CborStructure {
   /** Every disclosed claim, keyed by the namespace it came from. */
   public getAllPrettyClaims(): Record<Namespace, PrettyClaims> {
     return this.issuerSigned.getAllPrettyClaims()
+  }
+
+  /** The same claims rendered as JSON. See `cborToJson` for the conversion. */
+  public getAllPrettyClaimsAsJson(options?: CborToJsonOptions): Record<Namespace, Record<string, JsonValue>> {
+    return this.issuerSigned.getAllPrettyClaimsAsJson(options)
   }
 
   public override encodedStructure(): DocumentStructure {

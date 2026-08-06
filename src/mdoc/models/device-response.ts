@@ -1,5 +1,12 @@
 import { z } from 'zod'
-import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
+import {
+  buildStructure,
+  CborStructure,
+  type CborToJsonOptions,
+  cborMap,
+  cborStructure,
+  type JsonValue,
+} from '../../cbor'
 import type { MdocContext } from '../../context'
 import { type CoseKey, Header, ProtectedHeaders, UnprotectedHeaders } from '../../cose'
 import { base64url } from '../../utils'
@@ -83,10 +90,23 @@ export class DeviceResponse extends CborStructure {
    * rather than saying so.
    */
   public getAllPrettyClaims(): Record<DocType, Record<Namespace, PrettyClaims>> {
-    const claims: Record<DocType, Record<Namespace, PrettyClaims>> = {}
+    const claims: Record<DocType, Record<Namespace, PrettyClaims>> = Object.create(null)
 
     for (const document of this.documents ?? []) {
       claims[document.docType] = document.getAllPrettyClaims()
+    }
+
+    return claims
+  }
+
+  /** The same claims rendered as JSON. See `cborToJson` for the conversion. */
+  public getAllPrettyClaimsAsJson(
+    options?: CborToJsonOptions
+  ): Record<DocType, Record<Namespace, Record<string, JsonValue>>> {
+    const claims: Record<DocType, Record<Namespace, Record<string, JsonValue>>> = Object.create(null)
+
+    for (const document of this.documents ?? []) {
+      claims[document.docType] = document.getAllPrettyClaimsAsJson(options)
     }
 
     return claims

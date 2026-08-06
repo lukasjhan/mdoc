@@ -1,4 +1,12 @@
-import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
+import {
+  buildStructure,
+  CborStructure,
+  type CborToJsonOptions,
+  cborMap,
+  cborStructure,
+  cborToJson,
+  type JsonValue,
+} from '../../cbor'
 import type { MdocContext } from '../../context'
 import { base64url } from '../../utils'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
@@ -17,11 +25,20 @@ const schema = cborMap([
 /** The disclosed elements of one namespace, as identifier-to-value pairs. */
 export type PrettyClaims = Record<DataElementIdentifier, DataElementValue>
 
-const toPrettyClaims = (items: Array<IssuerSignedItem>): PrettyClaims =>
-  items.reduce<PrettyClaims>((claims, item) => {
+/**
+ * Built on a null prototype: an element identifier is any text string, and
+ * assigning `__proto__` on an ordinary object sets the prototype instead of
+ * adding a key, which would drop the claim without a word.
+ */
+const toPrettyClaims = (items: Array<IssuerSignedItem>): PrettyClaims => {
+  const claims = Object.create(null) as PrettyClaims
+
+  for (const item of items) {
     claims[item.elementIdentifier] = item.elementValue
-    return claims
-  }, {})
+  }
+
+  return claims
+}
 
 export type IssuerSignedStructure = {
   nameSpaces?: IssuerNamespaceStructure
@@ -77,13 +94,24 @@ export class IssuerSigned extends CborStructure {
    * `undefined` rather than saying so.
    */
   public getAllPrettyClaims(): Record<Namespace, PrettyClaims> {
-    const claims: Record<Namespace, PrettyClaims> = {}
+    const claims = Object.create(null) as Record<Namespace, PrettyClaims>
 
     for (const [namespace, items] of this.issuerNamespaces?.issuerNamespaces ?? []) {
       claims[namespace] = toPrettyClaims(items)
     }
 
     return claims
+  }
+
+  /**
+   * The same claims rendered as JSON. See `cborToJson` for what the conversion
+   * does to byte strings, dates and integer-keyed maps.
+   */
+  public getAllPrettyClaimsAsJson(options?: CborToJsonOptions): Record<Namespace, Record<string, JsonValue>> {
+    return cborToJson(
+      new Map(Object.entries(this.getAllPrettyClaims()).map(([ns, claims]) => [ns, new Map(Object.entries(claims))])),
+      options
+    ) as Record<Namespace, Record<string, JsonValue>>
   }
 
   public get encodedForOid4Vci() {

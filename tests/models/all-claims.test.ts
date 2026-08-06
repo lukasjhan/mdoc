@@ -49,6 +49,38 @@ describe('reading every claim without naming a namespace', () => {
     expect(Object.keys(claims[docType as string]).length).toBeGreaterThan(0)
   })
 
+  it('keeps a claim named __proto__ instead of silently dropping it', () => {
+    // Assigning __proto__ on an ordinary object sets the prototype, so the
+    // claim would vanish. The accessors build on a null prototype.
+    const document = DeviceResponse.decode(eudiReference).documents?.[0]
+    const all = document?.getAllPrettyClaims() as object
+
+    expect(Object.getPrototypeOf(all)).toBeNull()
+    expect(Object.getPrototypeOf(document?.getPrettyClaims('eu.europa.ec.eudi.pid.1') as object)).toBeNull()
+  })
+
+  it('renders the claims as JSON', () => {
+    const document = DeviceResponse.decode(eudiReference).documents?.[0]
+
+    expect(document?.getAllPrettyClaimsAsJson()).toEqual({
+      'eu.europa.ec.eudi.pid.1': {
+        birth_date: '2026-02-19',
+        family_name: 'Han',
+        given_name: 'Lukas',
+        nationality: ['LU'],
+      },
+    })
+  })
+
+  it('the JSON view survives JSON.stringify', () => {
+    const claims = DeviceResponse.decode(eudiReference).getAllPrettyClaimsAsJson()
+
+    expect(() => JSON.stringify(claims)).not.toThrow()
+    expect(JSON.parse(JSON.stringify(claims))['eu.europa.ec.eudi.pid.1']['eu.europa.ec.eudi.pid.1']).toMatchObject({
+      family_name: 'Han',
+    })
+  })
+
   it('is empty rather than undefined when nothing was disclosed', () => {
     const document = DeviceResponse.decode(eudiReference).documents?.[0]
 

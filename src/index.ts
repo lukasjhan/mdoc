@@ -1,4 +1,12 @@
-export { cborDecode, cborEncode, DataItem, DateOnly } from './cbor'
+export {
+  type CborToJsonOptions,
+  cborDecode,
+  cborEncode,
+  cborToJson,
+  DataItem,
+  DateOnly,
+  type JsonValue,
+} from './cbor'
 
 export * from './context'
 export * from './cose'
