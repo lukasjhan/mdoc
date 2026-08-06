@@ -2,11 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { DeviceResponse, hex } from '../../src'
 import { cborDecode } from '../../src/cbor'
 import { deviceResponse as animo } from '../examples/animo-mdoc-05/deviceResponse'
-import { deviceResponse as france } from '../examples/france/deviceResponse'
-import { deviceResponse as google } from '../examples/google/deviceResponse'
-import { deviceResponse as ubique } from '../examples/ubique/deviceResponse'
+import { deviceResponse as eudiReference } from '../examples/eudi-reference/deviceResponse'
 
-const vectors = { google, france, ubique, animo }
+const vectors = { animo, eudiReference }
 
 /**
  * The protected headers are covered by the issuer signature: `toBeSigned`

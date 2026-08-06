@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { buildStructure, type CborMap, cborArray } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { Handover } from './handover'
-import type { Oid4vpDcApiDraft24HandoverInfo } from './oid4vp-dc-api-draft24-handover-info'
 import type { Oid4vpDcApiHandoverInfo } from './oid4vp-dc-api-handover-info'
 
 const schema = cborArray([
@@ -13,7 +12,7 @@ const schema = cborArray([
 export type Oid4vpDcApiHandoverStructure = [string, Uint8Array]
 
 export type Oid4vpDcApiHandoverOptions = {
-  oid4vpDcApiHandoverInfo?: Oid4vpDcApiHandoverInfo | Oid4vpDcApiDraft24HandoverInfo
+  oid4vpDcApiHandoverInfo?: Oid4vpDcApiHandoverInfo
   oid4vpDcApiHandoverInfoHash?: Uint8Array
 }
 
@@ -21,7 +20,7 @@ export class Oid4vpDcApiHandover extends Handover {
   public static override schema = schema
 
   // The handover info is the input the hash is taken over, not wire data.
-  protected info?: Oid4vpDcApiHandoverInfo | Oid4vpDcApiDraft24HandoverInfo
+  protected info?: Oid4vpDcApiHandoverInfo
 
   public constructor(options: Oid4vpDcApiHandoverOptions) {
     super(
@@ -34,7 +33,7 @@ export class Oid4vpDcApiHandover extends Handover {
     this.info = options.oid4vpDcApiHandoverInfo
   }
 
-  public get oid4vpDcApiHandoverInfo(): Oid4vpDcApiHandoverInfo | Oid4vpDcApiDraft24HandoverInfo | undefined {
+  public get oid4vpDcApiHandoverInfo(): Oid4vpDcApiHandoverInfo | undefined {
     return this.info
   }
 
@@ -57,7 +56,7 @@ export class Oid4vpDcApiHandover extends Handover {
 
     const copy = Object.create(Object.getPrototypeOf(this)) as this & {
       structure: CborMap
-      info?: Oid4vpDcApiHandoverInfo | Oid4vpDcApiDraft24HandoverInfo
+      info?: Oid4vpDcApiHandoverInfo
     }
 
     copy.structure = new Map(this.structure).set('hash', hash)

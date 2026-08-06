@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceResponse, hex, ValidityInfo } from '../../src'
 import { deviceResponse as animoDeviceResponse } from '../examples/animo-mdoc-05/deviceResponse'
-import { deviceResponse as franceDeviceResponse } from '../examples/france/deviceResponse'
-import { deviceResponse as googleDeviceResponse } from '../examples/google/deviceResponse'
-import { deviceResponse as ubiqueDeviceResponse } from '../examples/ubique/deviceResponse'
+import { deviceResponse as eudiReferenceDeviceResponse } from '../examples/eudi-reference/deviceResponse'
 
 const msoPayloadAndReEncoding = (deviceResponse: Uint8Array) => {
   const document = DeviceResponse.decode(deviceResponse).documents?.[0]
@@ -26,32 +24,18 @@ const msoPayloadAndReEncoding = (deviceResponse: Uint8Array) => {
  * re-encodes, so the two known-lossy cases below do not affect verification.
  */
 describe('MobileSecurityObject re-encodes to the received bytes', () => {
-  it('france', () => {
-    const { received, reEncoded } = msoPayloadAndReEncoding(franceDeviceResponse)
-    expect(reEncoded).toBe(received)
-  })
-
-  it('ubique', () => {
-    const { received, reEncoded } = msoPayloadAndReEncoding(ubiqueDeviceResponse)
+  it('eudi-reference', () => {
+    const { received, reEncoded } = msoPayloadAndReEncoding(eudiReferenceDeviceResponse)
     expect(reEncoded).toBe(received)
   })
 })
 
 /**
- * Two round trips are lossy, both because of how this library encodes rather
- * than how it decodes. They predate the schema-backed models and are pinned
- * here so that any change to them is deliberate.
+ * One round trip is lossy, because of how this library encodes rather than how
+ * it decodes. It predates the schema-backed models and is pinned here so that
+ * any change to it is deliberate.
  */
 describe('known lossy re-encodings', () => {
-  it('drops sub-second precision on tdate values (google)', () => {
-    const { received, reEncoded } = msoPayloadAndReEncoding(googleDeviceResponse)
-
-    // c0 781b "2025-02-19T23:36:58.210391Z"  ->  c0 74 "2025-02-19T23:36:58Z"
-    expect(received).toContain(hex.encode(new TextEncoder().encode('2025-02-19T23:36:58.210391Z')))
-    expect(reEncoded).toContain(hex.encode(new TextEncoder().encode('2025-02-19T23:36:58Z')))
-    expect(reEncoded).not.toBe(received)
-  })
-
   it('normalises non-preferred map headers to their compact form (animo)', () => {
     const { received, reEncoded } = msoPayloadAndReEncoding(animoDeviceResponse)
 

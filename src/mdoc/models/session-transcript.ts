@@ -6,13 +6,8 @@ import { EReaderKey, type EReaderKeyStructure } from './e-reader-key'
 import { Handover } from './handover'
 import { IsoMdocDcApiHandover, type IsoMdocDcApiHandoverOptions } from './iso-mdoc-dc-api-handover'
 import { NfcHandover } from './nfc-handover'
-import {
-  Oid4vpDcApiDraft24HandoverInfo,
-  type Oid4vpDcApiDraft24HandoverInfoOptions,
-} from './oid4vp-dc-api-draft24-handover-info'
 import { Oid4vpDcApiHandover } from './oid4vp-dc-api-handover'
 import { Oid4vpDcApiHandoverInfo, type Oid4vpDcApiHandoverInfoOptions } from './oid4vp-dc-api-handover-info'
-import { Oid4vpDraft18Handover } from './oid4vp-draft18-handover'
 import { Oid4vpHandover } from './oid4vp-handover'
 import { Oid4vpHandoverInfo, type Oid4vpHandoverInfoOptions } from './oid4vp-handover-info'
 import { QrHandover } from './qr-handover'
@@ -49,7 +44,7 @@ const handoverCodec = z.codec(
       const candidates: Array<{
         isCorrectHandover(structure: unknown): boolean
         fromEncodedStructure(structure: unknown): Handover
-      }> = [NfcHandover, QrHandover, Oid4vpHandover, Oid4vpDraft18Handover, Oid4vpDcApiHandover, IsoMdocDcApiHandover]
+      }> = [NfcHandover, QrHandover, Oid4vpHandover, Oid4vpDcApiHandover, IsoMdocDcApiHandover]
 
       for (const candidate of candidates) {
         if (candidate.isCorrectHandover(encoded)) return candidate.fromEncodedStructure(encoded)
@@ -134,16 +129,6 @@ export class SessionTranscript extends CborStructure {
     })
   }
 
-  public static async forOid4VpDcApiDraft24(
-    options: Oid4vpDcApiDraft24HandoverInfoOptions,
-    ctx: Pick<MdocContext, 'crypto'>
-  ) {
-    const info = new Oid4vpDcApiDraft24HandoverInfo(options)
-    const handover = await new Oid4vpDcApiHandover({ oid4vpDcApiHandoverInfo: info }).prepare(ctx)
-
-    return new SessionTranscript({ handover })
-  }
-
   public static async forOid4VpDcApi(options: Oid4vpDcApiHandoverInfoOptions, ctx: Pick<MdocContext, 'crypto'>) {
     const info = new Oid4vpDcApiHandoverInfo(options)
     const handover = await new Oid4vpDcApiHandover({ oid4vpDcApiHandoverInfo: info }).prepare(ctx)
@@ -167,23 +152,5 @@ export class SessionTranscript extends CborStructure {
     const handover = await new Oid4vpHandover({ oid4vpHandoverInfo: info }).prepare(ctx)
 
     return new SessionTranscript({ handover })
-  }
-
-  /**
-   * Calculate the session transcript bytes as defined in 18013-7 first edition, based
-   * on OpenID4VP draft 18.
-   */
-  public static async forOid4VpDraft18(
-    options: { clientId: string; responseUri: string; verifierGeneratedNonce: string; mdocGeneratedNonce: string },
-    ctx: Pick<MdocContext, 'crypto'>
-  ) {
-    const handover = new Oid4vpDraft18Handover({
-      clientId: options.clientId,
-      nonce: options.verifierGeneratedNonce,
-      mdocGeneratedNonce: options.mdocGeneratedNonce,
-      responseUri: options.responseUri,
-    })
-
-    return new SessionTranscript({ handover: await handover.prepare(ctx) })
   }
 }
