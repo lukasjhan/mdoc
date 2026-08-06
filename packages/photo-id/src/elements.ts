@@ -78,6 +78,64 @@ export type PhotoIdBaseElementIdentifier =
 
 export type PhotoIdSpecificElementIdentifier = (typeof PHOTO_ID_SPECIFIC_ELEMENTS)[number]
 
+/** The encoding formats ISO/IEC TS 23220-2 gives for these elements. */
+export type PhotoIdEncoding = 'tstr' | 'bstr' | 'uint' | 'bool' | 'full-date' | 'tdate'
+
+/**
+ * How each element is encoded. Table C.1 defers to ISO/IEC TS 23220-2 for the
+ * base-namespace elements; Table C.2 gives tstr for every element it defines.
+ *
+ * An `age_over_NN` is not listed, since NN is open; `encodingFor` answers for
+ * those.
+ */
+export const PHOTO_ID_ELEMENT_ENCODING = {
+  family_name: 'tstr',
+  given_name: 'tstr',
+  birth_date: 'full-date',
+  portrait: 'bstr',
+  issue_date: 'full-date',
+  expiry_date: 'full-date',
+  issuing_authority: 'tstr',
+  issuing_country: 'tstr',
+  age_over_18: 'bool',
+  age_in_years: 'uint',
+  age_birth_year: 'uint',
+  portrait_capture_date: 'tdate',
+  birthplace: 'tstr',
+  name_at_birth: 'tstr',
+  resident_address: 'tstr',
+  resident_city: 'tstr',
+  resident_postal_code: 'tstr',
+  resident_country: 'tstr',
+  resident_city_latin1: 'tstr',
+  sex: 'uint',
+  nationality: 'tstr',
+  document_number: 'tstr',
+  issuing_subdivision: 'tstr',
+  family_name_latin1: 'tstr',
+  given_name_latin1: 'tstr',
+  person_id: 'tstr',
+  birth_country: 'tstr',
+  birth_state: 'tstr',
+  birth_city: 'tstr',
+  administrative_number: 'tstr',
+  resident_street: 'tstr',
+  resident_house_number: 'tstr',
+  travel_document_type: 'tstr',
+  travel_document_number: 'tstr',
+  resident_state: 'tstr',
+  travel_document_mrz: 'tstr',
+  family_name_viz: 'tstr',
+  given_name_viz: 'tstr',
+} as const satisfies Record<string, PhotoIdEncoding>
+
+/** How an element is encoded, or `undefined` for one this profile does not name. */
+export const encodingFor = (identifier: string): PhotoIdEncoding | undefined => {
+  if (/^age_over_\d{1,2}$/.test(identifier)) return 'bool'
+
+  return (PHOTO_ID_ELEMENT_ENCODING as Record<string, PhotoIdEncoding>)[identifier]
+}
+
 /**
  * `sex`, as ISO/IEC 5218 defines it. Table C.1 notes that 9 is used for X,
  * where the base specification would leave it "not applicable".

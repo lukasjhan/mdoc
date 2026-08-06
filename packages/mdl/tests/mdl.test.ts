@@ -1,12 +1,15 @@
 import { DateOnly } from '@m-doc/core'
 import { describe, expect, it } from 'vitest'
 import {
+  encodingFor,
   findMissingMandatoryElements,
   isExpired,
   isNotYetValid,
   jurisdictionNamespace,
   MDL_DOC_TYPE,
+  MDL_MANDATORY_ELEMENTS,
   MDL_NAMESPACE,
+  MDL_OPTIONAL_ELEMENTS,
   privilegesFor,
   readDrivingPrivileges,
 } from '../src'
@@ -104,5 +107,32 @@ describe('profile', () => {
   it('says undefined rather than false when the date was not disclosed', () => {
     expect(isExpired({})).toBeUndefined()
     expect(isNotYetValid({})).toBeUndefined()
+  })
+})
+
+describe('element encodings', () => {
+  it('gives the encoding Table 5 lists', () => {
+    expect(encodingFor('family_name')).toBe('tstr')
+    expect(encodingFor('birth_date')).toBe('full-date')
+    expect(encodingFor('issue_date')).toBe('tdate-or-full-date')
+    expect(encodingFor('portrait')).toBe('bstr')
+    expect(encodingFor('height')).toBe('uint')
+    expect(encodingFor('driving_privileges')).toBe('structure')
+  })
+
+  it('answers for any age_over_NN', () => {
+    expect(encodingFor('age_over_18')).toBe('bool')
+    expect(encodingFor('age_over_99')).toBe('bool')
+    expect(encodingFor('age_over_')).toBeUndefined()
+  })
+
+  it('covers every element the profile names', () => {
+    for (const element of [...MDL_MANDATORY_ELEMENTS, ...MDL_OPTIONAL_ELEMENTS]) {
+      expect(encodingFor(element), element).toBeDefined()
+    }
+  })
+
+  it('has nothing to say about an element it does not name', () => {
+    expect(encodingFor('org.example.custom')).toBeUndefined()
   })
 })

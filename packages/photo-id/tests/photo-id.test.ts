@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import {
+  encodingFor,
   findMissingMandatoryElements,
   findTravelDocumentIssues,
   jurisdictionNamespace,
   PHOTO_ID_BASE_NAMESPACE,
   PHOTO_ID_DATAGROUPS_NAMESPACE,
   PHOTO_ID_DOC_TYPE,
+  PHOTO_ID_MANDATORY_ELEMENTS,
   PHOTO_ID_NAMESPACE,
+  PHOTO_ID_OPTIONAL_ELEMENTS,
+  PHOTO_ID_SPECIFIC_ELEMENTS,
 } from '../src'
 
 describe('identifiers', () => {
@@ -75,5 +79,30 @@ describe('findTravelDocumentIssues', () => {
   it('asks for nothing without dg1', () => {
     expect(findTravelDocumentIssues({ photoIdClaims: {} })).toEqual([])
     expect(findTravelDocumentIssues({ photoIdClaims: {}, dataGroupClaims: {} })).toEqual([])
+  })
+})
+
+describe('element encodings', () => {
+  it('gives the encoding the tables list', () => {
+    expect(encodingFor('family_name')).toBe('tstr')
+    expect(encodingFor('birth_date')).toBe('full-date')
+    expect(encodingFor('portrait')).toBe('bstr')
+    expect(encodingFor('sex')).toBe('uint')
+    expect(encodingFor('age_over_18')).toBe('bool')
+    expect(encodingFor('travel_document_mrz')).toBe('tstr')
+  })
+
+  it('covers every element the profile names', () => {
+    for (const element of [
+      ...PHOTO_ID_MANDATORY_ELEMENTS,
+      ...PHOTO_ID_OPTIONAL_ELEMENTS,
+      ...PHOTO_ID_SPECIFIC_ELEMENTS,
+    ]) {
+      expect(encodingFor(element), element).toBeDefined()
+    }
+  })
+
+  it('has nothing to say about an element it does not name', () => {
+    expect(encodingFor('org.example.custom')).toBeUndefined()
   })
 })
