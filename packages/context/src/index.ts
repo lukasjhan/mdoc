@@ -16,6 +16,15 @@ export type WebCrypto = {
   getRandomValues<T extends Uint8Array>(array: T): T
 }
 
+/**
+ * `@peculiar/x509` takes `BufferSource`, which the DOM library narrows to
+ * `ArrayBufferView<ArrayBuffer>`. A `Uint8Array` from anywhere else in this
+ * library is `Uint8Array<ArrayBufferLike>`, which that refuses -- the same
+ * bytes either way, so the cast is confined here rather than repeated at every
+ * call site.
+ */
+const parseCertificate = (bytes: Uint8Array) => new x509.X509Certificate(bytes as unknown as ArrayBuffer)
+
 export type MdocContextOptions = {
   /**
    * The WebCrypto implementation to use. Defaults to `globalThis.crypto`,
@@ -87,10 +96,10 @@ export const createMdocContext = (options: MdocContextOptions = {}): MdocContext
     },
 
     x509: {
-      getIssuerNameField: ({ certificate, field }) => new x509.X509Certificate(certificate).issuerName.getField(field),
+      getIssuerNameField: ({ certificate, field }) => parseCertificate(certificate).issuerName.getField(field),
 
       getPublicKey: async ({ certificate, alg }) => {
-        const parsed = new x509.X509Certificate(certificate)
+        const parsed = parseCertificate(certificate)
         const key = await importX509(parsed.toString(), alg, { extractable: true })
 
         return CoseKey.fromJwk((await exportJWK(key)) as unknown as Record<string, unknown>)
@@ -99,9 +108,9 @@ export const createMdocContext = (options: MdocContextOptions = {}): MdocContext
       verifyCertificateChain: async ({ trustedCertificates, x5chain, now }) => {
         if (x5chain.length === 0) throw new Error('Certificate chain is empty')
 
-        const leaf = new x509.X509Certificate(x5chain[0])
-        const presented = x5chain.map((c) => new x509.X509Certificate(c))
-        const trusted = trustedCertificates.map((c) => new x509.X509Certificate(c))
+        const leaf = parseCertificate(x5chain[0])
+        const presented = x5chain.map((c) => parseCertificate(c))
+        const trusted = trustedCertificates.map((c) => parseCertificate(c))
 
         const builder = new x509.X509ChainBuilder({ certificates: [...presented, ...trusted] })
         const built = await builder.build(leaf)
@@ -133,7 +142,7 @@ export const createMdocContext = (options: MdocContextOptions = {}): MdocContext
       },
 
       getCertificateData: async ({ certificate }) => {
-        const parsed = new x509.X509Certificate(certificate)
+        const parsed = parseCertificate(certificate)
 
         return {
           issuerName: parsed.issuerName.toString(),

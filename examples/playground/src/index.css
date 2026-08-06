@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: oklch(0.16 0.01 265);
+  --color-panel: oklch(0.21 0.012 265);
+  --color-line: oklch(0.29 0.014 265);
+  --color-ink: oklch(0.95 0.005 265);
+  --color-muted: oklch(0.68 0.015 265);
+  --color-accent: oklch(0.72 0.15 195);
+  --color-warn: oklch(0.75 0.15 65);
+  --color-bad: oklch(0.68 0.19 20);
+  --color-good: oklch(0.75 0.16 150);
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+}

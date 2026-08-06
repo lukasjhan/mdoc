@@ -29,6 +29,16 @@ const ctx = createMdocContext()
 await DeviceResponse.decode(bytes).verify({ trustedCertificates, sessionTranscript }, ctx)
 ```
 
+## Playground
+
+[`examples/playground`](./examples/playground) is a React app that decodes,
+issues and presents documents in the browser — a jwt.io for mdoc. Everything
+runs client side; no document, key or certificate leaves the tab.
+
+```bash
+pnpm --filter @m-doc/playground dev
+```
+
 ## Development
 
 ```bash
