@@ -16,6 +16,60 @@ Part of [**m-doc**](https://github.com/lukasjhan/mdoc).
 runs everything below against a real AAMVA list, or try it in the
 [browser playground](https://mdoc-playground.vercel.app).
 
+## CLI
+
+Reading a trust list is often a one-off, so the package ships a command:
+
+```bash
+npx @m-doc/vical vical.cbor
+```
+
+```
+================================================================
+VICAL
+================================================================
+Provider:        AAMVA
+Version:         1.0
+Date:            2026-08-05T01:39:05.000Z
+Issue ID:        344243
+Next update:     2026-08-06T01:39:05.000Z
+Algorithm:       ES256
+Certificates:    20
+Signature:       valid
+Staleness:       past nextUpdate
+...
+```
+
+The signature is checked by default, with Node's own primitives -- `node:crypto`
+parses the signer certificate and WebCrypto checks the ECDSA -- so the command
+needs nothing beyond this package.
+
+| Option | |
+| --- | --- |
+| `-j`, `--json` | print JSON instead of a table |
+| `-v`, `--verbose` | add sizes, chain length and the full country list |
+| `--pem` | print each certificate as PEM, and nothing else |
+| `--no-verify` | skip the signature check |
+| `-h`, `--help` | usage |
+| `--version` | the version that was built |
+
+The input may be raw CBOR, or hex, base64 or base64url text. Pass `-` to read
+stdin.
+
+Exit codes make it scriptable: `0` read and verified, `1` could not be read,
+`2` read but the signature did not verify.
+
+```bash
+# Trust anchors, straight out as PEM
+npx @m-doc/vical --pem vical.cbor > anchors.pem
+
+# Stop a pipeline on a list that does not verify
+npx @m-doc/vical --json vical.cbor > vical.json || exit 1
+
+# Which countries does this list cover?
+npx @m-doc/vical --json -v vical.cbor | jq .supportedCountries
+```
+
 ## Installation
 
 ```bash
@@ -138,7 +192,8 @@ SignedVical.decode(bytes).encode()   // byte-identical to bytes
 
 ## Requirements
 
-Node 20.19 or newer. Ships ESM and CJS, with type declarations for both.
+Node 20.19 or newer. Ships ESM and CJS, with type declarations for both. The
+library itself is runtime-agnostic; only the CLI is Node-specific.
 
 ## License
 

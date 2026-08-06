@@ -24,7 +24,7 @@ Native.
 | --- | --- | --- |
 | [`@m-doc/core`](./packages/core) | The mdoc data model, COSE structures, issuing and verification | `cbor-x`, `zod` |
 | [`@m-doc/context`](./packages/context) | WebCrypto and X.509 bindings, for Node, the browser and React Native | `@noble/*`, `@panva/hkdf`, `@peculiar/x509`, `jose` |
-| [`@m-doc/vical`](./packages/vical) | VICAL — the ISO/IEC 18013-5 Annex C issuer trust list | `@m-doc/core`, `zod` |
+| [`@m-doc/vical`](./packages/vical) | VICAL — the ISO/IEC 18013-5 Annex C issuer trust list, with a `vical` CLI | `@m-doc/core`, `zod` |
 | [`@m-doc/mdl`](./packages/mdl) | The mDL profile: element identifiers, age attestations, driving privileges | `@m-doc/core` |
 | [`@m-doc/photo-id`](./packages/photo-id) | The ISO/IEC TS 23220-4 PhotoID profile: namespaces and element identifiers | none |
 
@@ -605,6 +605,13 @@ vical.forCountry('NL')                      // by issuing country
 vical.forSubjectKeyIdentifier(ski)          // by SKI
 vical.trustAnchors(docType)                 // Map<issuing country, CertificateInfo>
 vical.certificates(docType)                 // Array<Uint8Array>
+```
+
+Reading one from the command line, signature checked:
+
+```bash
+npx @m-doc/vical vical.cbor
+npx @m-doc/vical --pem vical.cbor > anchors.pem
 ```
 
 Feeding a verifier straight from a trust list:

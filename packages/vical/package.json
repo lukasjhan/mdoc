@@ -1,9 +1,9 @@
 {
   "name": "@m-doc/vical",
-  "description": "VICAL (Verified Issuer Certificate Authority List) for ISO/IEC 18013-5 mDL",
+  "description": "VICAL (ISO/IEC 18013-5 Annex C) trust lists for TypeScript, with a CLI",
   "license": "Apache-2.0",
   "author": "Lukas J. Han <lukas@hopae.com>",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "node": ">=20.19"
   },
@@ -34,7 +34,7 @@
   "scripts": {
     "prepack": "node ../../scripts/assert-pnpm-pack.mjs",
     "types:check": "tsc --noEmit",
-    "build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --no-fail-on-warn",
+    "build": "tsdown src/index.ts src/cli.ts --format esm,cjs --dts --clean --sourcemap --no-fail-on-warn",
     "test": "vitest"
   },
   "dependencies": {
@@ -54,10 +54,14 @@
     "directory": "packages/vical"
   },
   "keywords": [
-    "vical",
-    "mdl",
+    "cli",
+    "iaca",
     "iso-18013-5",
+    "mdl",
     "trust-list",
-    "iaca"
-  ]
+    "vical"
+  ],
+  "bin": {
+    "vical": "./dist/cli.mjs"
+  }
 }
