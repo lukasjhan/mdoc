@@ -423,6 +423,25 @@ await SessionTranscript.forIsoMdocDcApi({ origin, encryptionInfoBase64Url }, ctx
 SessionTranscript.forQrHandover({ deviceEngagement, eReaderKey })
 ```
 
+Two earlier bindings are kept, because wallets and verifiers on them are still
+deployed:
+
+```ts
+// ISO/IEC TS 18013-7:2025 Annex B, which references OpenID4VP draft 18.
+// The handover is [clientIdHash, responseUriHash, nonce], each hash taken
+// over [value, mdocGeneratedNonce].
+await SessionTranscript.forOid4VpDraft18(
+  { clientId, responseUri, verifierGeneratedNonce, mdocGeneratedNonce },
+  ctx
+)
+
+// The DC API handover of OpenID4VP draft 24, whose info is [origin, clientId, nonce]
+await SessionTranscript.forOid4VpDcApiDraft24({ origin, clientId, nonce }, ctx)
+```
+
+An empty `mdocGeneratedNonce` is accepted: B.4.4 types it as a tstr, and
+deployed verifiers do send one.
+
 For QR handover the exact bytes matter — the session keys are derived over
 them. Build `DeviceEngagement` and `EReaderKey` with `.decode()` rather than
 their constructors; a decoded structure re-encodes to the bytes it arrived as.

@@ -41,6 +41,9 @@ export class NfcHandover extends Handover {
   public static override isCorrectHandover(structure: unknown): structure is NfcHandoverStructure {
     return (
       Array.isArray(structure) &&
+      // Exactly two: without the length, the three-element draft 18 handover
+      // matches this too, and whichever is tried first wins
+      structure.length === 2 &&
       structure[0] instanceof Uint8Array &&
       (structure[1] instanceof Uint8Array || structure[1] === null)
     )
