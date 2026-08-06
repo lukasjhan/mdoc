@@ -33,11 +33,11 @@ pnpm --filter @m-doc/core test
 
 ## Releasing
 
-Versions are set by hand in each package. Pushing a `v*` tag validates the
-workspace and publishes every package whose version is not yet on the registry.
+Versions are set by hand in each package. Publishing is manual, and sends up
+every package whose version is not yet on the registry.
 
 ```bash
-git tag v1.0.0 && git push origin v1.0.0
+pnpm release
 ```
 
 ## License
