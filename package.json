@@ -10,7 +10,8 @@
     "types:check": "pnpm -r types:check",
     "style:check": "biome check --unsafe",
     "style:fix": "biome check --write --unsafe",
-    "release": "pnpm build && pnpm -r publish --access public --no-git-checks"
+    "release": "pnpm release:check && pnpm -r publish --access public --no-git-checks",
+    "release:check": "pnpm build && node scripts/check-packages.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",
