@@ -1,4 +1,3 @@
-import { concatBytes } from '@noble/curves/utils.js'
 import { z } from 'zod'
 import { buildStructure, CborStructure, cborMap, fromEncoded, type SchemaBackedClass } from '../../cbor'
 import {
@@ -14,6 +13,18 @@ import type { Curve } from './curve'
 import { coseKeyToJwk, coseOptionsJwkMap, jwkCoseOptionsMap, jwkToCoseKey } from './jwk'
 import type { KeyOps } from './key-operation'
 import { KeyType } from './key-type'
+
+const concatBytes = (...arrays: Uint8Array[]): Uint8Array => {
+  const result = new Uint8Array(arrays.reduce((length, array) => length + array.length, 0))
+
+  let offset = 0
+  for (const array of arrays) {
+    result.set(array, offset)
+    offset += array.length
+  }
+
+  return result
+}
 
 export enum CoseKeyParameter {
   KeyType = 1,

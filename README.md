@@ -14,6 +14,17 @@ Native.
 | Package | Description |
 | --- | --- |
 | [`@m-doc/core`](./packages/core) | The mdoc data model, COSE structures, issuing and verification |
+| [`@m-doc/context`](./packages/context) | WebCrypto and X.509 bindings, for Node, the browser and React Native |
+
+`@m-doc/core` does no cryptography itself — it takes an `MdocContext` holding
+the primitives it needs. `@m-doc/context` is a ready-made one:
+
+```ts
+import { createMdocContext } from '@m-doc/context'
+
+const ctx = createMdocContext()
+await DeviceResponse.decode(bytes).verify({ trustedCertificates, sessionTranscript }, ctx)
+```
 
 ## Development
 

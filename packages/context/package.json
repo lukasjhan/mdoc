@@ -1,6 +1,6 @@
 {
-  "name": "@m-doc/core",
-  "description": "mdoc / mDL (ISO/IEC 18013-5 & 18013-7) issuance and verification for TypeScript",
+  "name": "@m-doc/context",
+  "description": "WebCrypto and X.509 bindings for @m-doc/core, for Node, the browser and React Native",
   "license": "Apache-2.0",
   "author": "Lukas J. Han <lukas@hopae.com>",
   "version": "1.0.0",
@@ -37,12 +37,14 @@
     "test": "vitest"
   },
   "dependencies": {
-    "cbor-x": "^1.6.5",
-    "zod": "^4.4.3"
+    "@m-doc/core": "workspace:*",
+    "@noble/curves": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
+    "@panva/hkdf": "^1.2.1",
+    "@peculiar/x509": "^1.14.0",
+    "jose": "^6.1.0"
   },
   "devDependencies": {
-    "@m-doc/context": "workspace:*",
-    "@peculiar/x509": "^1.14.0",
     "@types/node": "^24.10.0",
     "tsdown": "^0.19.0",
     "typescript": "~5.9.3",
@@ -51,16 +53,13 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lukasjhan/mdoc.git",
-    "directory": "packages/core"
+    "directory": "packages/context"
   },
   "keywords": [
     "mdoc",
     "mdl",
     "iso-18013-5",
-    "iso-18013-7",
-    "cbor",
-    "cose",
-    "verifiable-credentials",
-    "eudi"
+    "webcrypto",
+    "x509"
   ]
 }
