@@ -118,18 +118,11 @@ export class IssuerSignedBuilder {
       unprotectedHeaders.headers?.set(Header.KeyId, options.signingKey.keyId)
     }
 
-    const issuerAuth = new IssuerAuth({
+    const issuerAuth = await new IssuerAuth({
       payload: mso.encode({ asDataItem: true }),
       unprotectedHeaders,
       protectedHeaders,
-    })
-
-    await issuerAuth.addSignature(
-      {
-        signingKey: options.signingKey,
-      },
-      this.ctx
-    )
+    }).sign({ signingKey: options.signingKey }, this.ctx)
 
     return new IssuerSigned({
       issuerNamespaces: this.namespaces,

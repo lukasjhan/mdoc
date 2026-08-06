@@ -38,10 +38,16 @@ describe('sign1', () => {
       const isValid = await sign1.verifySignature({ key }, mdocContext)
       expect(isValid).toBeTruthy()
 
-      await sign1.addSignature({ signingKey: key }, mdocContext)
+      const resigned = await sign1.sign({ signingKey: key }, mdocContext)
 
-      const isValidAfterResign = await sign1.verifySignature({ key }, mdocContext)
+      const isValidAfterResign = await resigned.verifySignature({ key }, mdocContext)
       expect(isValidAfterResign).toBeTruthy()
+
+      // Signing produces a copy rather than altering the structure it was called on.
+      expect(resigned).not.toBe(sign1)
+      expect(sign1.signature).toStrictEqual(
+        cborDecode<Sign1>(hex.decode(testVector['sign1::sign'].expectedOutput.cborHex)).signature
+      )
     })
   })
 })

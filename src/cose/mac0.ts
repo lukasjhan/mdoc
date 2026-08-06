@@ -1,5 +1,16 @@
-import { CborEncodeError } from '../cbor/error.js'
-import { addExtension, type CborDecodeOptions, CborStructure, cborDecode, cborEncode } from '../cbor/index.js'
+import { z } from 'zod'
+import {
+  addExtension,
+  buildStructure,
+  type CborDecodeOptions,
+  type CborMap,
+  CborStructure,
+  cborArray,
+  cborDecode,
+  cborEncode,
+  cborStructure,
+  fromEncoded,
+} from '../cbor/index.js'
 import type { MdocContext } from '../context.js'
 import { SessionTranscript } from '../mdoc/models/session-transcript.js'
 import { CoseInvalidAlgorithmError, CosePayloadMustBeDefinedError } from './error.js'
@@ -11,6 +22,13 @@ import type { CoseKey } from './key/key.js'
 
 export type Mac0Structure = [Uint8Array, Map<unknown, unknown>, Uint8Array | null, Uint8Array]
 
+const schema = cborArray([
+  ['protectedHeaders', cborStructure(ProtectedHeaders)],
+  ['unprotectedHeaders', cborStructure(UnprotectedHeaders)],
+  ['payload', z.union([z.instanceof(Uint8Array), z.null()])],
+  ['tag', z.instanceof(Uint8Array)],
+])
+
 export type Mac0Options = {
   protectedHeaders: ProtectedHeaders | ProtectedHeaderOptions['protectedHeaders']
   unprotectedHeaders: UnprotectedHeaders | UnprotectedHeadersOptions['unprotectedHeaders']
@@ -20,63 +38,99 @@ export type Mac0Options = {
   detachedContent?: Uint8Array
 }
 
+/** The inputs to the `MAC0` computation that are not themselves wire data. */
+type Mac0Content = {
+  detachedContent?: Uint8Array
+  externalAad?: Uint8Array
+}
+
+/**
+ * COSE_Mac0.
+ *
+ * As with `Sign1`, the wire elements are fixed once the object exists and the
+ * detached content is carried alongside rather than assigned into it.
+ */
 export class Mac0 extends CborStructure {
   public static tag = 17
+  public static override schema = schema
 
-  public protectedHeaders: ProtectedHeaders
-  public unprotectedHeaders: UnprotectedHeaders
-  public payload: Uint8Array | null
-  public tag?: Uint8Array
-
-  public externalAad?: Uint8Array
-  private _detachedContent?: Uint8Array
-  private _toBeAuthenticatedCache?: Uint8Array
-
-  public get detachedContent() {
-    return this._detachedContent
-  }
-
-  public set detachedContent(value: Uint8Array | undefined) {
-    this._detachedContent = value
-    this._toBeAuthenticatedCache = undefined
-  }
+  // Optional because a decoded structure is built without running the
+  // constructor: bytes off the wire carry no detached content by definition.
+  protected content?: Mac0Content
+  private toBeAuthenticatedCache?: Uint8Array
 
   public constructor(options: Mac0Options) {
-    super()
+    super(
+      buildStructure([
+        [
+          'protectedHeaders',
+          options.protectedHeaders instanceof ProtectedHeaders
+            ? options.protectedHeaders
+            : new ProtectedHeaders({ protectedHeaders: options.protectedHeaders }),
+        ],
+        [
+          'unprotectedHeaders',
+          options.unprotectedHeaders instanceof UnprotectedHeaders
+            ? options.unprotectedHeaders
+            : new UnprotectedHeaders({ unprotectedHeaders: options.unprotectedHeaders }),
+        ],
+        ['payload', options.payload ?? null],
+        ['tag', options.tag],
+      ])
+    )
 
-    this.protectedHeaders =
-      options.protectedHeaders instanceof ProtectedHeaders
-        ? options.protectedHeaders
-        : new ProtectedHeaders({ protectedHeaders: options.protectedHeaders })
-
-    this.unprotectedHeaders =
-      options.unprotectedHeaders instanceof UnprotectedHeaders
-        ? options.unprotectedHeaders
-        : new UnprotectedHeaders({ unprotectedHeaders: options.unprotectedHeaders })
-
-    this.payload = options.payload ?? null
-
-    this.tag = options.tag
-
-    this.externalAad = options.externalAad
-    this.detachedContent = options.detachedContent
+    this.content = { detachedContent: options.detachedContent, externalAad: options.externalAad }
   }
 
-  public encodedStructure(): Mac0Structure {
-    if (!this.tag) {
-      throw new CborEncodeError('Tag must be defined when trying to encode a Mac0 structure')
-    }
+  /** Narrows the base return type; the schema guarantees the four-element shape. */
+  public override encodedStructure(): Mac0Structure {
+    return super.encodedStructure() as Mac0Structure
+  }
 
-    return [
-      this.protectedHeaders.encodedStructure(),
-      this.unprotectedHeaders.encodedStructure(),
-      this.payload,
-      this.tag,
-    ]
+  public get protectedHeaders(): ProtectedHeaders {
+    return this.structure.get('protectedHeaders') as ProtectedHeaders
+  }
+
+  public get unprotectedHeaders(): UnprotectedHeaders {
+    return this.structure.get('unprotectedHeaders') as UnprotectedHeaders
+  }
+
+  public get payload(): Uint8Array | null {
+    return (this.structure.get('payload') as Uint8Array | null | undefined) ?? null
+  }
+
+  public get tag(): Uint8Array | undefined {
+    return this.structure.get('tag') as Uint8Array | undefined
+  }
+
+  public get detachedContent(): Uint8Array | undefined {
+    return this.content?.detachedContent
+  }
+
+  public get externalAad(): Uint8Array | undefined {
+    return this.content?.externalAad
+  }
+
+  protected get transientContent(): Mac0Content {
+    return this.content ?? {}
+  }
+
+  protected derive(structure: CborMap, content: Mac0Content): this {
+    const copy = Object.create(Object.getPrototypeOf(this)) as this & { structure: CborMap; content: Mac0Content }
+
+    copy.structure = structure
+    copy.content = content
+
+    return copy
+  }
+
+  /** A copy carrying the detached content the tag was computed over. */
+  public withDetachedContent(detachedContent: Uint8Array): this {
+    return this.derive(this.structure, { ...this.transientContent, detachedContent })
   }
 
   public get toBeAuthenticated() {
-    if (this._toBeAuthenticatedCache) return this._toBeAuthenticatedCache
+    if (this.toBeAuthenticatedCache) return this.toBeAuthenticatedCache
 
     const payload = this.detachedContent ?? this.payload
 
@@ -90,8 +144,9 @@ export class Mac0 extends CborStructure {
 
     toBeAuthenticated.push(payload)
 
-    this._toBeAuthenticatedCache = cborEncode(toBeAuthenticated)
-    return this._toBeAuthenticatedCache
+    this.toBeAuthenticatedCache = cborEncode(toBeAuthenticated)
+
+    return this.toBeAuthenticatedCache
   }
 
   public get signatureAlgorithmName(): MacAlgorithm {
@@ -111,10 +166,14 @@ export class Mac0 extends CborStructure {
     return algorithmName
   }
 
-  public async addTag(
+  /**
+   * Computes the tag and returns the tagged copy. The receiver is unchanged,
+   * mirroring `Sign1.sign`.
+   */
+  public async authenticate(
     options: { privateKey: CoseKey; ephemeralKey: CoseKey; sessionTranscript: SessionTranscript | Uint8Array },
     ctx: Pick<MdocContext, 'crypto' | 'cose'>
-  ) {
+  ): Promise<this> {
     const ephemeralMacKey = await ctx.crypto.calculateEphemeralMacKey({
       privateKey: options.privateKey.encode(),
       publicKey: options.ephemeralKey.encode(),
@@ -126,20 +185,16 @@ export class Mac0 extends CborStructure {
     })
 
     const tag = await ctx.cose.mac0.sign({ mac0: this, key: ephemeralMacKey })
-    this.tag = tag
+
+    return this.derive(new Map(this.structure).set('tag', tag), this.transientContent)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions) {
     return cborDecode<Mac0>(bytes, options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: Mac0Structure): Mac0 {
-    return new Mac0({
-      protectedHeaders: encodedStructure[0],
-      unprotectedHeaders: encodedStructure[1],
-      payload: encodedStructure[2],
-      tag: encodedStructure[3],
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): Mac0 {
+    return fromEncoded(Mac0, encodedStructure)
   }
 }
 

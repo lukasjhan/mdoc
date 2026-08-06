@@ -128,6 +128,72 @@ export const cborMap = (fields: readonly CborField[]) => {
 }
 
 /**
+ * A codec for a CBOR array whose positions are fixed -- the four elements of a
+ * COSE_Sign1, for instance.
+ *
+ * Positions are named so that a model can expose `signature` rather than
+ * `structure[3]`, but the wire form stays an array: decoding maps each position
+ * onto its name, encoding writes the names back out in declaration order.
+ *
+ * A field whose schema accepts `undefined` may be absent when encoding, and any
+ * trailing absent field is simply not written. A required field that is missing
+ * is an error, which is what makes an unsigned `Sign1` fail to encode.
+ */
+export const cborArray = (fields: readonly CborField[]) =>
+  z.codec(
+    z.custom<unknown[]>((value) => Array.isArray(value)),
+    z.custom<CborMap>((value) => value instanceof Map),
+    {
+      decode: (encoded, ctx) => {
+        const decoded: CborMap = new Map()
+
+        fields.forEach(([key, schema], index) => {
+          const result = schema.safeParse(encoded[index])
+
+          if (!result.success) {
+            for (const issue of result.error.issues) {
+              ctx.issues.push({
+                code: 'custom',
+                message: issue.message,
+                path: [String(key), ...issue.path],
+                input: encoded[index],
+              })
+            }
+            return
+          }
+
+          if (result.data !== undefined) decoded.set(key, result.data)
+        })
+
+        return decoded
+      },
+
+      encode: (decoded) => {
+        const encoded: unknown[] = []
+
+        for (const [key, schema] of fields) {
+          const value = decoded.get(key)
+
+          if (value === undefined) {
+            if (!schema.safeParse(undefined).success) {
+              throw new Error(`Cannot encode: '${String(key)}' is required but not set`)
+            }
+
+            encoded.push(undefined)
+            continue
+          }
+
+          encoded.push(z.encode(schema, value))
+        }
+
+        while (encoded.length > 0 && encoded[encoded.length - 1] === undefined) encoded.pop()
+
+        return encoded
+      },
+    }
+  )
+
+/**
  * A codec for a CBOR map whose keys are data rather than field names -- a
  * namespace-to-digests map, for instance. Every entry is validated against the
  * same pair of schemas, and insertion order is preserved in both directions.

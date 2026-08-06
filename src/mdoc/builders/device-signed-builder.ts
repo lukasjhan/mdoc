@@ -69,18 +69,11 @@ export class DeviceSignedBuilder {
       docType: this.docType,
     })
 
-    const deviceSignature = new DeviceSignature({
+    const deviceSignature = await new DeviceSignature({
       unprotectedHeaders,
       protectedHeaders,
       detachedContent: deviceAuthentication.encode({ asDataItem: true }),
-    })
-
-    await deviceSignature.addSignature(
-      {
-        signingKey: options.signingKey,
-      },
-      this.ctx
-    )
+    }).sign({ signingKey: options.signingKey }, this.ctx)
 
     return new DeviceSigned({
       deviceNamespaces: this.namespaces,
@@ -115,13 +108,11 @@ export class DeviceSignedBuilder {
       docType: this.docType,
     })
 
-    const deviceMac = new DeviceMac({
+    const deviceMac = await new DeviceMac({
       unprotectedHeaders,
       protectedHeaders,
       detachedContent: deviceAuthentication.encode({ asDataItem: true }),
-    })
-
-    await deviceMac.addTag(
+    }).authenticate(
       {
         privateKey: options.privateKey,
         ephemeralKey: options.publicKey,

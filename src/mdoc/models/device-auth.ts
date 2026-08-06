@@ -91,8 +91,7 @@ export class DeviceAuth extends CborStructure {
 
     if (this.deviceSignature) {
       try {
-        const ds = this.deviceSignature
-        ds.detachedContent = deviceAuthenticationBytes
+        const ds = this.deviceSignature.withDetachedContent(deviceAuthenticationBytes)
 
         const verificationResult = await ctx.cose.sign1.verify({ sign1: ds, key: deviceKey })
 
@@ -131,9 +130,7 @@ export class DeviceAuth extends CborStructure {
       }
 
       try {
-        this.deviceMac.detachedContent = deviceAuthenticationBytes
-
-        const isValid = await this.deviceMac.verify(
+        const isValid = await this.deviceMac.withDetachedContent(deviceAuthenticationBytes).verify(
           {
             publicKey: deviceKey,
             privateKey: options.ephemeralMacPrivateKey,

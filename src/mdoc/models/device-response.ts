@@ -218,26 +218,20 @@ export class DeviceResponse extends CborStructure {
 
         const deviceAuthOptions: DeviceAuthOptions = {}
         if (useSignature) {
-          const deviceSignature = new DeviceSignature({
+          deviceAuthOptions.deviceSignature = await new DeviceSignature({
             unprotectedHeaders,
             protectedHeaders,
             detachedContent: deviceAuthenticationBytes,
-          })
-
-          await deviceSignature.addSignature({ signingKey }, ctx)
-
-          deviceAuthOptions.deviceSignature = deviceSignature
+          }).sign({ signingKey }, ctx)
         } else {
-          const deviceMac = new DeviceMac({
-            protectedHeaders,
-            unprotectedHeaders,
-            detachedContent: deviceAuthenticationBytes,
-          })
-
           const ephemeralKey = options.mac?.ephemeralKey
           if (!ephemeralKey) throw new Error('Ephemeral key is missing')
 
-          await deviceMac.addTag(
+          deviceAuthOptions.deviceMac = await new DeviceMac({
+            protectedHeaders,
+            unprotectedHeaders,
+            detachedContent: deviceAuthenticationBytes,
+          }).authenticate(
             {
               privateKey: signingKey,
               ephemeralKey: ephemeralKey,
@@ -245,8 +239,6 @@ export class DeviceResponse extends CborStructure {
             },
             ctx
           )
-
-          deviceAuthOptions.deviceMac = deviceMac
         }
 
         return new Document({

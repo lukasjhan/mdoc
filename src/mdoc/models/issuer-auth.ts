@@ -1,4 +1,4 @@
-import { type CborDecodeOptions, cborDecode, DataItem } from '../../cbor/index.js'
+import { type CborDecodeOptions, cborDecode, DataItem, decodeBytes, fromEncoded } from '../../cbor/index.js'
 import type { MdocContext } from '../../context.js'
 import { CosePayloadInvalidStructureError, CosePayloadMustBeDefinedError } from '../../cose/error.js'
 import { Sign1, type Sign1Options, type Sign1Structure } from '../../cose/sign1.js'
@@ -107,17 +107,11 @@ export class IssuerAuth extends Sign1 {
     })
   }
 
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions) {
-    const data = cborDecode<IssuerAuthStructure>(bytes, options)
-    return IssuerAuth.fromEncodedStructure(data)
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): IssuerAuth {
+    return decodeBytes(IssuerAuth, bytes, options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: IssuerAuthStructure): IssuerAuth {
-    return new IssuerAuth({
-      protectedHeaders: encodedStructure[0],
-      unprotectedHeaders: encodedStructure[1],
-      payload: encodedStructure[2],
-      signature: encodedStructure[3],
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): IssuerAuth {
+    return fromEncoded(IssuerAuth, encodedStructure)
   }
 }

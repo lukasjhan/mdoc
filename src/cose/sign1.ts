@@ -1,5 +1,16 @@
-import { CborEncodeError } from '../cbor/error.js'
-import { addExtension, type CborDecodeOptions, CborStructure, cborDecode, cborEncode } from '../cbor/index.js'
+import { z } from 'zod'
+import {
+  addExtension,
+  buildStructure,
+  type CborDecodeOptions,
+  type CborMap,
+  CborStructure,
+  cborArray,
+  cborDecode,
+  cborEncode,
+  cborStructure,
+  fromEncoded,
+} from '../cbor/index.js'
 import type { MdocContext } from '../context.js'
 import { CoseCertificateNotFoundError, CoseInvalidAlgorithmError, CosePayloadMustBeDefinedError } from './error.js'
 import { Header, type SignatureAlgorithm } from './headers/defaults.js'
@@ -9,6 +20,13 @@ import { coseKeyToJwk } from './key/jwk.js'
 import type { CoseKey } from './key/key.js'
 
 export type Sign1Structure = [Uint8Array, Map<unknown, unknown>, Uint8Array | null, Uint8Array]
+
+const schema = cborArray([
+  ['protectedHeaders', cborStructure(ProtectedHeaders)],
+  ['unprotectedHeaders', cborStructure(UnprotectedHeaders)],
+  ['payload', z.union([z.instanceof(Uint8Array), z.null()])],
+  ['signature', z.instanceof(Uint8Array)],
+])
 
 export type Sign1Options = {
   protectedHeaders?: ProtectedHeaders | ProtectedHeaderOptions['protectedHeaders']
@@ -20,58 +38,109 @@ export type Sign1Options = {
   externalAad?: Uint8Array
 }
 
+/** The inputs to the `Signature1` computation that are not themselves wire data. */
+type Sign1Content = {
+  detachedContent?: Uint8Array
+  externalAad?: Uint8Array
+}
+
+/**
+ * COSE_Sign1.
+ *
+ * The four wire elements are fixed once the object exists, so a structure that
+ * has been decoded and verified cannot then be altered.
+ *
+ * `detachedContent` and `externalAad` are not wire data -- they are inputs to
+ * the `Signature1` computation. They are fixed at construction, or carried onto
+ * a copy by `withDetachedContent`, which is what lets `toBeSigned` be cached
+ * with no invalidation logic at all.
+ */
 export class Sign1 extends CborStructure {
   public static tag = 18
+  public static override schema = schema
 
-  public protectedHeaders: ProtectedHeaders
-  public unprotectedHeaders: UnprotectedHeaders
-  public payload: Uint8Array | null
-  public signature?: Uint8Array
-
-  private _detachedContent?: Uint8Array
-  public externalAad?: Uint8Array
-  private _toBeSignedCache?: Uint8Array
-
-  public get detachedContent() {
-    return this._detachedContent
-  }
-
-  public set detachedContent(value: Uint8Array | undefined) {
-    this._detachedContent = value
-    this._toBeSignedCache = undefined
-  }
+  // Optional because a decoded structure is built without running the
+  // constructor: bytes off the wire carry no detached content by definition.
+  protected content?: Sign1Content
+  private toBeSignedCache?: Uint8Array
 
   public constructor(options: Sign1Options) {
-    super()
+    super(
+      buildStructure([
+        [
+          'protectedHeaders',
+          options.protectedHeaders instanceof ProtectedHeaders
+            ? options.protectedHeaders
+            : new ProtectedHeaders({ protectedHeaders: options.protectedHeaders }),
+        ],
+        [
+          'unprotectedHeaders',
+          options.unprotectedHeaders instanceof UnprotectedHeaders
+            ? options.unprotectedHeaders
+            : new UnprotectedHeaders({ unprotectedHeaders: options.unprotectedHeaders }),
+        ],
+        ['payload', options.payload ?? null],
+        ['signature', options.signature],
+      ])
+    )
 
-    this.protectedHeaders =
-      options.protectedHeaders instanceof ProtectedHeaders
-        ? options.protectedHeaders
-        : new ProtectedHeaders({ protectedHeaders: options.protectedHeaders })
-
-    this.unprotectedHeaders =
-      options.unprotectedHeaders instanceof UnprotectedHeaders
-        ? options.unprotectedHeaders
-        : new UnprotectedHeaders({ unprotectedHeaders: options.unprotectedHeaders })
-
-    this.payload = options.payload ?? null
-    this.signature = options.signature
-
-    this.detachedContent = options.detachedContent
-    this.externalAad = options.externalAad
+    this.content = { detachedContent: options.detachedContent, externalAad: options.externalAad }
   }
 
-  public encodedStructure(): Sign1Structure {
-    if (!this.signature) {
-      throw new CborEncodeError('Signature must be defined when trying to encode a Sign1 structure')
-    }
+  /** Narrows the base return type; the schema guarantees the four-element shape. */
+  public override encodedStructure(): Sign1Structure {
+    return super.encodedStructure() as Sign1Structure
+  }
 
-    return [
-      this.protectedHeaders.encodedStructure(),
-      this.unprotectedHeaders.encodedStructure(),
-      this.payload,
-      this.signature,
-    ]
+  public get protectedHeaders(): ProtectedHeaders {
+    return this.structure.get('protectedHeaders') as ProtectedHeaders
+  }
+
+  public get unprotectedHeaders(): UnprotectedHeaders {
+    return this.structure.get('unprotectedHeaders') as UnprotectedHeaders
+  }
+
+  public get payload(): Uint8Array | null {
+    return (this.structure.get('payload') as Uint8Array | null | undefined) ?? null
+  }
+
+  public get signature(): Uint8Array | undefined {
+    return this.structure.get('signature') as Uint8Array | undefined
+  }
+
+  public get detachedContent(): Uint8Array | undefined {
+    return this.content?.detachedContent
+  }
+
+  public get externalAad(): Uint8Array | undefined {
+    return this.content?.externalAad
+  }
+
+  /**
+   * Produces a copy of this structure with different transient content and,
+   * optionally, a different wire structure. Used rather than assignment so that
+   * the receiver stays exactly as it was handed out.
+   */
+  protected derive(structure: CborMap, content: Sign1Content): this {
+    const copy = Object.create(Object.getPrototypeOf(this)) as this & { structure: CborMap; content: Sign1Content }
+
+    copy.structure = structure
+    copy.content = content
+
+    return copy
+  }
+
+  /**
+   * A copy carrying the detached content the signature was made over. A
+   * detached signature's content arrives separately from the structure, so it
+   * cannot be known when the structure is decoded.
+   */
+  public withDetachedContent(detachedContent: Uint8Array): this {
+    return this.derive(this.structure, { ...this.content, detachedContent })
+  }
+
+  protected get transientContent(): Sign1Content {
+    return this.content ?? {}
   }
 
   public get certificateChain() {
@@ -107,7 +176,7 @@ export class Sign1 extends CborStructure {
   }
 
   public get toBeSigned() {
-    if (this._toBeSignedCache) return this._toBeSignedCache
+    if (this.toBeSignedCache) return this.toBeSignedCache
 
     const payload = this.detachedContent ?? this.payload
 
@@ -115,15 +184,14 @@ export class Sign1 extends CborStructure {
       throw new CosePayloadMustBeDefinedError()
     }
 
-    const toBeSigned: Array<unknown> = [
+    this.toBeSignedCache = cborEncode([
       'Signature1',
       this.protectedHeaders.encodedStructure(),
       this.externalAad ?? new Uint8Array(),
       payload,
-    ]
+    ])
 
-    this._toBeSignedCache = cborEncode(toBeSigned)
-    return this._toBeSignedCache
+    return this.toBeSignedCache
   }
 
   public get signatureAlgorithmName(): string {
@@ -155,18 +223,18 @@ export class Sign1 extends CborStructure {
     return Array.isArray(x5chain) ? x5chain : [x5chain]
   }
 
-  public async addSignature(options: { signingKey: CoseKey }, ctx: Pick<MdocContext, 'cose'>) {
-    const payload = this.payload ?? this.detachedContent
-    if (!payload) {
+  /**
+   * Signs the structure and returns the signed copy. The receiver is unchanged,
+   * so a structure never acquires a signature after the fact.
+   */
+  public async sign(options: { signingKey: CoseKey }, ctx: Pick<MdocContext, 'cose'>): Promise<this> {
+    if (!this.payload && !this.detachedContent) {
       throw new CosePayloadMustBeDefinedError()
     }
 
-    const signature = await ctx.cose.sign1.sign({
-      sign1: this,
-      key: options.signingKey,
-    })
+    const signature = await ctx.cose.sign1.sign({ sign1: this, key: options.signingKey })
 
-    this.signature = signature
+    return this.derive(new Map(this.structure).set('signature', signature), this.transientContent)
   }
 
   public async verifySignature(options: { key?: CoseKey }, ctx: Pick<MdocContext, 'cose' | 'x509'>) {
@@ -197,13 +265,8 @@ export class Sign1 extends CborStructure {
     return cborDecode<Sign1>(bytes, options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: Sign1Structure): Sign1 {
-    return new Sign1({
-      protectedHeaders: encodedStructure[0],
-      unprotectedHeaders: encodedStructure[1],
-      payload: encodedStructure[2],
-      signature: encodedStructure[3],
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): Sign1 {
+    return fromEncoded(Sign1, encodedStructure)
   }
 }
 

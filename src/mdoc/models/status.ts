@@ -96,9 +96,7 @@ export class Status extends CborStructure {
 
   public static override fromEncodedStructure(encodedStructure: StatusStructure | Map<string, unknown>): Status {
     const entries =
-      encodedStructure instanceof Map
-        ? encodedStructure
-        : new Map<string, unknown>(Object.entries(encodedStructure))
+      encodedStructure instanceof Map ? encodedStructure : new Map<string, unknown>(Object.entries(encodedStructure))
 
     const statusListEntry = entries.get('status_list')
 
