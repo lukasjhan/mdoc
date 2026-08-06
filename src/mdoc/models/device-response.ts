@@ -15,9 +15,12 @@ import { DeviceNamespaces } from './device-namespaces'
 import type { DeviceRequest } from './device-request'
 import { DeviceSignature } from './device-signature'
 import { DeviceSigned } from './device-signed'
+import type { DocType } from './doctype'
 import { Document, type DocumentStructure } from './document'
 import { DocumentError, type DocumentErrorStructure } from './document-error'
+import type { PrettyClaims } from './issuer-signed'
 import { IssuerSigned } from './issuer-signed'
+import type { Namespace } from './namespace'
 import type { SessionTranscript } from './session-transcript'
 
 const schema = cborMap([
@@ -69,6 +72,24 @@ export class DeviceResponse extends CborStructure {
 
   public get status(): number {
     return this.structure.get('status') as number
+  }
+
+  /**
+   * Every disclosed claim in the response, keyed by docType and then by the
+   * namespace it came from.
+   *
+   * Reading claims otherwise means naming both up front, which a verifier does
+   * not always know -- and a name that does not match yields `undefined`
+   * rather than saying so.
+   */
+  public getAllPrettyClaims(): Record<DocType, Record<Namespace, PrettyClaims>> {
+    const claims: Record<DocType, Record<Namespace, PrettyClaims>> = {}
+
+    for (const document of this.documents ?? []) {
+      claims[document.docType] = document.getAllPrettyClaims()
+    }
+
+    return claims
   }
 
   public override encodedStructure(): DeviceResponseStructure {

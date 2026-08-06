@@ -3,7 +3,7 @@ import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbo
 import { DeviceSigned, type DeviceSignedStructure } from './device-signed'
 import type { DocType } from './doctype'
 import type { ErrorItems } from './error-items'
-import { IssuerSigned, type IssuerSignedStructure } from './issuer-signed'
+import { IssuerSigned, type IssuerSignedStructure, type PrettyClaims } from './issuer-signed'
 import type { Namespace } from './namespace'
 
 const schema = cborMap([
@@ -59,6 +59,20 @@ export class Document extends CborStructure {
 
   public getIssuerNamespace(namespace: Namespace) {
     return this.issuerSigned.issuerNamespaces?.issuerNamespaces.get(namespace)
+  }
+
+  /** The namespaces this document actually carries. */
+  public get namespaces(): Array<Namespace> {
+    return this.issuerSigned.namespaces
+  }
+
+  public getPrettyClaims(namespace: Namespace): PrettyClaims | undefined {
+    return this.issuerSigned.getPrettyClaims(namespace)
+  }
+
+  /** Every disclosed claim, keyed by the namespace it came from. */
+  public getAllPrettyClaims(): Record<Namespace, PrettyClaims> {
+    return this.issuerSigned.getAllPrettyClaims()
   }
 
   public override encodedStructure(): DocumentStructure {

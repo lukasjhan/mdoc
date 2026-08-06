@@ -2,6 +2,8 @@ import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbo
 import type { MdocContext } from '../../context'
 import { base64url } from '../../utils'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
+import type { DataElementIdentifier } from './data-element-identifier'
+import type { DataElementValue } from './data-element-value'
 import { IssuerAuth, type IssuerAuthStructure } from './issuer-auth'
 import { IssuerNamespace, type IssuerNamespaceStructure } from './issuer-namespace'
 import type { IssuerSignedItem } from './issuer-signed-item'
@@ -11,6 +13,15 @@ const schema = cborMap([
   ['nameSpaces', cborStructure(IssuerNamespace).optional()],
   ['issuerAuth', cborStructure(IssuerAuth)],
 ])
+
+/** The disclosed elements of one namespace, as identifier-to-value pairs. */
+export type PrettyClaims = Record<DataElementIdentifier, DataElementValue>
+
+const toPrettyClaims = (items: Array<IssuerSignedItem>): PrettyClaims =>
+  items.reduce<PrettyClaims>((claims, item) => {
+    claims[item.elementIdentifier] = item.elementValue
+    return claims
+  }, {})
 
 export type IssuerSignedStructure = {
   nameSpaces?: IssuerNamespaceStructure
@@ -46,12 +57,33 @@ export class IssuerSigned extends CborStructure {
     return this.issuerNamespaces?.get(namespace)
   }
 
-  public getPrettyClaims(namespace: Namespace) {
-    if (!this.issuerNamespaces) return undefined
-    const issuerSignedItems = this.issuerNamespaces.issuerNamespaces.get(namespace)
+  /** The namespaces this document actually carries. */
+  public get namespaces(): Array<Namespace> {
+    return this.issuerNamespaces?.namespaces ?? []
+  }
+
+  public getPrettyClaims(namespace: Namespace): PrettyClaims | undefined {
+    const issuerSignedItems = this.issuerNamespaces?.get(namespace)
     if (!issuerSignedItems) return undefined
 
-    return issuerSignedItems.reduce((prev, curr) => ({ ...prev, [curr.elementIdentifier]: curr.elementValue }), {})
+    return toPrettyClaims(issuerSignedItems)
+  }
+
+  /**
+   * Every disclosed claim, keyed by the namespace it came from.
+   *
+   * Reading claims otherwise means naming the namespace up front, which a
+   * verifier does not always know -- and a name that does not match yields
+   * `undefined` rather than saying so.
+   */
+  public getAllPrettyClaims(): Record<Namespace, PrettyClaims> {
+    const claims: Record<Namespace, PrettyClaims> = {}
+
+    for (const [namespace, items] of this.issuerNamespaces?.issuerNamespaces ?? []) {
+      claims[namespace] = toPrettyClaims(items)
+    }
+
+    return claims
   }
 
   public get encodedForOid4Vci() {

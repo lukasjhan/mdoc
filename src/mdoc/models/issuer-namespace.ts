@@ -26,6 +26,11 @@ export class IssuerNamespace extends CborStructure {
     return this.issuerNamespaces.get(namespace)
   }
 
+  /** The namespaces this structure carries, in the order they were received. */
+  public get namespaces(): Array<Namespace> {
+    return [...this.issuerNamespaces.keys()]
+  }
+
   public override encodedStructure(): IssuerNamespaceStructure {
     return super.encodedStructure() as IssuerNamespaceStructure
   }
