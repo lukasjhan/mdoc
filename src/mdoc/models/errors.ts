@@ -1,38 +1,37 @@
-import { CborStructure } from '../../cbor'
-import { ErrorItems, type ErrorItemsStructure } from './error-items'
+import { z } from 'zod'
+import {
+  type CborDecodeOptions,
+  CborStructure,
+  cborDynamicMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
+import { ErrorItems } from './error-items'
 import type { Namespace } from './namespace'
 
-export type ErrorsStructure = Map<Namespace, ErrorItemsStructure>
+const schema = cborDynamicMap(z.string(), cborStructure(ErrorItems))
 
 export type ErrorsOptions = {
   errors: Map<Namespace, ErrorItems>
 }
 
 export class Errors extends CborStructure {
-  public errors: Map<Namespace, ErrorItems>
+  public static override schema = schema
 
   public constructor(options: ErrorsOptions) {
-    super()
-    this.errors = options.errors
+    super(new Map(options.errors))
   }
 
-  public encodedStructure(): ErrorsStructure {
-    const map: ErrorsStructure = new Map()
-
-    this.errors.forEach((v, k) => {
-      map.set(k, v.encodedStructure())
-    })
-
-    return map
+  public get errors(): Map<Namespace, ErrorItems> {
+    return this.structure as Map<Namespace, ErrorItems>
   }
 
-  public static override fromEncodedStructure(encodedStructure: ErrorsStructure): Errors {
-    const errors = new Map<Namespace, ErrorItems>()
+  public static override fromEncodedStructure(encodedStructure: unknown): Errors {
+    return fromEncoded(Errors, encodedStructure)
+  }
 
-    encodedStructure.forEach((v, k) => {
-      errors.set(k, ErrorItems.fromEncodedStructure(v))
-    })
-
-    return new Errors({ errors })
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Errors {
+    return decodeBytes(Errors, bytes, options)
   }
 }

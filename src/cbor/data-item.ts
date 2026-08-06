@@ -1,5 +1,7 @@
 import { addExtension } from 'cbor-x'
-import { cborDecode, cborEncode } from '.'
+// Imported from the module directly rather than the barrel: the barrel also
+// exports the schema helpers, which import this file.
+import { cborDecode, cborEncode } from './parser'
 
 export type DataItemParams<T = unknown> =
   | {

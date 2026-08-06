@@ -1,4 +1,11 @@
-import { CborStructure } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, CborStructure, cborArray, decodeBytes, fromEncoded } from '../../cbor'
+
+const schema = cborArray([
+  ['version', z.number()],
+  ['issuerUrl', z.string()],
+  ['serverRetrievalToken', z.string()],
+])
 
 export type OidcStructure = [number, string, string]
 
@@ -9,26 +16,39 @@ export type OidcOptions = {
 }
 
 export class Oidc extends CborStructure {
-  public version: number
-  public issuerUrl: string
-  public serverRetrievalToken: string
+  public static override schema = schema
 
   public constructor(options: OidcOptions) {
-    super()
-    this.version = options.version
-    this.issuerUrl = options.issuerUrl
-    this.serverRetrievalToken = options.serverRetrievalToken
+    super(
+      buildStructure([
+        ['version', options.version],
+        ['issuerUrl', options.issuerUrl],
+        ['serverRetrievalToken', options.serverRetrievalToken],
+      ])
+    )
   }
 
-  public encodedStructure(): OidcStructure {
-    return [this.version, this.issuerUrl, this.serverRetrievalToken]
+  public get version(): number {
+    return this.structure.get('version') as number
   }
 
-  public static override fromEncodedStructure(encodedStructure: OidcStructure): Oidc {
-    return new Oidc({
-      version: encodedStructure[0],
-      issuerUrl: encodedStructure[1],
-      serverRetrievalToken: encodedStructure[2],
-    })
+  public get issuerUrl(): string {
+    return this.structure.get('issuerUrl') as string
+  }
+
+  public get serverRetrievalToken(): string {
+    return this.structure.get('serverRetrievalToken') as string
+  }
+
+  public override encodedStructure(): OidcStructure {
+    return super.encodedStructure() as OidcStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): Oidc {
+    return fromEncoded(Oidc, encodedStructure)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Oidc {
+    return decodeBytes(Oidc, bytes, options)
   }
 }

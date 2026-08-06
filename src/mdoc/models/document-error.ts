@@ -1,6 +1,9 @@
-import { CborStructure } from '../../cbor'
+import { z } from 'zod'
+import { type CborDecodeOptions, CborStructure, cborDynamicMap, decodeBytes, fromEncoded } from '../../cbor'
 import type { DocType } from './doctype'
 import type { ErrorCode } from './error-code'
+
+const schema = cborDynamicMap(z.string(), z.number())
 
 export type DocumentErrorStructure = Map<DocType, ErrorCode>
 
@@ -9,18 +12,25 @@ export type DocumentErrorOptions = {
 }
 
 export class DocumentError extends CborStructure {
-  public documentError: Map<DocType, ErrorCode>
+  public static override schema = schema
 
   public constructor(options: DocumentErrorOptions) {
-    super()
-    this.documentError = options.documentError
+    super(new Map(options.documentError))
   }
 
-  public encodedStructure(): DocumentErrorStructure {
-    return this.documentError
+  public get documentError(): Map<DocType, ErrorCode> {
+    return this.structure as Map<DocType, ErrorCode>
   }
 
-  public static override fromEncodedStructure(encodedStructure: DocumentErrorStructure): DocumentError {
-    return new DocumentError({ documentError: encodedStructure })
+  public override encodedStructure(): DocumentErrorStructure {
+    return super.encodedStructure() as DocumentErrorStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): DocumentError {
+    return fromEncoded(DocumentError, encodedStructure)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DocumentError {
+    return decodeBytes(DocumentError, bytes, options)
   }
 }

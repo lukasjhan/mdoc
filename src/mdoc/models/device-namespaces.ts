@@ -1,6 +1,16 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import {
+  type CborDecodeOptions,
+  CborStructure,
+  cborDynamicMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import { DeviceSignedItems, type DeviceSignedItemsStructure } from './device-signed-items'
 import type { Namespace } from './namespace'
+
+const schema = cborDynamicMap(z.string(), cborStructure(DeviceSignedItems))
 
 export type DeviceNamespacesStructure = Map<Namespace, DeviceSignedItemsStructure>
 
@@ -9,34 +19,25 @@ export type DeviceNamespacesOptions = {
 }
 
 export class DeviceNamespaces extends CborStructure {
-  public deviceNamespaces: Map<Namespace, DeviceSignedItems>
+  public static override schema = schema
 
   public constructor(options: DeviceNamespacesOptions) {
-    super()
-    this.deviceNamespaces = options.deviceNamespaces
+    super(new Map(options.deviceNamespaces))
   }
 
-  public encodedStructure(): DeviceNamespacesStructure {
-    const map: DeviceNamespacesStructure = new Map()
-
-    this.deviceNamespaces.forEach((v, k) => {
-      map.set(k, v.encodedStructure())
-    })
-
-    return map
+  public get deviceNamespaces(): Map<Namespace, DeviceSignedItems> {
+    return this.structure as Map<Namespace, DeviceSignedItems>
   }
 
-  public static override fromEncodedStructure(encodedStructure: DeviceNamespacesStructure): DeviceNamespaces {
-    const deviceNamespaces = new Map<Namespace, DeviceSignedItems>()
-    encodedStructure.forEach((v, k) => {
-      deviceNamespaces.set(k, DeviceSignedItems.fromEncodedStructure(v))
-    })
+  public override encodedStructure(): DeviceNamespacesStructure {
+    return super.encodedStructure() as DeviceNamespacesStructure
+  }
 
-    return new DeviceNamespaces({ deviceNamespaces })
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceNamespaces {
+    return fromEncoded(DeviceNamespaces, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceNamespaces {
-    const structure = cborDecode<DeviceNamespacesStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return DeviceNamespaces.fromEncodedStructure(structure)
+    return decodeBytes(DeviceNamespaces, bytes, options)
   }
 }

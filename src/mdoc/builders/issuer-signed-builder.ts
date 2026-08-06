@@ -110,13 +110,13 @@ export class IssuerSignedBuilder {
       protectedHeaders: new Map([[Header.Algorithm, options.algorithm]]),
     })
 
-    const unprotectedHeaders = new UnprotectedHeaders({
-      unprotectedHeaders: new Map([[Header.X5Chain, options.certificate]]),
-    })
+    const headers = new Map<unknown, unknown>([[Header.X5Chain, options.certificate]])
 
     if (options.signingKey.keyId) {
-      unprotectedHeaders.headers?.set(Header.KeyId, options.signingKey.keyId)
+      headers.set(Header.KeyId, options.signingKey.keyId)
     }
+
+    const unprotectedHeaders = new UnprotectedHeaders({ unprotectedHeaders: headers })
 
     const issuerAuth = await new IssuerAuth({
       payload: mso.encode({ asDataItem: true }),

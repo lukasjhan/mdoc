@@ -55,13 +55,13 @@ export class DeviceSignedBuilder {
       protectedHeaders: new Map([[Header.Algorithm, options.algorithm]]),
     })
 
-    const unprotectedHeaders = new UnprotectedHeaders({
-      unprotectedHeaders: new Map([[Header.X5Chain, base64.decode(options.derCertificate)]]),
-    })
+    const headers = new Map<unknown, unknown>([[Header.X5Chain, base64.decode(options.derCertificate)]])
 
     if (options.signingKey.keyId) {
-      unprotectedHeaders.headers?.set(Header.KeyId, options.signingKey.keyId)
+      headers.set(Header.KeyId, options.signingKey.keyId)
     }
+
+    const unprotectedHeaders = new UnprotectedHeaders({ unprotectedHeaders: headers })
 
     const deviceAuthentication = new DeviceAuthentication({
       sessionTranscript: options.sessionTranscript,
@@ -94,13 +94,13 @@ export class DeviceSignedBuilder {
       protectedHeaders: new Map([[Header.Algorithm, options.algorithm]]),
     })
 
-    const unprotectedHeaders = new UnprotectedHeaders({
-      unprotectedHeaders: new Map([[Header.X5Chain, base64.decode(options.derCertificate)]]),
-    })
+    const headers = new Map<unknown, unknown>([[Header.X5Chain, base64.decode(options.derCertificate)]])
 
     if (options.privateKey.keyId) {
-      unprotectedHeaders.headers?.set(Header.KeyId, options.privateKey.keyId)
+      headers.set(Header.KeyId, options.privateKey.keyId)
     }
+
+    const unprotectedHeaders = new UnprotectedHeaders({ unprotectedHeaders: headers })
 
     const deviceAuthentication = new DeviceAuthentication({
       sessionTranscript: options.sessionTranscript,

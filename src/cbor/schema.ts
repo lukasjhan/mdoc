@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { CborStructure } from './cbor-structure'
+import { DataItem } from './data-item'
 
 /**
  * CBOR map keys are either text strings (ISO 18013-5 structures) or unsigned
@@ -42,6 +43,21 @@ export const cborStructure = <T extends CborStructure>(Class: CborStructureClass
     {
       decode: (encoded) => Class.fromEncodedStructure(encoded),
       encode: (instance) => instance.encodedStructure(),
+    }
+  )
+
+/**
+ * A codec for a nested structure that the wire format wraps in a tag-24 data
+ * item -- `#6.24(bstr .cbor Structure)`, which ISO 18013-5 uses wherever a
+ * structure has to be hashed or signed as an opaque blob.
+ */
+export const cborDataItem = <T extends CborStructure>(Class: CborStructureClass<T>) =>
+  z.codec(
+    z.custom<DataItem>((value) => value instanceof DataItem),
+    z.custom<T>((value) => value instanceof CborStructure),
+    {
+      decode: (dataItem) => Class.fromEncodedStructure(dataItem.data),
+      encode: (instance) => DataItem.fromData(instance.encodedStructure()),
     }
   )
 
