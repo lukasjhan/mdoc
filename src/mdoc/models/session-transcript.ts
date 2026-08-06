@@ -82,24 +82,21 @@ export class SessionTranscript extends CborStructure {
     ctx: Pick<MdocContext, 'crypto'>
   ) {
     const info = new Oid4vpDcApiDraft24HandoverInfo(options)
-    const handover = new Oid4vpDcApiHandover({ oid4vpDcApiHandoverInfo: info })
-    await handover.prepare(ctx)
+    const handover = await new Oid4vpDcApiHandover({ oid4vpDcApiHandoverInfo: info }).prepare(ctx)
 
     return new SessionTranscript({ handover })
   }
 
   public static async forOid4VpDcApi(options: Oid4vpDcApiHandoverInfoOptions, ctx: Pick<MdocContext, 'crypto'>) {
     const info = new Oid4vpDcApiHandoverInfo(options)
-    const handover = new Oid4vpDcApiHandover({ oid4vpDcApiHandoverInfo: info })
-    await handover.prepare(ctx)
+    const handover = await new Oid4vpDcApiHandover({ oid4vpDcApiHandoverInfo: info }).prepare(ctx)
 
     return new SessionTranscript({ handover })
   }
 
   public static async forOid4Vp(options: Oid4vpHandoverInfoOptions, ctx: Pick<MdocContext, 'crypto'>) {
     const info = new Oid4vpHandoverInfo(options)
-    const handover = new Oid4vpHandover({ oid4vpHandoverInfo: info })
-    await handover.prepare(ctx)
+    const handover = await new Oid4vpHandover({ oid4vpHandoverInfo: info }).prepare(ctx)
 
     return new SessionTranscript({ handover })
   }
@@ -118,9 +115,8 @@ export class SessionTranscript extends CborStructure {
       mdocGeneratedNonce: options.mdocGeneratedNonce,
       responseUri: options.responseUri,
     })
-    await handover.prepare(ctx)
 
-    return new SessionTranscript({ handover })
+    return new SessionTranscript({ handover: await handover.prepare(ctx) })
   }
 
   public static override fromEncodedStructure(encodedStructure: SessionTranscriptStructure): SessionTranscript {

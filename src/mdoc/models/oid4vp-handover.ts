@@ -1,7 +1,13 @@
-import { type CborDecodeOptions, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, type CborMap, cborArray, decodeBytes, fromEncoded } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { Handover } from './handover'
 import type { Oid4vpHandoverInfo } from './oid4vp-handover-info'
+
+const schema = cborArray([
+  ['context', z.literal('OpenID4VPHandover')],
+  ['hash', z.instanceof(Uint8Array)],
+])
 
 export type Oid4vpHandoverStructure = [string, Uint8Array]
 
@@ -11,48 +17,71 @@ export type Oid4vpHandoverOptions = {
 }
 
 export class Oid4vpHandover extends Handover {
-  public oid4vpHandoverInfo?: Oid4vpHandoverInfo
-  public oid4vpHandoverInfoHash?: Uint8Array
+  public static override schema = schema
+
+  // The handover info is the input the hash is taken over, not wire data.
+  protected info?: Oid4vpHandoverInfo
 
   public constructor(options: Oid4vpHandoverOptions) {
-    super()
-    this.oid4vpHandoverInfo = options.oid4vpHandoverInfo
-    this.oid4vpHandoverInfoHash = options.oid4vpHandoverInfoHash
+    super(
+      buildStructure([
+        ['context', 'OpenID4VPHandover'],
+        ['hash', options.oid4vpHandoverInfoHash],
+      ])
+    )
+
+    this.info = options.oid4vpHandoverInfo
   }
 
-  public async prepare(ctx: Pick<MdocContext, 'crypto'>) {
-    if (!this.oid4vpHandoverInfo && !this.oid4vpHandoverInfoHash) {
+  public get oid4vpHandoverInfo(): Oid4vpHandoverInfo | undefined {
+    return this.info
+  }
+
+  public get oid4vpHandoverInfoHash(): Uint8Array | undefined {
+    return this.structure.get('hash') as Uint8Array | undefined
+  }
+
+  /**
+   * Returns a copy carrying the digest over the handover info. The receiver is
+   * unchanged, so a handover never gains its hash after being handed out.
+   */
+  public async prepare(ctx: Pick<MdocContext, 'crypto'>): Promise<this> {
+    if (!this.info && !this.oid4vpHandoverInfoHash) {
       throw new Error(`Either the 'oid4vpHandoverInfo' or 'oid4vpHandoverInfoHash' must be set`)
     }
 
-    if (this.oid4vpHandoverInfo) {
-      this.oid4vpHandoverInfoHash = await ctx.crypto.digest({
-        digestAlgorithm: 'SHA-256',
-        bytes: this.oid4vpHandoverInfo.encode(),
-      })
+    if (!this.info) return this
+
+    const hash = await ctx.crypto.digest({ digestAlgorithm: 'SHA-256', bytes: this.info.encode() })
+
+    const copy = Object.create(Object.getPrototypeOf(this)) as this & {
+      structure: CborMap
+      info?: Oid4vpHandoverInfo
     }
+
+    copy.structure = new Map(this.structure).set('hash', hash)
+    copy.info = this.info
+
+    return copy
   }
 
-  public encodedStructure(): Oid4vpHandoverStructure {
+  public override encodedStructure(): Oid4vpHandoverStructure {
     if (!this.oid4vpHandoverInfoHash) {
       throw new Error('Call `prepare` first to create the hash over the handover info')
     }
 
-    return ['OpenID4VPHandover', this.oid4vpHandoverInfoHash]
+    return super.encodedStructure() as Oid4vpHandoverStructure
   }
 
-  public static override fromEncodedStructure(encodedStructure: Oid4vpHandoverStructure): Oid4vpHandover {
-    return new Oid4vpHandover({
-      oid4vpHandoverInfoHash: encodedStructure[1],
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): Oid4vpHandover {
+    return fromEncoded(Oid4vpHandover, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Oid4vpHandover {
-    const structure = cborDecode<Oid4vpHandoverStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return Oid4vpHandover.fromEncodedStructure(structure)
+    return decodeBytes(Oid4vpHandover, bytes, options)
   }
 
-  public static isCorrectHandover(structure: unknown): structure is Oid4vpHandoverStructure {
+  public static override isCorrectHandover(structure: unknown): structure is Oid4vpHandoverStructure {
     return Array.isArray(structure) && structure[0] === 'OpenID4VPHandover' && structure[1] instanceof Uint8Array
   }
 }

@@ -1,5 +1,11 @@
-import { type CborDecodeOptions, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, cborArray, decodeBytes, fromEncoded } from '../../cbor'
 import { Handover } from './handover'
+
+const schema = cborArray([
+  ['selectMessage', z.instanceof(Uint8Array)],
+  ['requestMessage', z.union([z.instanceof(Uint8Array), z.null()])],
+])
 
 export type NfcHandoverStructure = [Uint8Array, Uint8Array | null]
 
@@ -9,32 +15,38 @@ export type NfcHandoverOptions = {
 }
 
 export class NfcHandover extends Handover {
-  public selectMessage: Uint8Array
-  public requestMessage?: Uint8Array
+  public static override schema = schema
 
   public constructor(options: NfcHandoverOptions) {
-    super()
-    this.selectMessage = options.selectMessage
-    this.requestMessage = options.requestMessage
+    super(
+      buildStructure([
+        ['selectMessage', options.selectMessage],
+        ['requestMessage', options.requestMessage ?? null],
+      ])
+    )
   }
 
-  public encodedStructure(): NfcHandoverStructure {
-    return [this.selectMessage, this.requestMessage ?? null]
+  public get selectMessage(): Uint8Array {
+    return this.structure.get('selectMessage') as Uint8Array
   }
 
-  public static override fromEncodedStructure(encodedStructure: NfcHandoverStructure): NfcHandover {
-    return new NfcHandover({
-      selectMessage: encodedStructure[0],
-      requestMessage: encodedStructure[1] ?? undefined,
-    })
+  public get requestMessage(): Uint8Array | undefined {
+    return (this.structure.get('requestMessage') as Uint8Array | null) ?? undefined
+  }
+
+  public override encodedStructure(): NfcHandoverStructure {
+    return super.encodedStructure() as NfcHandoverStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): NfcHandover {
+    return fromEncoded(NfcHandover, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): NfcHandover {
-    const structure = cborDecode<NfcHandoverStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return NfcHandover.fromEncodedStructure(structure)
+    return decodeBytes(NfcHandover, bytes, options)
   }
 
-  public static isCorrectHandover(structure: unknown): structure is NfcHandoverStructure {
+  public static override isCorrectHandover(structure: unknown): structure is NfcHandoverStructure {
     return (
       Array.isArray(structure) &&
       structure[0] instanceof Uint8Array &&

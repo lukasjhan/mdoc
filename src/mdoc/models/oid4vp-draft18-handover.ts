@@ -1,6 +1,21 @@
-import { type CborDecodeOptions, cborDecode, cborEncode } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  type CborMap,
+  cborArray,
+  cborEncode,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import type { MdocContext } from '../../context'
 import { Handover } from './handover'
+
+const schema = cborArray([
+  ['clientIdHash', z.instanceof(Uint8Array)],
+  ['responseUriHash', z.instanceof(Uint8Array)],
+  ['nonce', z.string()],
+])
 
 export type Oid4vpDraft18HandoverStructure = [Uint8Array, Uint8Array, string]
 
@@ -14,84 +29,123 @@ export type Oid4vpDraft18HandoverOptions = {
   responseUriHash?: Uint8Array
 }
 
+/** The inputs the two hashes are taken over. Not wire data. */
+type Draft18Inputs = {
+  mdocGeneratedNonce?: string
+  clientId?: string
+  responseUri?: string
+}
+
 /**
  *
  * @note this will be removed as it is already a legacy handover structure
  *
  */
 export class Oid4vpDraft18Handover extends Handover {
-  public mdocGeneratedNonce?: string
-  public clientId?: string
-  public responseUri?: string
-  public nonce: string
+  public static override schema = schema
 
-  public clientIdHash?: Uint8Array
-  public responseUriHash?: Uint8Array
+  protected inputs?: Draft18Inputs
 
   public constructor(options: Oid4vpDraft18HandoverOptions) {
-    super()
-    this.mdocGeneratedNonce = options.mdocGeneratedNonce
-    this.clientId = options.clientId
-    this.responseUri = options.responseUri
-    this.nonce = options.nonce
+    super(
+      buildStructure([
+        ['clientIdHash', options.clientIdHash],
+        ['responseUriHash', options.responseUriHash],
+        ['nonce', options.nonce],
+      ])
+    )
 
-    this.clientIdHash = options.clientIdHash
-    this.responseUriHash = options.responseUriHash
+    this.inputs = {
+      mdocGeneratedNonce: options.mdocGeneratedNonce,
+      clientId: options.clientId,
+      responseUri: options.responseUri,
+    }
   }
 
-  public async prepare(ctx: Pick<MdocContext, 'crypto'>) {
-    if (
-      (!this.mdocGeneratedNonce || !this.clientId || !this.responseUri) &&
-      (!this.clientIdHash || !this.responseUriHash)
-    ) {
+  public get nonce(): string {
+    return this.structure.get('nonce') as string
+  }
+
+  public get clientIdHash(): Uint8Array | undefined {
+    return this.structure.get('clientIdHash') as Uint8Array | undefined
+  }
+
+  public get responseUriHash(): Uint8Array | undefined {
+    return this.structure.get('responseUriHash') as Uint8Array | undefined
+  }
+
+  public get mdocGeneratedNonce(): string | undefined {
+    return this.inputs?.mdocGeneratedNonce
+  }
+
+  public get clientId(): string | undefined {
+    return this.inputs?.clientId
+  }
+
+  public get responseUri(): string | undefined {
+    return this.inputs?.responseUri
+  }
+
+  /**
+   * Returns a copy carrying the two digests. The receiver is unchanged, so a
+   * handover never gains its hashes after being handed out.
+   */
+  public async prepare(ctx: Pick<MdocContext, 'crypto'>): Promise<this> {
+    const { clientId, responseUri, mdocGeneratedNonce } = this.inputs ?? {}
+
+    if ((!mdocGeneratedNonce || !clientId || !responseUri) && (!this.clientIdHash || !this.responseUriHash)) {
       throw new Error(
         'Either the responseUriHash and clientIdHash must be set or the clientId, responseUri and mdocGeneratedNonce'
       )
     }
 
-    if (this.clientId && this.mdocGeneratedNonce) {
-      this.clientIdHash = await ctx.crypto.digest({
-        digestAlgorithm: 'SHA-256',
-        bytes: cborEncode([this.clientId, this.mdocGeneratedNonce]),
-      })
+    const structure = new Map(this.structure)
+
+    if (clientId && mdocGeneratedNonce) {
+      structure.set(
+        'clientIdHash',
+        await ctx.crypto.digest({ digestAlgorithm: 'SHA-256', bytes: cborEncode([clientId, mdocGeneratedNonce]) })
+      )
     }
 
-    if (this.responseUri && this.mdocGeneratedNonce) {
-      this.responseUriHash = await ctx.crypto.digest({
-        digestAlgorithm: 'SHA-256',
-        bytes: cborEncode([this.responseUri, this.mdocGeneratedNonce]),
-      })
+    if (responseUri && mdocGeneratedNonce) {
+      structure.set(
+        'responseUriHash',
+        await ctx.crypto.digest({ digestAlgorithm: 'SHA-256', bytes: cborEncode([responseUri, mdocGeneratedNonce]) })
+      )
     }
 
-    if (!this.clientIdHash || !this.responseUriHash) {
+    if (!structure.get('clientIdHash') || !structure.get('responseUriHash')) {
       throw new Error(
         'Could not hash the client id and/or the response uri. Make sure the properties are set on the class, or manually provide the hashed client id and response uri with the mdoc generated nonce'
       )
     }
+
+    const copy = Object.create(Object.getPrototypeOf(this)) as this & { structure: CborMap; inputs?: Draft18Inputs }
+
+    copy.structure = structure
+    copy.inputs = this.inputs
+
+    return copy
   }
 
-  public encodedStructure(): Oid4vpDraft18HandoverStructure {
+  public override encodedStructure(): Oid4vpDraft18HandoverStructure {
     if (!this.clientIdHash || !this.responseUriHash) {
       throw new Error('Call `prepare` first to create the hash over the client id and response uri')
     }
 
-    return [this.clientIdHash, this.responseUriHash, this.nonce]
+    return super.encodedStructure() as Oid4vpDraft18HandoverStructure
   }
 
-  public static override fromEncodedStructure(encodedStructure: Oid4vpDraft18HandoverStructure): Oid4vpDraft18Handover {
-    return new Oid4vpDraft18Handover({
-      clientIdHash: encodedStructure[0],
-      responseUriHash: encodedStructure[1],
-      nonce: encodedStructure[2],
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): Oid4vpDraft18Handover {
+    return fromEncoded(Oid4vpDraft18Handover, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Oid4vpDraft18Handover {
-    const structure = cborDecode<Oid4vpDraft18HandoverStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return Oid4vpDraft18Handover.fromEncodedStructure(structure)
+    return decodeBytes(Oid4vpDraft18Handover, bytes, options)
   }
 
-  public static isCorrectHandover(structure: unknown): structure is Oid4vpDraft18HandoverStructure {
+  public static override isCorrectHandover(structure: unknown): structure is Oid4vpDraft18HandoverStructure {
     return (
       Array.isArray(structure) &&
       structure[0] instanceof Uint8Array &&
