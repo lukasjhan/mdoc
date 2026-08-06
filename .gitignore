@@ -32,3 +32,6 @@ dist/
 .cache
 
 *.tgz
+
+# local agent config
+.claude

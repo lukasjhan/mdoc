@@ -25,17 +25,21 @@ pnpm types:check
 pnpm style:check
 ```
 
-Each package can also be worked on directly:
+A single package:
 
 ```bash
 pnpm --filter @m-doc/core test
 ```
 
-## Contributing
+## Releasing
 
-Is there something you'd like to fix or add? Great, we love community
-contributions! To get involved, please follow our [contribution guidelines](./CONTRIBUTING.md).
+Versions are set by hand in each package. Pushing a `v*` tag validates the
+workspace and publishes every package whose version is not yet on the registry.
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
 
 ## License
 
-This project is licensed under the Apache License Version 2.0 (Apache-2.0).
+Apache-2.0.
