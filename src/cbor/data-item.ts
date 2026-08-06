@@ -1,5 +1,5 @@
+import { addExtension } from 'cbor-x'
 import { cborDecode, cborEncode } from '.'
-import { addExtension } from './cbor-x'
 
 export type DataItemParams<T = unknown> =
   | {

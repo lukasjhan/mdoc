@@ -1,4 +1,4 @@
-import type { Options as CborXParserOptions } from './cbor-x'
+import type { Options as CborXParserOptions } from 'cbor-x'
 import { DataItem } from './data-item'
 import { cborEncode } from './parser'
 
