@@ -1,4 +1,11 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, CborStructure, cborArray, decodeBytes, fromEncoded } from '../../cbor'
+
+const schema = cborArray([
+  ['origin', z.string()],
+  ['nonce', z.string()],
+  ['jwkThumbprint', z.union([z.instanceof(Uint8Array), z.null()])],
+])
 
 export type Oid4vpDcApiHandoverInfoStructure = [string, string, Uint8Array | null]
 
@@ -9,33 +16,39 @@ export type Oid4vpDcApiHandoverInfoOptions = {
 }
 
 export class Oid4vpDcApiHandoverInfo extends CborStructure {
-  public origin: string
-  public nonce: string
-  public jwkThumbprint?: Uint8Array
+  public static override schema = schema
 
   public constructor(options: Oid4vpDcApiHandoverInfoOptions) {
-    super()
-    this.origin = options.origin
-    this.nonce = options.nonce
-    this.jwkThumbprint = options.jwkThumbprint
+    super(
+      buildStructure([
+        ['origin', options.origin],
+        ['nonce', options.nonce],
+        ['jwkThumbprint', options.jwkThumbprint ?? null],
+      ])
+    )
   }
 
-  public encodedStructure(): Oid4vpDcApiHandoverInfoStructure {
-    return [this.origin, this.nonce, this.jwkThumbprint ?? null]
+  public get origin(): string {
+    return this.structure.get('origin') as string
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: Oid4vpDcApiHandoverInfoStructure
-  ): Oid4vpDcApiHandoverInfo {
-    return new Oid4vpDcApiHandoverInfo({
-      origin: encodedStructure[0],
-      nonce: encodedStructure[1],
-      jwkThumbprint: encodedStructure[2] ?? undefined,
-    })
+  public get nonce(): string {
+    return this.structure.get('nonce') as string
+  }
+
+  public get jwkThumbprint(): Uint8Array | undefined {
+    return (this.structure.get('jwkThumbprint') as Uint8Array | null) ?? undefined
+  }
+
+  public override encodedStructure(): Oid4vpDcApiHandoverInfoStructure {
+    return super.encodedStructure() as Oid4vpDcApiHandoverInfoStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): Oid4vpDcApiHandoverInfo {
+    return fromEncoded(Oid4vpDcApiHandoverInfo, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Oid4vpDcApiHandoverInfo {
-    const structure = cborDecode<Oid4vpDcApiHandoverInfoStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return Oid4vpDcApiHandoverInfo.fromEncodedStructure(structure)
+    return decodeBytes(Oid4vpDcApiHandoverInfo, bytes, options)
   }
 }

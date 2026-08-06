@@ -257,6 +257,27 @@ export const cborDynamicMap = (keySchema: z.ZodType, valueSchema: z.ZodType) =>
   )
 
 /**
+ * Re-keys a decoded map so that a text key holding a decimal integer -- `"0"`
+ * -- is read as the integer `0`.
+ *
+ * ISO 18013-5 labels the retrieval-option maps with unsigned integers, but
+ * implementations exist that write those labels as text strings, and a verifier
+ * has to be able to read them. Keys that are not decimal integers are left
+ * alone.
+ */
+export const coerceNumericKeys = (encodedStructure: unknown): unknown => {
+  if (!(encodedStructure instanceof Map)) return encodedStructure
+
+  const coerced = new Map<unknown, unknown>()
+
+  for (const [key, value] of encodedStructure) {
+    coerced.set(typeof key === 'string' && /^(0|[1-9]\d*)$/.test(key) ? Number(key) : key, value)
+  }
+
+  return coerced
+}
+
+/**
  * Builds the initial structure for a newly constructed model, in the order the
  * schema declares. Entries with an `undefined` value are dropped so that an
  * unset optional never reaches the wire.

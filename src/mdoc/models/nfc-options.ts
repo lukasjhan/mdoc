@@ -1,4 +1,20 @@
-import { CborStructure } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  coerceNumericKeys,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
+
+// ISO 18013-5 keys these by unsigned integer. The previous encoder built a
+// plain object, whose keys CBOR writes as text strings.
+const schema = cborMap([
+  [0, z.number()],
+  [1, z.number()],
+])
 
 export type NfcOptionsStructure = {
   0: number
@@ -11,34 +27,34 @@ export type NfcOptionsOptions = {
 }
 
 export class NfcOptions extends CborStructure {
-  public maxLenCommandDataField: number
-  public maxLenResponseDataField: number
+  public static override schema = schema
 
   public constructor(options: NfcOptionsOptions) {
-    super()
-    this.maxLenCommandDataField = options.maxLenCommandDataField
-    this.maxLenResponseDataField = options.maxLenResponseDataField
+    super(
+      buildStructure([
+        [0, options.maxLenCommandDataField],
+        [1, options.maxLenResponseDataField],
+      ])
+    )
   }
 
-  public encodedStructure(): NfcOptionsStructure {
-    return {
-      0: this.maxLenCommandDataField,
-      1: this.maxLenResponseDataField,
-    }
+  public get maxLenCommandDataField(): number {
+    return this.structure.get(0) as number
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: NfcOptionsStructure | Map<number, unknown>
-  ): NfcOptions {
-    let structure = encodedStructure as NfcOptionsStructure
+  public get maxLenResponseDataField(): number {
+    return this.structure.get(1) as number
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as NfcOptionsStructure
-    }
+  public override encodedStructure(): NfcOptionsStructure {
+    return super.encodedStructure() as unknown as NfcOptionsStructure
+  }
 
-    return new NfcOptions({
-      maxLenCommandDataField: structure[0],
-      maxLenResponseDataField: structure[1],
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): NfcOptions {
+    return fromEncoded(NfcOptions, coerceNumericKeys(encodedStructure))
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): NfcOptions {
+    return decodeBytes(NfcOptions, bytes, options)
   }
 }

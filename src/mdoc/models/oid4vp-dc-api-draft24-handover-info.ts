@@ -1,4 +1,11 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, CborStructure, cborArray, decodeBytes, fromEncoded } from '../../cbor'
+
+const schema = cborArray([
+  ['origin', z.string()],
+  ['clientId', z.string()],
+  ['nonce', z.string()],
+])
 
 export type Oid4vpDcApiDraft24HandoverInfoStructure = [string, string, string]
 
@@ -9,36 +16,39 @@ export type Oid4vpDcApiDraft24HandoverInfoOptions = {
 }
 
 export class Oid4vpDcApiDraft24HandoverInfo extends CborStructure {
-  public origin: string
-  public clientId: string
-  public nonce: string
+  public static override schema = schema
 
   public constructor(options: Oid4vpDcApiDraft24HandoverInfoOptions) {
-    super()
-    this.origin = options.origin
-    this.clientId = options.clientId
-    this.nonce = options.nonce
+    super(
+      buildStructure([
+        ['origin', options.origin],
+        ['clientId', options.clientId],
+        ['nonce', options.nonce],
+      ])
+    )
   }
 
-  public encodedStructure(): Oid4vpDcApiDraft24HandoverInfoStructure {
-    return [this.origin, this.clientId, this.nonce]
+  public get origin(): string {
+    return this.structure.get('origin') as string
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: Oid4vpDcApiDraft24HandoverInfoStructure
-  ): Oid4vpDcApiDraft24HandoverInfo {
-    return new Oid4vpDcApiDraft24HandoverInfo({
-      origin: encodedStructure[0],
-      clientId: encodedStructure[1],
-      nonce: encodedStructure[2],
-    })
+  public get clientId(): string {
+    return this.structure.get('clientId') as string
+  }
+
+  public get nonce(): string {
+    return this.structure.get('nonce') as string
+  }
+
+  public override encodedStructure(): Oid4vpDcApiDraft24HandoverInfoStructure {
+    return super.encodedStructure() as Oid4vpDcApiDraft24HandoverInfoStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): Oid4vpDcApiDraft24HandoverInfo {
+    return fromEncoded(Oid4vpDcApiDraft24HandoverInfo, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Oid4vpDcApiDraft24HandoverInfo {
-    const structure = cborDecode<Oid4vpDcApiDraft24HandoverInfoStructure>(bytes, {
-      ...(options ?? {}),
-      mapsAsObjects: false,
-    })
-    return Oid4vpDcApiDraft24HandoverInfo.fromEncodedStructure(structure)
+    return decodeBytes(Oid4vpDcApiDraft24HandoverInfo, bytes, options)
   }
 }

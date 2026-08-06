@@ -1,4 +1,23 @@
-import { CborStructure } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  coerceNumericKeys,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
+
+// ISO 18013-5 keys these by unsigned integer. The previous encoder built a
+// plain object, whose keys CBOR writes as text strings.
+const schema = cborMap([
+  [0, z.boolean()],
+  [1, z.boolean()],
+  [10, z.instanceof(Uint8Array).optional()],
+  [11, z.instanceof(Uint8Array).optional()],
+  [20, z.instanceof(Uint8Array).optional()],
+])
 
 export type BleOptionsStructure = {
   0: boolean
@@ -17,57 +36,49 @@ export type BleOptionsOptions = {
 }
 
 export class BleOptions extends CborStructure {
-  public peripheralServerMode: boolean
-  public centralClientMode: boolean
-  public peripheralServerModeUuid?: Uint8Array
-  public centralClientModeUuid?: Uint8Array
-  public peripheralServerModeDeviceAddress?: Uint8Array
+  public static override schema = schema
 
   public constructor(options: BleOptionsOptions) {
-    super()
-    this.peripheralServerMode = options.peripheralServerMode
-    this.centralClientMode = options.centralClientMode
-    this.peripheralServerModeUuid = options.peripheralServerModeUuid
-    this.centralClientModeUuid = options.centralClientModeUuid
-    this.peripheralServerModeDeviceAddress = options.peripheralServerModeDeviceAddress
+    super(
+      buildStructure([
+        [0, options.peripheralServerMode],
+        [1, options.centralClientMode],
+        [10, options.peripheralServerModeUuid],
+        [11, options.centralClientModeUuid],
+        [20, options.peripheralServerModeDeviceAddress],
+      ])
+    )
   }
 
-  public encodedStructure(): BleOptionsStructure {
-    const structure: BleOptionsStructure = {
-      0: this.peripheralServerMode,
-      1: this.centralClientMode,
-    }
-
-    if (this.peripheralServerModeUuid) {
-      structure[10] = this.peripheralServerModeUuid
-    }
-
-    if (this.centralClientModeUuid) {
-      structure[11] = this.centralClientModeUuid
-    }
-
-    if (this.peripheralServerModeDeviceAddress) {
-      structure[20] = this.peripheralServerModeDeviceAddress
-    }
-
-    return structure
+  public get peripheralServerMode(): boolean {
+    return this.structure.get(0) as boolean
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: BleOptionsStructure | Map<number, unknown>
-  ): CborStructure {
-    let structure = encodedStructure as BleOptionsStructure
+  public get centralClientMode(): boolean {
+    return this.structure.get(1) as boolean
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as BleOptionsStructure
-    }
+  public get peripheralServerModeUuid(): Uint8Array | undefined {
+    return this.structure.get(10) as Uint8Array | undefined
+  }
 
-    return new BleOptions({
-      peripheralServerMode: structure[0],
-      centralClientMode: structure[1],
-      peripheralServerModeUuid: structure[10],
-      centralClientModeUuid: structure[11],
-      peripheralServerModeDeviceAddress: structure[20],
-    })
+  public get centralClientModeUuid(): Uint8Array | undefined {
+    return this.structure.get(11) as Uint8Array | undefined
+  }
+
+  public get peripheralServerModeDeviceAddress(): Uint8Array | undefined {
+    return this.structure.get(20) as Uint8Array | undefined
+  }
+
+  public override encodedStructure(): BleOptionsStructure {
+    return super.encodedStructure() as unknown as BleOptionsStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): BleOptions {
+    return fromEncoded(BleOptions, coerceNumericKeys(encodedStructure))
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): BleOptions {
+    return decodeBytes(BleOptions, bytes, options)
   }
 }
