@@ -1,14 +1,4 @@
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborDataItem,
-  cborMap,
-  cborStructure,
-  type DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborDataItem, cborMap, cborStructure, type DataItem } from '../../cbor'
 import { DeviceAuth, type DeviceAuthStructure } from './device-auth'
 import { DeviceNamespaces, type DeviceNamespacesStructure } from './device-namespaces'
 
@@ -49,13 +39,5 @@ export class DeviceSigned extends CborStructure {
 
   public override encodedStructure(): DeviceSignedStructure {
     return super.encodedStructure() as DeviceSignedStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceSigned {
-    return fromEncoded(DeviceSigned, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceSigned {
-    return decodeBytes(DeviceSigned, bytes, options)
   }
 }

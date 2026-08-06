@@ -1,12 +1,4 @@
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import { DeviceKey } from './device-key'
 import { KeyAuthorizations } from './key-authorizations'
 import { KeyInfo } from './key-info'
@@ -46,13 +38,5 @@ export class DeviceKeyInfo extends CborStructure {
 
   public get keyInfo(): KeyInfo | undefined {
     return this.structure.get('keyInfo') as KeyInfo | undefined
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceKeyInfo {
-    return fromEncoded(DeviceKeyInfo, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceKeyInfo {
-    return decodeBytes(DeviceKeyInfo, bytes, options)
   }
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, CborStructure, cborMap } from '../../cbor'
 
 const schema = cborMap([
   ['signed', z.date()],
@@ -63,13 +63,5 @@ export class ValidityInfo extends CborStructure {
     const skewMs = skewSeconds * 1000
     const validFromWithSkew = new Date(this.validFrom.getTime() - skewMs)
     return validFromWithSkew <= now
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): ValidityInfo {
-    return fromEncoded(ValidityInfo, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ValidityInfo {
-    return decodeBytes(ValidityInfo, bytes, options)
   }
 }

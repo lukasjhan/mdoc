@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, CborStructure, cborArray, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, CborStructure, cborArray } from '../../cbor'
 
 const schema = cborArray([
   ['origin', z.string()],
@@ -42,13 +42,5 @@ export class Oid4vpDcApiDraft24HandoverInfo extends CborStructure {
 
   public override encodedStructure(): Oid4vpDcApiDraft24HandoverInfoStructure {
     return super.encodedStructure() as Oid4vpDcApiDraft24HandoverInfoStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): Oid4vpDcApiDraft24HandoverInfo {
-    return fromEncoded(Oid4vpDcApiDraft24HandoverInfo, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Oid4vpDcApiDraft24HandoverInfo {
-    return decodeBytes(Oid4vpDcApiDraft24HandoverInfo, bytes, options)
   }
 }

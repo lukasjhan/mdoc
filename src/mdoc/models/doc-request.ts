@@ -1,14 +1,4 @@
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborDataItem,
-  cborMap,
-  cborStructure,
-  type DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborDataItem, cborMap, cborStructure, type DataItem } from '../../cbor'
 import { ItemsRequest, type ItemsRequestStructure } from './items-request'
 import { ReaderAuth, type ReaderAuthStructure } from './reader-auth'
 
@@ -49,13 +39,5 @@ export class DocRequest extends CborStructure {
 
   public override encodedStructure(): DocRequestStructure {
     return super.encodedStructure() as DocRequestStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DocRequest {
-    return fromEncoded(DocRequest, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DocRequest {
-    return decodeBytes(DocRequest, bytes, options)
   }
 }

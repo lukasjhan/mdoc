@@ -1,13 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import type { DigestAlgorithm } from '../../cose'
 import { DeviceKeyInfo } from './device-key-info'
 import type { DocType } from './doctype'
@@ -80,13 +72,5 @@ export class MobileSecurityObject extends CborStructure {
 
   public get status(): Status | undefined {
     return this.structure.get('status') as Status | undefined
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): MobileSecurityObject {
-    return fromEncoded(MobileSecurityObject, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): MobileSecurityObject {
-    return decodeBytes(MobileSecurityObject, bytes, options)
   }
 }

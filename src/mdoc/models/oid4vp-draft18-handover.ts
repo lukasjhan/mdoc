@@ -1,13 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  type CborMap,
-  cborArray,
-  cborEncode,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, type CborMap, cborArray, cborEncode } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { Handover } from './handover'
 
@@ -135,14 +127,6 @@ export class Oid4vpDraft18Handover extends Handover {
     }
 
     return super.encodedStructure() as Oid4vpDraft18HandoverStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): Oid4vpDraft18Handover {
-    return fromEncoded(Oid4vpDraft18Handover, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Oid4vpDraft18Handover {
-    return decodeBytes(Oid4vpDraft18Handover, bytes, options)
   }
 
   public static override isCorrectHandover(structure: unknown): structure is Oid4vpDraft18HandoverStructure {

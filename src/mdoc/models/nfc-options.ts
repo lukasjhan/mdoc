@@ -1,12 +1,11 @@
 import { z } from 'zod'
 import {
   buildStructure,
-  type CborDecodeOptions,
   CborStructure,
   cborMap,
   coerceNumericKeys,
-  decodeBytes,
   fromEncoded,
+  type SchemaBackedClass,
 } from '../../cbor'
 
 // ISO 18013-5 keys these by unsigned integer. The previous encoder built a
@@ -50,11 +49,10 @@ export class NfcOptions extends CborStructure {
     return super.encodedStructure() as unknown as NfcOptionsStructure
   }
 
-  public static override fromEncodedStructure(encodedStructure: unknown): NfcOptions {
-    return fromEncoded(NfcOptions, coerceNumericKeys(encodedStructure))
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): NfcOptions {
-    return decodeBytes(NfcOptions, bytes, options)
+  public static override fromEncodedStructure<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    encodedStructure: unknown
+  ): T {
+    return fromEncoded(this, coerceNumericKeys(encodedStructure))
   }
 }

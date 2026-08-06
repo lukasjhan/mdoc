@@ -1,12 +1,13 @@
 import {
   type CborDecodeOptions,
   type CborEncodeOptions,
+  type CborStructure,
   cborEncode,
   DataItem,
   decodeBytes,
-  fromEncoded,
+  type SchemaBackedClass,
 } from '../../cbor'
-import { assertKeyType, CoseKey, type CoseKeyOptions, type EncodedCoseKeyStructure } from '../../cose/key/key'
+import { CoseKey, type CoseKeyOptions, type EncodedCoseKeyStructure } from '../../cose/key/key'
 
 export type EReaderKeyStructure = EncodedCoseKeyStructure
 
@@ -30,15 +31,13 @@ export class EReaderKey extends CoseKey {
     return super.encode(options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: unknown): EReaderKey {
-    assertKeyType(encodedStructure)
-
-    return fromEncoded(EReaderKey, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): EReaderKey {
-    const key = decodeBytes(EReaderKey, bytes, options)
-    key.rawBytes = bytes
+  public static override decode<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    bytes: Uint8Array,
+    options?: CborDecodeOptions
+  ): T {
+    const key = decodeBytes(this, bytes, options)
+    ;(key as { rawBytes?: Uint8Array }).rawBytes = bytes
     return key
   }
 }

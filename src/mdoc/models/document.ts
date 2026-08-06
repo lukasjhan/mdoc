@@ -1,13 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import { DeviceSigned, type DeviceSignedStructure } from './device-signed'
 import type { DocType } from './doctype'
 import type { ErrorItems } from './error-items'
@@ -71,13 +63,5 @@ export class Document extends CborStructure {
 
   public override encodedStructure(): DocumentStructure {
     return super.encodedStructure() as DocumentStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): Document {
-    return fromEncoded(Document, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Document {
-    return decodeBytes(Document, bytes, options)
   }
 }

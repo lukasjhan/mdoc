@@ -67,18 +67,30 @@ export abstract class CborStructure {
     return cborEncode(options?.asDataItem ? DataItem.fromData(structure) : structure)
   }
 
-  public static fromEncodedStructure(_encodedStructure: unknown): CborStructure {
-    throw new Error('fromEncodedStructure must be implemented')
+  /**
+   * Both statics are typed on `this`, so a subclass gets them back returning
+   * its own type without having to redeclare them. A model only overrides when
+   * it has something to do before validation.
+   */
+  public static fromEncodedStructure<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    encodedStructure: unknown
+  ): T {
+    return fromEncoded(this, encodedStructure)
   }
 
-  public static decode(_bytes: Uint8Array, _options?: CborDecodeOptions): CborStructure {
-    throw new Error('decode must be implemented')
+  public static decode<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    bytes: Uint8Array,
+    options?: CborDecodeOptions
+  ): T {
+    return decodeBytes(this, bytes, options)
   }
 }
 
 // Only the prototype is needed: instances are built with Object.create, never
 // through the constructor, so a model may keep its constructor private.
-type SchemaBackedClass<T extends CborStructure> = {
+export type SchemaBackedClass<T extends CborStructure> = {
   prototype: T
   schema?: z.ZodType
   name: string
@@ -113,11 +125,12 @@ export const fromEncoded = <T extends CborStructure>(Class: SchemaBackedClass<T>
  * peer wrote as text.
  */
 export const decodeBytes = <T extends CborStructure>(
-  Class: SchemaBackedClass<T> & { fromEncodedStructure?: (encodedStructure: unknown) => T },
+  Class: SchemaBackedClass<T>,
   bytes: Uint8Array,
   options?: CborDecodeOptions
 ): T => {
   const structure = cborDecode(bytes, { ...(options ?? {}), mapsAsObjects: false })
+  const decoder = (Class as { fromEncodedStructure?: (encodedStructure: unknown) => T }).fromEncodedStructure
 
-  return Class.fromEncodedStructure ? Class.fromEncodedStructure(structure) : fromEncoded(Class, structure)
+  return decoder ? decoder.call(Class, structure) : fromEncoded(Class, structure)
 }

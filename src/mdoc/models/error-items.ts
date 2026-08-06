@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { type CborDecodeOptions, CborStructure, cborDynamicMap, decodeBytes, fromEncoded } from '../../cbor'
+import { CborStructure, cborDynamicMap } from '../../cbor'
 import type { DataElementIdentifier } from './data-element-identifier'
 import type { ErrorCode } from './error-code'
 
@@ -24,13 +24,5 @@ export class ErrorItems extends CborStructure {
 
   public override encodedStructure(): ErrorItemsStructure {
     return super.encodedStructure() as ErrorItemsStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): ErrorItems {
-    return fromEncoded(ErrorItems, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ErrorItems {
-    return decodeBytes(ErrorItems, bytes, options)
   }
 }

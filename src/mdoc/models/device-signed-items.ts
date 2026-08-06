@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { type CborDecodeOptions, CborStructure, cborDynamicMap, decodeBytes, fromEncoded } from '../../cbor'
+import { CborStructure, cborDynamicMap } from '../../cbor'
 import type { DataElementIdentifier } from './data-element-identifier'
 import type { DataElementValue } from './data-element-value'
 
@@ -24,13 +24,5 @@ export class DeviceSignedItems extends CborStructure {
 
   public override encodedStructure(): DeviceSignedItemsStructure {
     return super.encodedStructure() as DeviceSignedItemsStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceSignedItems {
-    return fromEncoded(DeviceSignedItems, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceSignedItems {
-    return decodeBytes(DeviceSignedItems, bytes, options)
   }
 }

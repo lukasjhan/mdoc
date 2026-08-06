@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, CborStructure, cborMap } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { compareBytes } from '../../utils'
 import type { DataElementIdentifier } from './data-element-identifier'
@@ -95,13 +95,5 @@ export class IssuerSignedItem extends CborStructure {
 
   public override encodedStructure(): IssuerSignedItemStructure {
     return super.encodedStructure() as IssuerSignedItemStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): IssuerSignedItem {
-    return fromEncoded(IssuerSignedItem, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): IssuerSignedItem {
-    return decodeBytes(IssuerSignedItem, bytes, options)
   }
 }

@@ -1,13 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborArray,
-  DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborArray, DataItem } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { DeviceEngagement, type DeviceEngagementStructure } from './device-engagement'
 import { EReaderKey, type EReaderKeyStructure } from './e-reader-key'
@@ -181,13 +173,5 @@ export class SessionTranscript extends CborStructure {
     })
 
     return new SessionTranscript({ handover: await handover.prepare(ctx) })
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): SessionTranscript {
-    return fromEncoded(SessionTranscript, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): SessionTranscript {
-    return decodeBytes(SessionTranscript, bytes, options)
   }
 }

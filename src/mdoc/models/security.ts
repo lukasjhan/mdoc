@@ -1,14 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborArray,
-  cborDataItem,
-  type DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborArray, cborDataItem, type DataItem } from '../../cbor'
 import type { EncodedCoseKeyStructure } from '../../cose'
 import { EDeviceKey } from './e-device-key'
 
@@ -47,13 +38,5 @@ export class Security extends CborStructure {
 
   public get eDeviceKey(): EDeviceKey {
     return this.structure.get('eDeviceKey') as EDeviceKey
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): Security {
-    return fromEncoded(Security, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Security {
-    return decodeBytes(Security, bytes, options)
   }
 }

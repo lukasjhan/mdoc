@@ -1,13 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { type CoseKey, Header, ProtectedHeaders, UnprotectedHeaders } from '../../cose'
 import { base64url } from '../../utils'
@@ -81,14 +73,6 @@ export class DeviceResponse extends CborStructure {
 
   public override encodedStructure(): DeviceResponseStructure {
     return super.encodedStructure() as DeviceResponseStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceResponse {
-    return fromEncoded(DeviceResponse, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceResponse {
-    return decodeBytes(DeviceResponse, bytes, options)
   }
 
   public async verify(

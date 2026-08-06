@@ -1,14 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborDataItem,
-  cborMap,
-  type DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborDataItem, cborMap, type DataItem } from '../../cbor'
 import type { MdocContext } from '../../context'
 import type { CoseKey } from '../../cose'
 import { EReaderKey, type EReaderKeyStructure } from './e-reader-key'
@@ -70,13 +61,5 @@ export class SessionEstablishment extends CborStructure {
 
   public override encodedStructure(): SessionEstablishmentStructure {
     return super.encodedStructure() as SessionEstablishmentStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): SessionEstablishment {
-    return fromEncoded(SessionEstablishment, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): SessionEstablishment {
-    return decodeBytes(SessionEstablishment, bytes, options)
   }
 }

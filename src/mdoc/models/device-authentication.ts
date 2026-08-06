@@ -1,15 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborArray,
-  cborDataItem,
-  cborDecode,
-  type DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborArray, cborDataItem, cborDecode, type DataItem } from '../../cbor'
 import { DeviceNamespaces, type DeviceNamespacesStructure } from './device-namespaces'
 import type { DocType } from './doctype'
 import { SessionTranscript, type SessionTranscriptStructure } from './session-transcript'
@@ -87,13 +77,5 @@ export class DeviceAuthentication extends CborStructure {
 
   public override encodedStructure(): DeviceAuthenticationStructure {
     return super.encodedStructure() as DeviceAuthenticationStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceAuthentication {
-    return fromEncoded(DeviceAuthentication, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceAuthentication {
-    return decodeBytes(DeviceAuthentication, bytes, options)
   }
 }

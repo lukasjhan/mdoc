@@ -1,12 +1,4 @@
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { base64url } from '../../utils'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
@@ -159,13 +151,5 @@ export class IssuerSigned extends CborStructure {
 
   public override encodedStructure(): IssuerSignedStructure {
     return super.encodedStructure() as IssuerSignedStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): IssuerSigned {
-    return fromEncoded(IssuerSigned, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): IssuerSigned {
-    return decodeBytes(IssuerSigned, bytes, options)
   }
 }

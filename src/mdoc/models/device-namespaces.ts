@@ -1,12 +1,5 @@
 import { z } from 'zod'
-import {
-  type CborDecodeOptions,
-  CborStructure,
-  cborDynamicMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { CborStructure, cborDynamicMap, cborStructure } from '../../cbor'
 import { DeviceSignedItems, type DeviceSignedItemsStructure } from './device-signed-items'
 import type { Namespace } from './namespace'
 
@@ -31,13 +24,5 @@ export class DeviceNamespaces extends CborStructure {
 
   public override encodedStructure(): DeviceNamespacesStructure {
     return super.encodedStructure() as DeviceNamespacesStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceNamespaces {
-    return fromEncoded(DeviceNamespaces, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceNamespaces {
-    return decodeBytes(DeviceNamespaces, bytes, options)
   }
 }

@@ -1,13 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import { DocRequest, type DocRequestStructure } from './doc-request'
 
 const schema = cborMap([
@@ -47,13 +39,5 @@ export class DeviceRequest extends CborStructure {
 
   public override encodedStructure(): DeviceRequestStructure {
     return super.encodedStructure() as DeviceRequestStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceRequest {
-    return fromEncoded(DeviceRequest, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceRequest {
-    return decodeBytes(DeviceRequest, bytes, options)
   }
 }

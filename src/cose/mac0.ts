@@ -10,6 +10,7 @@ import {
   cborEncode,
   cborStructure,
   fromEncoded,
+  type SchemaBackedClass,
 } from '../cbor/index.js'
 import type { MdocContext } from '../context.js'
 import { SessionTranscript } from '../mdoc/models/session-transcript.js'
@@ -189,12 +190,19 @@ export class Mac0 extends CborStructure {
     return this.derive(new Map(this.structure).set('tag', tag), this.transientContent)
   }
 
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions) {
-    return cborDecode<Mac0>(bytes, options)
-  }
+  /**
+   * Accepts the structure tagged or bare. A tag-17 structure is turned into a
+   * `Mac0` by the extension below, so its encoded form is taken back out and
+   * validated against `this`, which keeps a subclass decoding as itself.
+   */
+  public static override decode<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    bytes: Uint8Array,
+    options?: CborDecodeOptions
+  ): T {
+    const structure = cborDecode<unknown>(bytes, options)
 
-  public static override fromEncodedStructure(encodedStructure: unknown): Mac0 {
-    return fromEncoded(Mac0, encodedStructure)
+    return fromEncoded(this, structure instanceof Mac0 ? structure.encodedStructure() : structure)
   }
 }
 
@@ -205,5 +213,6 @@ addExtension({
   encode(instance: Mac0, encodeFn: (obj: unknown) => Uint8Array) {
     return encodeFn(instance.encodedStructure())
   },
-  decode: Mac0.fromEncodedStructure,
+  // Wrapped rather than passed by reference: the static reads `this`.
+  decode: (structure: unknown) => Mac0.fromEncodedStructure(structure),
 })

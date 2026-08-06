@@ -1,13 +1,5 @@
 import { z } from 'zod'
-import {
-  type CborDecodeOptions,
-  CborStructure,
-  cborDataItem,
-  cborDynamicMap,
-  type DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { CborStructure, cborDataItem, cborDynamicMap, type DataItem } from '../../cbor'
 import { IssuerSignedItem, type IssuerSignedItemStructure } from './issuer-signed-item'
 import type { Namespace } from './namespace'
 
@@ -36,13 +28,5 @@ export class IssuerNamespace extends CborStructure {
 
   public override encodedStructure(): IssuerNamespaceStructure {
     return super.encodedStructure() as IssuerNamespaceStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): IssuerNamespace {
-    return fromEncoded(IssuerNamespace, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): IssuerNamespace {
-    return decodeBytes(IssuerNamespace, bytes, options)
   }
 }

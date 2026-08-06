@@ -1,4 +1,3 @@
-import { type CborDecodeOptions, decodeBytes, fromEncoded } from '../../cbor'
 import type { MdocContext } from '../../context'
 import type { CoseKey } from '../../cose'
 import { Mac0, type Mac0Structure } from '../../cose/mac0'
@@ -30,13 +29,5 @@ export class DeviceMac extends Mac0 {
       mac0: this,
       key,
     })
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceMac {
-    return fromEncoded(DeviceMac, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceMac {
-    return decodeBytes(DeviceMac, bytes, options)
   }
 }

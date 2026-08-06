@@ -1,4 +1,4 @@
-import { type CborDecodeOptions, CborStructure } from '../../cbor/cbor-structure.js'
+import { type CborDecodeOptions, CborStructure, type SchemaBackedClass } from '../../cbor/cbor-structure.js'
 import { cborDecode, cborEncode } from '../../cbor/parser.js'
 
 export type ProtectedHeadersStructure = Uint8Array
@@ -48,11 +48,22 @@ export class ProtectedHeaders extends CborStructure {
     return this.raw ?? cborEncode(this.parsed)
   }
 
-  public static override fromEncodedStructure(encodedStructure: unknown): ProtectedHeaders {
-    return new ProtectedHeaders({ protectedHeaders: encodedStructure as Uint8Array | Map<unknown, unknown> })
+  // Cast because this class builds itself rather than going through a schema,
+  // and it is never extended.
+  public static override fromEncodedStructure<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    encodedStructure: unknown
+  ): T {
+    return new ProtectedHeaders({
+      protectedHeaders: encodedStructure as Uint8Array | Map<unknown, unknown>,
+    }) as unknown as T
   }
 
-  public static override decode(bytes: Uint8Array, _options?: CborDecodeOptions): ProtectedHeaders {
-    return new ProtectedHeaders({ protectedHeaders: bytes })
+  public static override decode<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    bytes: Uint8Array,
+    _options?: CborDecodeOptions
+  ): T {
+    return new ProtectedHeaders({ protectedHeaders: bytes }) as unknown as T
   }
 }

@@ -1,12 +1,11 @@
 import { z } from 'zod'
 import {
   buildStructure,
-  type CborDecodeOptions,
   CborStructure,
   cborMap,
   coerceNumericKeys,
-  decodeBytes,
   fromEncoded,
+  type SchemaBackedClass,
 } from '../../cbor'
 
 // ISO 18013-5 keys these by unsigned integer. The previous encoder built a
@@ -74,11 +73,10 @@ export class BleOptions extends CborStructure {
     return super.encodedStructure() as unknown as BleOptionsStructure
   }
 
-  public static override fromEncodedStructure(encodedStructure: unknown): BleOptions {
-    return fromEncoded(BleOptions, coerceNumericKeys(encodedStructure))
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): BleOptions {
-    return decodeBytes(BleOptions, bytes, options)
+  public static override fromEncodedStructure<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    encodedStructure: unknown
+  ): T {
+    return fromEncoded(this, coerceNumericKeys(encodedStructure))
   }
 }

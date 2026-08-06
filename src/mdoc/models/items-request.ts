@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, CborStructure, cborMap } from '../../cbor'
 import type { DataElementIdentifier } from './data-element-identifier'
 import type { DocType } from './doctype'
 import type { IntentToRetain } from './itent-to-retain'
@@ -49,13 +49,5 @@ export class ItemsRequest extends CborStructure {
 
   public override encodedStructure(): ItemsRequestStructure {
     return super.encodedStructure() as ItemsRequestStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): ItemsRequest {
-    return fromEncoded(ItemsRequest, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ItemsRequest {
-    return decodeBytes(ItemsRequest, bytes, options)
   }
 }

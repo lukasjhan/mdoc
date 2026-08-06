@@ -1,14 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  type CborKey,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, type CborKey, CborStructure, cborMap, cborStructure } from '../../cbor'
 
 /**
  * `StatusListInfo` -- a reference into an IETF Token Status List
@@ -52,14 +43,6 @@ export class StatusListInfo extends CborStructure {
 
   public override encodedStructure(): StatusListInfoStructure {
     return super.encodedStructure() as StatusListInfoStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): StatusListInfo {
-    return fromEncoded(StatusListInfo, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): StatusListInfo {
-    return decodeBytes(StatusListInfo, bytes, options)
   }
 }
 
@@ -110,13 +93,5 @@ export class Status extends CborStructure {
 
   public override encodedStructure(): StatusStructure {
     return super.encodedStructure() as StatusStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): Status {
-    return fromEncoded(Status, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Status {
-    return decodeBytes(Status, bytes, options)
   }
 }

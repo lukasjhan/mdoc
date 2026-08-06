@@ -1,6 +1,6 @@
 import { concatBytes } from '@noble/curves/utils.js'
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, CborStructure, cborMap, fromEncoded, type SchemaBackedClass } from '../../cbor'
 import {
   CoseDNotDefinedError,
   CoseInvalidKtyForRawError,
@@ -154,14 +154,13 @@ export class CoseKey extends CborStructure {
     return new CoseKey(options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: unknown): CoseKey {
+  public static override fromEncodedStructure<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    encodedStructure: unknown
+  ): T {
     assertKeyType(encodedStructure)
 
-    return fromEncoded(CoseKey, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): CoseKey {
-    return decodeBytes(CoseKey, bytes, options)
+    return fromEncoded(this, encodedStructure)
   }
 
   public get publicKey() {

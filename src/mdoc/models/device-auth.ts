@@ -1,12 +1,4 @@
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { type CoseKey, MacAlgorithm } from '../../cose'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
@@ -168,13 +160,5 @@ export class DeviceAuth extends CborStructure {
       check: 'No Device Signature or Device Mac found on Device Auth',
       reason: 'No Device Signature or Device Mac found on Device Auth',
     })
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceAuth {
-    return fromEncoded(DeviceAuth, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceAuth {
-    return decodeBytes(DeviceAuth, bytes, options)
   }
 }

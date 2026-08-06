@@ -1,12 +1,5 @@
 import { z } from 'zod'
-import {
-  type CborDecodeOptions,
-  CborStructure,
-  cborDynamicMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { CborStructure, cborDynamicMap, cborStructure } from '../../cbor'
 import { ErrorItems } from './error-items'
 import type { Namespace } from './namespace'
 
@@ -25,13 +18,5 @@ export class Errors extends CborStructure {
 
   public get errors(): Map<Namespace, ErrorItems> {
     return this.structure as Map<Namespace, ErrorItems>
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): Errors {
-    return fromEncoded(Errors, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Errors {
-    return decodeBytes(Errors, bytes, options)
   }
 }

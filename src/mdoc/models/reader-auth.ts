@@ -1,4 +1,3 @@
-import { type CborDecodeOptions, decodeBytes, fromEncoded } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { Sign1, type Sign1Structure } from '../../cose/sign1'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
@@ -7,14 +6,6 @@ import { ReaderAuthentication, type ReaderAuthenticationOptions } from './reader
 export type ReaderAuthStructure = Sign1Structure
 
 export class ReaderAuth extends Sign1 {
-  public static override fromEncodedStructure(encodedStructure: unknown): ReaderAuth {
-    return fromEncoded(ReaderAuth, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ReaderAuth {
-    return decodeBytes(ReaderAuth, bytes, options)
-  }
-
   public async verify(
     options: {
       readerAuthentication: ReaderAuthentication | ReaderAuthenticationOptions

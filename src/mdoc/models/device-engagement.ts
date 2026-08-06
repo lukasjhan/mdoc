@@ -12,6 +12,7 @@ import {
   DataItem,
   decodeBytes,
   fromEncoded,
+  type SchemaBackedClass,
 } from '../../cbor'
 import { DeviceRetrievalMethod, type DeviceRetrievalMethodStructure } from './device-retrieval-method'
 import { ProtocolInfo, type ProtocolInfoStructure } from './protocol-info'
@@ -115,13 +116,20 @@ export class DeviceEngagement extends CborStructure {
     return super.encode(options)
   }
 
-  public static override fromEncodedStructure(encodedStructure: unknown): DeviceEngagement {
-    return fromEncoded(DeviceEngagement, coerceNumericKeys(encodedStructure))
+  public static override fromEncodedStructure<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    encodedStructure: unknown
+  ): T {
+    return fromEncoded(this, coerceNumericKeys(encodedStructure))
   }
 
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceEngagement {
-    const engagement = decodeBytes(DeviceEngagement, bytes, options)
-    engagement.rawBytes = bytes
+  public static override decode<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    bytes: Uint8Array,
+    options?: CborDecodeOptions
+  ): T {
+    const engagement = decodeBytes(this, bytes, options)
+    ;(engagement as { rawBytes?: Uint8Array }).rawBytes = bytes
     return engagement
   }
 }

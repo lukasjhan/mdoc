@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, CborStructure, cborMap } from '../../cbor'
 import type { DataElementIdentifier } from './data-element-identifier'
 import type { Namespace } from './namespace'
 
@@ -43,13 +43,5 @@ export class KeyAuthorizations extends CborStructure {
 
   public override encodedStructure(): KeyAuthorizationsStructure {
     return super.encodedStructure() as KeyAuthorizationsStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): KeyAuthorizations {
-    return fromEncoded(KeyAuthorizations, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): KeyAuthorizations {
-    return decodeBytes(KeyAuthorizations, bytes, options)
   }
 }

@@ -1,15 +1,5 @@
 import { z } from 'zod'
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborArray,
-  cborDataItem,
-  cborStructure,
-  type DataItem,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborArray, cborDataItem, cborStructure, type DataItem } from '../../cbor'
 import { ItemsRequest, type ItemsRequestStructure } from './items-request'
 import { SessionTranscript, type SessionTranscriptStructure } from './session-transcript'
 
@@ -49,13 +39,5 @@ export class ReaderAuthentication extends CborStructure {
 
   public override encodedStructure(): ReaderAuthenticationStructure {
     return super.encodedStructure() as ReaderAuthenticationStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): ReaderAuthentication {
-    return fromEncoded(ReaderAuthentication, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ReaderAuthentication {
-    return decodeBytes(ReaderAuthentication, bytes, options)
   }
 }

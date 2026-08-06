@@ -1,12 +1,4 @@
-import {
-  buildStructure,
-  type CborDecodeOptions,
-  CborStructure,
-  cborMap,
-  cborStructure,
-  decodeBytes,
-  fromEncoded,
-} from '../../cbor'
+import { buildStructure, CborStructure, cborMap, cborStructure } from '../../cbor'
 import { Oidc, type OidcStructure } from './oidc'
 import { WebApi, type WebApiStructure } from './web-api'
 
@@ -47,13 +39,5 @@ export class ServerRetrievalMethod extends CborStructure {
 
   public override encodedStructure(): ServerRetrievalMethodStructure {
     return super.encodedStructure() as ServerRetrievalMethodStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): ServerRetrievalMethod {
-    return fromEncoded(ServerRetrievalMethod, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ServerRetrievalMethod {
-    return decodeBytes(ServerRetrievalMethod, bytes, options)
   }
 }

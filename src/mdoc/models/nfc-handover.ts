@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, cborArray, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, cborArray } from '../../cbor'
 import { Handover } from './handover'
 
 const schema = cborArray([
@@ -36,14 +36,6 @@ export class NfcHandover extends Handover {
 
   public override encodedStructure(): NfcHandoverStructure {
     return super.encodedStructure() as NfcHandoverStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): NfcHandover {
-    return fromEncoded(NfcHandover, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): NfcHandover {
-    return decodeBytes(NfcHandover, bytes, options)
   }
 
   public static override isCorrectHandover(structure: unknown): structure is NfcHandoverStructure {

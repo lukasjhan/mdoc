@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
+import { buildStructure, CborStructure, cborMap } from '../../cbor'
 
 const schema = cborMap([
   ['status', z.number().optional()],
@@ -38,13 +38,5 @@ export class SessionData extends CborStructure {
 
   public override encodedStructure(): SessionDataStructure {
     return super.encodedStructure() as SessionDataStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): SessionData {
-    return fromEncoded(SessionData, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): SessionData {
-    return decodeBytes(SessionData, bytes, options)
   }
 }

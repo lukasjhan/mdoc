@@ -10,6 +10,7 @@ import {
   cborEncode,
   cborStructure,
   fromEncoded,
+  type SchemaBackedClass,
 } from '../cbor/index.js'
 import type { MdocContext } from '../context.js'
 import { CoseCertificateNotFoundError, CoseInvalidAlgorithmError, CosePayloadMustBeDefinedError } from './error.js'
@@ -261,12 +262,19 @@ export class Sign1 extends CborStructure {
     })
   }
 
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions) {
-    return cborDecode<Sign1>(bytes, options)
-  }
+  /**
+   * Accepts the structure tagged or bare. A tag-18 structure is turned into a
+   * `Sign1` by the extension below, so its encoded form is taken back out and
+   * validated against `this`, which keeps a subclass decoding as itself.
+   */
+  public static override decode<T extends CborStructure>(
+    this: SchemaBackedClass<T>,
+    bytes: Uint8Array,
+    options?: CborDecodeOptions
+  ): T {
+    const structure = cborDecode<unknown>(bytes, options)
 
-  public static override fromEncodedStructure(encodedStructure: unknown): Sign1 {
-    return fromEncoded(Sign1, encodedStructure)
+    return fromEncoded(this, structure instanceof Sign1 ? structure.encodedStructure() : structure)
   }
 }
 
@@ -277,5 +285,6 @@ addExtension({
   encode(instance: Sign1, encodeFn: (obj: unknown) => Uint8Array) {
     return encodeFn(instance)
   },
-  decode: Sign1.fromEncodedStructure,
+  // Wrapped rather than passed by reference: the static reads `this`.
+  decode: (structure: unknown) => Sign1.fromEncodedStructure(structure),
 })

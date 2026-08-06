@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { type CborDecodeOptions, CborStructure, cborDynamicMap, decodeBytes, fromEncoded } from '../../cbor'
+import { CborStructure, cborDynamicMap } from '../../cbor'
 
 const schema = cborDynamicMap(z.number(), z.unknown())
 
@@ -22,13 +22,5 @@ export class KeyInfo extends CborStructure {
 
   public override encodedStructure(): KeyInfoStructure {
     return super.encodedStructure() as KeyInfoStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): KeyInfo {
-    return fromEncoded(KeyInfo, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): KeyInfo {
-    return decodeBytes(KeyInfo, bytes, options)
   }
 }

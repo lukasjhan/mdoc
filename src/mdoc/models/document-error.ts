@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { type CborDecodeOptions, CborStructure, cborDynamicMap, decodeBytes, fromEncoded } from '../../cbor'
+import { CborStructure, cborDynamicMap } from '../../cbor'
 import type { DocType } from './doctype'
 import type { ErrorCode } from './error-code'
 
@@ -24,13 +24,5 @@ export class DocumentError extends CborStructure {
 
   public override encodedStructure(): DocumentErrorStructure {
     return super.encodedStructure() as DocumentErrorStructure
-  }
-
-  public static override fromEncodedStructure(encodedStructure: unknown): DocumentError {
-    return fromEncoded(DocumentError, encodedStructure)
-  }
-
-  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DocumentError {
-    return decodeBytes(DocumentError, bytes, options)
   }
 }
