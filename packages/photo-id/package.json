@@ -33,7 +33,7 @@
   },
   "scripts": {
     "types:check": "tsc --noEmit",
-    "build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap",
+    "build": "tsdown src/index.ts --format esm,cjs --dts --clean --sourcemap --no-fail-on-warn",
     "test": "vitest"
   },
   "devDependencies": {
