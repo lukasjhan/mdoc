@@ -1,6 +1,19 @@
-import { CborStructure } from '../../cbor'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import { Oidc, type OidcStructure } from './oidc'
 import { WebApi, type WebApiStructure } from './web-api'
+
+const schema = cborMap([
+  ['webApi', cborStructure(WebApi).optional()],
+  ['oidc', cborStructure(Oidc).optional()],
+])
 
 export type ServerRetrievalMethodStructure = {
   webApi?: WebApiStructure
@@ -13,44 +26,34 @@ export type ServerRetrievalMethodOptions = {
 }
 
 export class ServerRetrievalMethod extends CborStructure {
-  public webApi?: WebApi
-  public oidc?: Oidc
+  public static override schema = schema
 
   public constructor(options: ServerRetrievalMethodOptions) {
-    super()
-    this.webApi = options.webApi
-    this.oidc = options.oidc
+    super(
+      buildStructure([
+        ['webApi', options.webApi],
+        ['oidc', options.oidc],
+      ])
+    )
   }
 
-  public encodedStructure(): ServerRetrievalMethodStructure {
-    const structure: ServerRetrievalMethodStructure = {}
-
-    if (this.webApi) {
-      structure.webApi = this.webApi.encodedStructure()
-    }
-
-    if (this.oidc) {
-      structure.oidc = this.oidc.encodedStructure()
-    }
-
-    return structure
+  public get webApi(): WebApi | undefined {
+    return this.structure.get('webApi') as WebApi | undefined
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: ServerRetrievalMethodStructure | Map<string, unknown>
-  ): ServerRetrievalMethod {
-    let structure = encodedStructure as ServerRetrievalMethodStructure
+  public get oidc(): Oidc | undefined {
+    return this.structure.get('oidc') as Oidc | undefined
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = {
-        webApi: encodedStructure.get('webApi') as ServerRetrievalMethodStructure['webApi'],
-        oidc: encodedStructure.get('oidc') as ServerRetrievalMethodStructure['oidc'],
-      }
-    }
+  public override encodedStructure(): ServerRetrievalMethodStructure {
+    return super.encodedStructure() as ServerRetrievalMethodStructure
+  }
 
-    return new ServerRetrievalMethod({
-      webApi: structure.webApi ? WebApi.fromEncodedStructure(structure.webApi) : undefined,
-      oidc: structure.oidc ? Oidc.fromEncodedStructure(structure.oidc) : undefined,
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): ServerRetrievalMethod {
+    return fromEncoded(ServerRetrievalMethod, encodedStructure)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ServerRetrievalMethod {
+    return decodeBytes(ServerRetrievalMethod, bytes, options)
   }
 }

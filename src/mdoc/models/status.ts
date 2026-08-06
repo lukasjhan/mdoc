@@ -1,10 +1,25 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  type CborKey,
+  CborStructure,
+  cborMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 
 /**
- * `StatusListInfo` — a reference into an IETF Token Status List (`draft-ietf-oauth-status-list`).
- * `idx` is the credential's index in the packed status array; `uri` locates the `statuslist+jwt`.
- * Encoded as a CBOR map with the tstr keys `idx` (uint) and `uri` (tstr).
+ * `StatusListInfo` -- a reference into an IETF Token Status List
+ * (`draft-ietf-oauth-status-list`). `idx` is the credential's index in the
+ * packed status array; `uri` locates the `statuslist+jwt`.
  */
+const statusListInfoSchema = cborMap([
+  ['idx', z.number()],
+  ['uri', z.string()],
+])
+
 export type StatusListInfoStructure = {
   idx: number
   uri: string
@@ -16,47 +31,47 @@ export type StatusListInfoOptions = {
 }
 
 export class StatusListInfo extends CborStructure {
-  public idx: number
-  public uri: string
+  public static override schema = statusListInfoSchema
 
   public constructor(options: StatusListInfoOptions) {
-    super()
-    this.idx = options.idx
-    this.uri = options.uri
+    super(
+      buildStructure([
+        ['idx', options.idx],
+        ['uri', options.uri],
+      ])
+    )
   }
 
-  public encodedStructure(): StatusListInfoStructure {
-    return {
-      idx: this.idx,
-      uri: this.uri,
-    }
+  public get idx(): number {
+    return this.structure.get('idx') as number
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: StatusListInfoStructure | Map<string, unknown>
-  ): StatusListInfo {
-    let structure = encodedStructure as StatusListInfoStructure
+  public get uri(): string {
+    return this.structure.get('uri') as string
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as StatusListInfoStructure
-    }
+  public override encodedStructure(): StatusListInfoStructure {
+    return super.encodedStructure() as StatusListInfoStructure
+  }
 
-    return new StatusListInfo({ idx: structure.idx, uri: structure.uri })
+  public static override fromEncodedStructure(encodedStructure: unknown): StatusListInfo {
+    return fromEncoded(StatusListInfo, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): StatusListInfo {
-    const structure = cborDecode<StatusListInfoStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-
-    return StatusListInfo.fromEncodedStructure(structure)
+    return decodeBytes(StatusListInfo, bytes, options)
   }
 }
 
 /**
- * `Status` — the optional `status` element of the MobileSecurityObject (ISO/IEC 18013-5:2021 2nd edition).
- * It carries the credential's revocation reference. Only `status_list` is modelled here (the mechanism
- * mandated by HAIP / ETSI TS 119 472-3 for EUDI); unknown entries are preserved on decode so an
- * `identifier_list` (or any future member) survives a round-trip.
+ * `Status` -- the optional `status` element of the MobileSecurityObject
+ * (ISO/IEC 18013-5 second edition). It carries the credential's revocation
+ * reference. Only `status_list` is modelled here, the mechanism HAIP and ETSI
+ * TS 119 472-3 mandate for EUDI; any other member -- an `identifier_list`, or
+ * anything added later -- is carried through untouched by the schema.
  */
+const statusSchema = cborMap([['status_list', cborStructure(StatusListInfo).optional()]])
+
 export type StatusStructure = {
   status_list?: StatusListInfoStructure
 } & Record<string, unknown>
@@ -66,56 +81,42 @@ export type StatusOptions = {
 }
 
 export class Status extends CborStructure {
-  public statusList?: StatusListInfo
-  /** Any non-`status_list` members, preserved verbatim across a decode/encode round-trip. */
-  public additional: Map<string, unknown>
+  public static override schema = statusSchema
 
   public constructor(options: StatusOptions & { additional?: Map<string, unknown> }) {
-    super()
-    this.statusList = options.statusList
+    const statusList = options.statusList
       ? options.statusList instanceof StatusListInfo
         ? options.statusList
         : new StatusListInfo(options.statusList)
       : undefined
-    this.additional = options.additional ?? new Map()
+
+    super(buildStructure([['status_list', statusList], ...(options.additional ?? new Map<CborKey, unknown>())]))
   }
 
-  public encodedStructure(): StatusStructure {
-    const structure: StatusStructure = {}
-
-    if (this.statusList) {
-      structure.status_list = this.statusList.encodedStructure()
-    }
-
-    for (const [key, value] of this.additional) {
-      structure[key] = value
-    }
-
-    return structure
+  public get statusList(): StatusListInfo | undefined {
+    return this.structure.get('status_list') as StatusListInfo | undefined
   }
 
-  public static override fromEncodedStructure(encodedStructure: StatusStructure | Map<string, unknown>): Status {
-    const entries =
-      encodedStructure instanceof Map ? encodedStructure : new Map<string, unknown>(Object.entries(encodedStructure))
-
-    const statusListEntry = entries.get('status_list')
-
+  /** Any non-`status_list` member, preserved verbatim across a round-trip. */
+  public get additional(): Map<string, unknown> {
     const additional = new Map<string, unknown>()
-    for (const [key, value] of entries) {
-      if (key !== 'status_list') additional.set(key, value)
+
+    for (const [key, value] of this.structure) {
+      if (key !== 'status_list') additional.set(String(key), value)
     }
 
-    return new Status({
-      statusList: statusListEntry
-        ? StatusListInfo.fromEncodedStructure(statusListEntry as StatusListInfoStructure | Map<string, unknown>)
-        : undefined,
-      additional,
-    })
+    return additional
+  }
+
+  public override encodedStructure(): StatusStructure {
+    return super.encodedStructure() as StatusStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): Status {
+    return fromEncoded(Status, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): Status {
-    const structure = cborDecode<StatusStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-
-    return Status.fromEncodedStructure(structure)
+    return decodeBytes(Status, bytes, options)
   }
 }

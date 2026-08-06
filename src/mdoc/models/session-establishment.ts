@@ -1,8 +1,23 @@
-import { type CborDecodeOptions, CborStructure, cborDecode, DataItem } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborDataItem,
+  cborMap,
+  type DataItem,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import type { MdocContext } from '../../context'
 import type { CoseKey } from '../../cose'
 import { EReaderKey, type EReaderKeyStructure } from './e-reader-key'
 import type { SessionTranscript } from './session-transcript'
+
+const schema = cborMap([
+  ['eReaderKey', cborDataItem(EReaderKey)],
+  ['data', z.instanceof(Uint8Array)],
+])
 
 export type SessionEstablishmentStructure = {
   eReaderKey: DataItem<EReaderKeyStructure>
@@ -15,13 +30,23 @@ export type SessionEstablishmentOptions = {
 }
 
 export class SessionEstablishment extends CborStructure {
-  public eReaderKey: EReaderKey
-  public data: Uint8Array
+  public static override schema = schema
 
   public constructor(options: SessionEstablishmentOptions) {
-    super()
-    this.eReaderKey = options.eReaderKey
-    this.data = options.data
+    super(
+      buildStructure([
+        ['eReaderKey', options.eReaderKey],
+        ['data', options.data],
+      ])
+    )
+  }
+
+  public get eReaderKey(): EReaderKey {
+    return this.structure.get('eReaderKey') as EReaderKey
+  }
+
+  public get data(): Uint8Array {
+    return this.structure.get('data') as Uint8Array
   }
 
   public async decryptedData(
@@ -43,30 +68,15 @@ export class SessionEstablishment extends CborStructure {
     throw new Error('unimplemented: ctx.crypto.decrypt must be added')
   }
 
-  public encodedStructure(): SessionEstablishmentStructure {
-    return {
-      eReaderKey: DataItem.fromData(this.eReaderKey.encodedStructure()),
-      data: this.data,
-    }
+  public override encodedStructure(): SessionEstablishmentStructure {
+    return super.encodedStructure() as SessionEstablishmentStructure
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: SessionEstablishmentStructure | Map<unknown, unknown>
-  ): SessionEstablishment {
-    let structure = encodedStructure as SessionEstablishmentStructure
-
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as SessionEstablishmentStructure
-    }
-
-    return new SessionEstablishment({
-      eReaderKey: EReaderKey.fromEncodedStructure(structure.eReaderKey.data),
-      data: structure.data,
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): SessionEstablishment {
+    return fromEncoded(SessionEstablishment, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): SessionEstablishment {
-    const structure = cborDecode<SessionEstablishmentStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return SessionEstablishment.fromEncodedStructure(structure)
+    return decodeBytes(SessionEstablishment, bytes, options)
   }
 }

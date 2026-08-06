@@ -1,4 +1,13 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import type { MdocContext } from '../../context'
 import { base64url } from '../../utils'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
@@ -6,6 +15,11 @@ import { IssuerAuth, type IssuerAuthStructure } from './issuer-auth'
 import { IssuerNamespace, type IssuerNamespaceStructure } from './issuer-namespace'
 import type { IssuerSignedItem } from './issuer-signed-item'
 import type { Namespace } from './namespace'
+
+const schema = cborMap([
+  ['nameSpaces', cborStructure(IssuerNamespace).optional()],
+  ['issuerAuth', cborStructure(IssuerAuth)],
+])
 
 export type IssuerSignedStructure = {
   nameSpaces?: IssuerNamespaceStructure
@@ -18,13 +32,23 @@ export type IssuerSignedOptions = {
 }
 
 export class IssuerSigned extends CborStructure {
-  public issuerNamespaces?: IssuerNamespace
-  public issuerAuth: IssuerAuth
+  public static override schema = schema
 
   public constructor(options: IssuerSignedOptions) {
-    super()
-    this.issuerNamespaces = options.issuerNamespaces
-    this.issuerAuth = options.issuerAuth
+    super(
+      buildStructure([
+        ['nameSpaces', options.issuerNamespaces],
+        ['issuerAuth', options.issuerAuth],
+      ])
+    )
+  }
+
+  public get issuerNamespaces(): IssuerNamespace | undefined {
+    return this.structure.get('nameSpaces') as IssuerNamespace | undefined
+  }
+
+  public get issuerAuth(): IssuerAuth {
+    return this.structure.get('issuerAuth') as IssuerAuth
   }
 
   public getIssuerNamespace(namespace: Namespace) {
@@ -134,35 +158,15 @@ export class IssuerSigned extends CborStructure {
     )
   }
 
-  public encodedStructure(): IssuerSignedStructure {
-    const structure: Partial<IssuerSignedStructure> = {}
-
-    if (this.issuerNamespaces) {
-      structure.nameSpaces = this.issuerNamespaces.encodedStructure()
-    }
-
-    structure.issuerAuth = this.issuerAuth.encodedStructure()
-
-    return structure as IssuerSignedStructure
+  public override encodedStructure(): IssuerSignedStructure {
+    return super.encodedStructure() as IssuerSignedStructure
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: IssuerSignedStructure | Map<string, unknown>
-  ): IssuerSigned {
-    let structure = encodedStructure as IssuerSignedStructure
-
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as IssuerSignedStructure
-    }
-
-    return new IssuerSigned({
-      issuerNamespaces: structure.nameSpaces ? IssuerNamespace.fromEncodedStructure(structure.nameSpaces) : undefined,
-      issuerAuth: IssuerAuth.fromEncodedStructure(structure.issuerAuth),
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): IssuerSigned {
+    return fromEncoded(IssuerSigned, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): IssuerSigned {
-    const structure = cborDecode<IssuerSignedStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return IssuerSigned.fromEncodedStructure(structure)
+    return decodeBytes(IssuerSigned, bytes, options)
   }
 }

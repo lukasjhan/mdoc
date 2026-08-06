@@ -1,5 +1,19 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import { DocRequest, type DocRequestStructure } from './doc-request'
+
+const schema = cborMap([
+  ['version', z.string()],
+  ['docRequests', z.array(cborStructure(DocRequest))],
+])
 
 export type DeviceRequestStructure = {
   version: string
@@ -12,39 +26,34 @@ export type DeviceRequestOptions = {
 }
 
 export class DeviceRequest extends CborStructure {
-  public version: string
-  public docRequests: Array<DocRequest>
+  public static override schema = schema
 
   public constructor(options: DeviceRequestOptions) {
-    super()
-    this.version = options.version ?? '1.0'
-    this.docRequests = options.docRequests
+    super(
+      buildStructure([
+        ['version', options.version ?? '1.0'],
+        ['docRequests', options.docRequests],
+      ])
+    )
   }
 
-  public encodedStructure(): DeviceRequestStructure {
-    return {
-      version: this.version,
-      docRequests: this.docRequests.map((dr) => dr.encodedStructure()),
-    }
+  public get version(): string {
+    return this.structure.get('version') as string
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: DeviceRequestStructure | Map<unknown, unknown>
-  ): DeviceRequest {
-    let structure = encodedStructure as DeviceRequestStructure
+  public get docRequests(): Array<DocRequest> {
+    return this.structure.get('docRequests') as Array<DocRequest>
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as DeviceRequestStructure
-    }
+  public override encodedStructure(): DeviceRequestStructure {
+    return super.encodedStructure() as DeviceRequestStructure
+  }
 
-    return new DeviceRequest({
-      version: structure.version,
-      docRequests: structure.docRequests.map(DocRequest.fromEncodedStructure),
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceRequest {
+    return fromEncoded(DeviceRequest, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceRequest {
-    const map = cborDecode<Map<unknown, unknown>>(bytes, options)
-    return DeviceRequest.fromEncodedStructure(map)
+    return decodeBytes(DeviceRequest, bytes, options)
   }
 }

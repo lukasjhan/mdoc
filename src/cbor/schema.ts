@@ -77,15 +77,30 @@ export const cborDataItem = <T extends CborStructure>(Class: CborStructureClass<
  * 3. **Absent optionals stay absent.** A key is only written when it has a
  *    value, so an unset optional never appears as an explicit `null`.
  */
+/**
+ * `cborDecode` yields a `Map`, but callers hand structures in as plain objects
+ * too -- which is what the hand-written decoders accepted before. Both are read.
+ */
+export const asEntries = (value: unknown): Map<unknown, unknown> | undefined => {
+  if (value instanceof Map) return value
+
+  if (value && typeof value === 'object' && !Array.isArray(value) && !ArrayBuffer.isView(value)) {
+    return new Map<unknown, unknown>(Object.entries(value))
+  }
+
+  return undefined
+}
+
 export const cborMap = (fields: readonly CborField[]) => {
   const fieldSchemas = new Map<CborKey, z.ZodType>(fields.map(([key, schema]) => [key, schema]))
   const isOptional = (schema: z.ZodType) => schema.safeParse(undefined).success
 
   return z.codec(
-    z.custom<Map<unknown, unknown>>((value) => value instanceof Map),
+    z.custom<Map<unknown, unknown> | Record<string, unknown>>((value) => asEntries(value) !== undefined),
     z.custom<CborMap>((value) => value instanceof Map),
     {
-      decode: (encoded, ctx) => {
+      decode: (input, ctx) => {
+        const encoded = asEntries(input) as Map<unknown, unknown>
         const decoded: CborMap = new Map()
 
         // Wire order first, so re-encoding reproduces the received bytes.
