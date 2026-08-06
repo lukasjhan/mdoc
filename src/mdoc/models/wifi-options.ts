@@ -8,14 +8,14 @@ import {
   type SchemaBackedClass,
 } from '../../cbor'
 
-// ISO 18013-5 keys these by unsigned integer. The previous encoder built a
-// plain object, whose keys CBOR writes as text strings.
+// ISO/IEC 18013-5:2021 8.2.2.3:
 //
-// NOTE: key 1 holds the channel number and key 2 the operating class here,
-// which is the mapping this library has always used in both directions. It
-// looks inverted relative to ISO 18013-5 Table 13; left as-is because changing
-// it would alter the wire format on a reading of the spec that has not been
-// confirmed against the text.
+//   WifiOptions = {
+//     ? 0: tstr,  ; Pass-phrase Info Pass-phrase
+//     ? 1: uint,  ; Channel Info Operating Class
+//     ? 2: uint,  ; Channel Info Channel Number
+//     ? 3: bstr   ; Band Info Supported Bands
+//   }
 const schema = cborMap([
   [0, z.string().optional()],
   [1, z.number().optional()],
@@ -44,8 +44,8 @@ export class WifiOptions extends CborStructure {
     super(
       buildStructure([
         [0, options.passPhrase],
-        [1, options.channelInfoChannelNumber],
-        [2, options.channelInfoOperatingClass],
+        [1, options.channelInfoOperatingClass],
+        [2, options.channelInfoChannelNumber],
         [3, options.bandInfoSupportedBands],
       ])
     )
@@ -55,11 +55,11 @@ export class WifiOptions extends CborStructure {
     return this.structure.get(0) as string | undefined
   }
 
-  public get channelInfoChannelNumber(): number | undefined {
+  public get channelInfoOperatingClass(): number | undefined {
     return this.structure.get(1) as number | undefined
   }
 
-  public get channelInfoOperatingClass(): number | undefined {
+  public get channelInfoChannelNumber(): number | undefined {
     return this.structure.get(2) as number | undefined
   }
 

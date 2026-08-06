@@ -33,6 +33,22 @@ describe('retrieval options use integer keys on the wire', () => {
     expect(hex.encode(new WifiOptions({ passPhrase: 'x' }).encode())).toBe('a1006178')
   })
 
+  /**
+   * ISO/IEC 18013-5:2021 8.2.2.3 puts the operating class at key 1 and the
+   * channel number at key 2. This library had the two the other way round, in
+   * both directions, so it round-tripped with itself and with nothing else.
+   */
+  it('WifiOptions puts the operating class at key 1 and the channel number at key 2', () => {
+    const encoded = hex.encode(new WifiOptions({ channelInfoOperatingClass: 81, channelInfoChannelNumber: 6 }).encode())
+
+    // a2 01 1851 02 06
+    expect(encoded).toBe('a20118510206')
+
+    const decoded = WifiOptions.decode(hex.decode(encoded))
+    expect(decoded.channelInfoOperatingClass).toBe(81)
+    expect(decoded.channelInfoChannelNumber).toBe(6)
+  })
+
   it('round-trips through decode', () => {
     const original = new BleOptions({
       peripheralServerMode: true,
