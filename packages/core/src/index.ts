@@ -1,12 +1,6 @@
-export {
-  type CborToJsonOptions,
-  cborDecode,
-  cborEncode,
-  cborToJson,
-  DataItem,
-  DateOnly,
-  type JsonValue,
-} from './cbor'
+// The CBOR layer is public: it is what a package building its own structures
+// on top of this one -- @m-doc/vical, say -- declares them with.
+export * from './cbor'
 
 export * from './context'
 export * from './cose'

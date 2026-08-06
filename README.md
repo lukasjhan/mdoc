@@ -15,6 +15,7 @@ Native.
 | --- | --- |
 | [`@m-doc/core`](./packages/core) | The mdoc data model, COSE structures, issuing and verification |
 | [`@m-doc/context`](./packages/context) | WebCrypto and X.509 bindings, for Node, the browser and React Native |
+| [`@m-doc/vical`](./packages/vical) | VICAL — the ISO/IEC 18013-5 Annex C issuer trust list |
 
 `@m-doc/core` does no cryptography itself — it takes an `MdocContext` holding
 the primitives it needs. `@m-doc/context` is a ready-made one:
