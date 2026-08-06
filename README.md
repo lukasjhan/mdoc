@@ -766,12 +766,28 @@ dependants.
 
 ## Releasing
 
-Versions are set by hand in each package. Publishing is manual, and sends up
-every package whose version is not yet on the registry.
+**Every package shares one version.** A release bumps all of them together,
+whether or not each one changed, so `@m-doc/core@1.1.0` and `@m-doc/mdl@1.1.0`
+are always the pair that were built and tested against each other. Cross-package
+dependencies are published as `^`, so a patch never forces a duplicate copy into
+a dependency tree.
+
+Versions are set by hand. Publishing sends up every package whose version is not
+yet on the registry:
 
 ```bash
 pnpm release
 ```
+
+That runs `release:check` first — it builds, packs each package with pnpm, and
+runs [publint](https://publint.dev) and
+[are-the-types-wrong](https://arethetypeswrong.github.io) against the real
+tarballs. Nothing is published unless all of it passes.
+
+Use pnpm, not npm. `exports` points at `src/index.ts` during development and is
+replaced with the `dist` map by `publishConfig.exports`, which is a pnpm
+feature; npm ignores it and would publish a package pointing at a file it did
+not ship. A `prepack` guard refuses to run under npm for that reason.
 
 ## License
 

@@ -3,7 +3,7 @@
   "description": "ISO/IEC TS 23220-4 PhotoID profile: namespaces and element identifiers",
   "license": "Apache-2.0",
   "author": "Lukas J. Han <lukas@hopae.com>",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "engines": {
     "node": ">=20.19"
   },
