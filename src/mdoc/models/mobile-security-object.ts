@@ -1,20 +1,31 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import type { DigestAlgorithm } from '../../cose'
-import { DeviceKeyInfo, type DeviceKeyInfoStructure } from './device-key-info'
+import { DeviceKeyInfo } from './device-key-info'
 import type { DocType } from './doctype'
-import { Status, type StatusOptions, type StatusStructure } from './status'
-import { ValidityInfo, type ValidityInfoStructure } from './validity-info'
-import { ValueDigests, type ValueDigestsStructure } from './value-digests'
+import { Status, type StatusOptions } from './status'
+import { ValidityInfo } from './validity-info'
+import { ValueDigests } from './value-digests'
 
-export type MobileSecurityObjectStructure = {
-  version: string
-  digestAlgorithm: string
-  docType: string
-  valueDigests: ValueDigestsStructure
-  deviceKeyInfo: DeviceKeyInfoStructure
-  validityInfo: ValidityInfoStructure
-  status?: StatusStructure
-}
+// Declaration order is wire order for structures built in memory, so it
+// matches what this library has always emitted.
+const schema = cborMap([
+  ['version', z.string()],
+  ['digestAlgorithm', z.string()],
+  ['valueDigests', cborStructure(ValueDigests)],
+  ['deviceKeyInfo', cborStructure(DeviceKeyInfo)],
+  ['docType', z.string()],
+  ['validityInfo', cborStructure(ValidityInfo)],
+  ['status', cborStructure(Status).optional()],
+])
 
 export type MobileSecurityObjectOptions = {
   version?: string
@@ -27,69 +38,55 @@ export type MobileSecurityObjectOptions = {
 }
 
 export class MobileSecurityObject extends CborStructure {
-  public version: string
-  public digestAlgorithm: DigestAlgorithm
-  public docType: string
-  public validityInfo: ValidityInfo
-  public valueDigests: ValueDigests
-  public deviceKeyInfo: DeviceKeyInfo
-  public status?: Status
+  public static override schema = schema
 
   public constructor(options: MobileSecurityObjectOptions) {
-    super()
-    this.version = options.version ?? '1.0'
-    this.digestAlgorithm = options.digestAlgorithm
-    this.docType = options.docType
-    this.validityInfo = options.validityInfo
-    this.valueDigests = options.valueDigests
-    this.deviceKeyInfo = options.deviceKeyInfo
-    this.status = options.status
-      ? options.status instanceof Status
-        ? options.status
-        : new Status(options.status)
-      : undefined
+    super(
+      buildStructure([
+        ['version', options.version ?? '1.0'],
+        ['digestAlgorithm', options.digestAlgorithm],
+        ['valueDigests', options.valueDigests],
+        ['deviceKeyInfo', options.deviceKeyInfo],
+        ['docType', options.docType],
+        ['validityInfo', options.validityInfo],
+        ['status', options.status instanceof Status ? options.status : options.status && new Status(options.status)],
+      ])
+    )
   }
 
-  public encodedStructure(): MobileSecurityObjectStructure {
-    const structure: MobileSecurityObjectStructure = {
-      version: this.version,
-      digestAlgorithm: this.digestAlgorithm,
-      valueDigests: this.valueDigests.encodedStructure(),
-      deviceKeyInfo: this.deviceKeyInfo.encodedStructure(),
-      docType: this.docType,
-      validityInfo: this.validityInfo.encodedStructure(),
-    }
-
-    if (this.status) {
-      structure.status = this.status.encodedStructure()
-    }
-
-    return structure
+  public get version(): string {
+    return this.structure.get('version') as string
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: MobileSecurityObjectStructure | Map<string, unknown>
-  ): MobileSecurityObject {
-    let structure = encodedStructure as MobileSecurityObjectStructure
+  public get digestAlgorithm(): DigestAlgorithm {
+    return this.structure.get('digestAlgorithm') as DigestAlgorithm
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as MobileSecurityObjectStructure
-    }
+  public get docType(): string {
+    return this.structure.get('docType') as string
+  }
 
-    return new MobileSecurityObject({
-      version: structure.version,
-      digestAlgorithm: structure.digestAlgorithm as DigestAlgorithm,
-      docType: structure.docType,
-      validityInfo: ValidityInfo.fromEncodedStructure(structure.validityInfo),
-      valueDigests: ValueDigests.fromEncodedStructure(structure.valueDigests),
-      deviceKeyInfo: DeviceKeyInfo.fromEncodedStructure(structure.deviceKeyInfo),
-      status: structure.status ? Status.fromEncodedStructure(structure.status) : undefined,
-    })
+  public get valueDigests(): ValueDigests {
+    return this.structure.get('valueDigests') as ValueDigests
+  }
+
+  public get deviceKeyInfo(): DeviceKeyInfo {
+    return this.structure.get('deviceKeyInfo') as DeviceKeyInfo
+  }
+
+  public get validityInfo(): ValidityInfo {
+    return this.structure.get('validityInfo') as ValidityInfo
+  }
+
+  public get status(): Status | undefined {
+    return this.structure.get('status') as Status | undefined
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): MobileSecurityObject {
+    return fromEncoded(MobileSecurityObject, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): MobileSecurityObject {
-    const structure = cborDecode<MobileSecurityObjectStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-
-    return MobileSecurityObject.fromEncodedStructure(structure)
+    return decodeBytes(MobileSecurityObject, bytes, options)
   }
 }

@@ -3,7 +3,7 @@ import type { MdocContext } from '../../context.js'
 import { CosePayloadInvalidStructureError, CosePayloadMustBeDefinedError } from '../../cose/error.js'
 import { Sign1, type Sign1Options, type Sign1Structure } from '../../cose/sign1.js'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback.js'
-import { MobileSecurityObject, type MobileSecurityObjectStructure } from './mobile-security-object.js'
+import { MobileSecurityObject } from './mobile-security-object.js'
 
 export type IssuerAuthStructure = Sign1Structure
 export type IssuerAuthOptions = Sign1Options
@@ -18,7 +18,7 @@ export class IssuerAuth extends Sign1 {
       throw new CosePayloadMustBeDefinedError()
     }
 
-    const dataItem = cborDecode<DataItem<MobileSecurityObjectStructure>>(this.payload, {
+    const dataItem = cborDecode<DataItem<unknown>>(this.payload, {
       unwrapTopLevelDataItem: false,
     })
 

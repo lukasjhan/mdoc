@@ -37,7 +37,8 @@
     "changeset-version": "pnpm changeset version && pnpm style:fix"
   },
   "dependencies": {
-    "cbor-x": "^1.6.5"
+    "cbor-x": "^1.6.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",
