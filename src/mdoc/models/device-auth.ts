@@ -1,4 +1,12 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import type { MdocContext } from '../../context'
 import { type CoseKey, MacAlgorithm } from '../../cose'
 import { defaultVerificationCallback, onCategoryCheck, type VerificationCallback } from '../check-callback'
@@ -8,6 +16,11 @@ import { DeviceMac, type DeviceMacStructure } from './device-mac'
 import { DeviceSignature, type DeviceSignatureStructure } from './device-signature'
 import type { Document } from './document'
 import type { SessionTranscript } from './session-transcript'
+
+const schema = cborMap([
+  ['deviceSignature', cborStructure(DeviceSignature).optional()],
+  ['deviceMac', cborStructure(DeviceMac).optional()],
+])
 
 export type DeviceAuthStructure = {
   deviceSignature?: DeviceSignatureStructure
@@ -20,16 +33,25 @@ export type DeviceAuthOptions = {
 }
 
 export class DeviceAuth extends CborStructure {
-  public deviceSignature?: DeviceSignature
-  public deviceMac?: DeviceMac
+  public static override schema = schema
 
   public constructor(options: DeviceAuthOptions) {
-    super()
-
-    this.deviceSignature = options.deviceSignature
-    this.deviceMac = options.deviceMac
+    super(
+      buildStructure([
+        ['deviceSignature', options.deviceSignature],
+        ['deviceMac', options.deviceMac],
+      ])
+    )
 
     this.assertEitherMacOrSignature()
+  }
+
+  public get deviceSignature(): DeviceSignature | undefined {
+    return this.structure.get('deviceSignature') as DeviceSignature | undefined
+  }
+
+  public get deviceMac(): DeviceMac | undefined {
+    return this.structure.get('deviceMac') as DeviceMac | undefined
   }
 
   private assertEitherMacOrSignature() {
@@ -42,22 +64,10 @@ export class DeviceAuth extends CborStructure {
     }
   }
 
-  public encodedStructure(): DeviceAuthStructure {
+  public override encodedStructure(): DeviceAuthStructure {
     this.assertEitherMacOrSignature()
 
-    if (this.deviceSignature) {
-      return {
-        deviceSignature: this.deviceSignature.encodedStructure(),
-      }
-    }
-
-    if (this.deviceMac) {
-      return {
-        deviceMac: this.deviceMac.encodedStructure(),
-      }
-    }
-
-    throw new MdlError('unreachable')
+    return super.encodedStructure() as DeviceAuthStructure
   }
 
   public async verify(
@@ -160,29 +170,11 @@ export class DeviceAuth extends CborStructure {
     })
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: DeviceAuthStructure | Map<string, unknown>
-  ): DeviceAuth {
-    let structure = encodedStructure as DeviceAuthStructure
-
-    if (encodedStructure instanceof Map) {
-      structure = {
-        deviceMac: encodedStructure.get('deviceMac') as DeviceAuthStructure['deviceMac'],
-        deviceSignature: encodedStructure.get('deviceSignature') as DeviceAuthStructure['deviceSignature'],
-      }
-    }
-
-    return new DeviceAuth({
-      deviceSignature: structure.deviceSignature
-        ? DeviceSignature.fromEncodedStructure(structure.deviceSignature)
-        : undefined,
-      deviceMac: structure.deviceMac ? DeviceMac.fromEncodedStructure(structure.deviceMac) : undefined,
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceAuth {
+    return fromEncoded(DeviceAuth, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceAuth {
-    const structure = cborDecode<DeviceAuthStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-
-    return DeviceAuth.fromEncodedStructure(structure)
+    return decodeBytes(DeviceAuth, bytes, options)
   }
 }

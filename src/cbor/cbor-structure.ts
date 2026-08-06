@@ -104,9 +104,20 @@ export const fromEncoded = <T extends CborStructure>(Class: SchemaBackedClass<T>
   return instance
 }
 
-/** Decodes CBOR bytes into a model instance, validating against its schema. */
+/**
+ * Decodes CBOR bytes into a model instance, validating against its schema.
+ *
+ * Routed through the model's own `fromEncodedStructure` rather than straight to
+ * `fromEncoded`, because some models have work to do before validation --
+ * picking the class a polymorphic position holds, or reading integer labels a
+ * peer wrote as text.
+ */
 export const decodeBytes = <T extends CborStructure>(
-  Class: SchemaBackedClass<T>,
+  Class: SchemaBackedClass<T> & { fromEncodedStructure?: (encodedStructure: unknown) => T },
   bytes: Uint8Array,
   options?: CborDecodeOptions
-): T => fromEncoded(Class, cborDecode(bytes, { ...(options ?? {}), mapsAsObjects: false }))
+): T => {
+  const structure = cborDecode(bytes, { ...(options ?? {}), mapsAsObjects: false })
+
+  return Class.fromEncodedStructure ? Class.fromEncodedStructure(structure) : fromEncoded(Class, structure)
+}

@@ -1,4 +1,5 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, CborStructure, cborArray, decodeBytes, fromEncoded } from '../../cbor'
 import { CborEncodeError } from '../../cbor/error'
 import { BleOptions } from './ble-options'
 import { NfcOptions } from './nfc-options'
@@ -11,6 +12,26 @@ export enum DeviceRetrievalMethodType {
   WifiAware = 3,
 }
 
+/**
+ * Which class position 2 holds depends on position 0, which a per-position
+ * schema cannot see. The options are therefore instantiated before validation,
+ * in `fromEncodedStructure`, and this codec only carries them back out.
+ */
+const retrievalOptions = z.codec(
+  z.unknown(),
+  z.custom<RetrievalOptions>((value) => value instanceof CborStructure),
+  {
+    decode: (encoded) => encoded as RetrievalOptions,
+    encode: (options) => options.encodedStructure(),
+  }
+)
+
+const schema = cborArray([
+  ['type', z.number()],
+  ['version', z.number()],
+  ['retrievalOptions', retrievalOptions],
+])
+
 export type DeviceRetrievalMethodStructure = [DeviceRetrievalMethodType, number, RetrievalOptionsStructure]
 
 export type DeviceRetrievalMethodOptions = {
@@ -19,51 +40,55 @@ export type DeviceRetrievalMethodOptions = {
   retrievalOptions: RetrievalOptions
 }
 
+const optionsClassFor = (type: unknown) => {
+  if (type === DeviceRetrievalMethodType.Nfc) return NfcOptions
+  if (type === DeviceRetrievalMethodType.Ble) return BleOptions
+  if (type === DeviceRetrievalMethodType.WifiAware) return WifiOptions
+
+  throw new CborEncodeError(`Type '${type}' does not match a valid device retrieval type`)
+}
+
 export class DeviceRetrievalMethod extends CborStructure {
-  public type: DeviceRetrievalMethodType
-  public version: number
-  public retrievalOptions: RetrievalOptions
+  public static override schema = schema
 
   public constructor(options: DeviceRetrievalMethodOptions) {
-    super()
-    this.type = options.type
-    this.version = options.version
-    this.retrievalOptions = options.retrievalOptions
+    super(
+      buildStructure([
+        ['type', options.type],
+        ['version', options.version],
+        ['retrievalOptions', options.retrievalOptions],
+      ])
+    )
   }
 
-  public encodedStructure(): DeviceRetrievalMethodStructure {
-    return [this.type, this.version, this.retrievalOptions.encodedStructure()]
+  public get type(): DeviceRetrievalMethodType {
+    return this.structure.get('type') as DeviceRetrievalMethodType
   }
 
-  public static override fromEncodedStructure(encodedStructure: DeviceRetrievalMethodStructure): DeviceRetrievalMethod {
-    const type = encodedStructure[0]
-    const version = encodedStructure[1]
-    const retrievalOptions = encodedStructure[2]
+  public get version(): number {
+    return this.structure.get('version') as number
+  }
 
-    const RetrievalOptionsCls =
-      type === DeviceRetrievalMethodType.Nfc
-        ? NfcOptions
-        : type === DeviceRetrievalMethodType.Ble
-          ? BleOptions
-          : type === DeviceRetrievalMethodType.WifiAware
-            ? WifiOptions
-            : undefined
+  public get retrievalOptions(): RetrievalOptions {
+    return this.structure.get('retrievalOptions') as RetrievalOptions
+  }
 
-    if (!RetrievalOptionsCls) {
-      throw new CborEncodeError(`Type '${type}' does not match a valid device retrieval type`)
+  public override encodedStructure(): DeviceRetrievalMethodStructure {
+    return super.encodedStructure() as DeviceRetrievalMethodStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceRetrievalMethod {
+    if (!Array.isArray(encodedStructure)) {
+      throw new CborEncodeError('A device retrieval method must be an array')
     }
 
-    return new DeviceRetrievalMethod({
-      type,
-      version,
-      retrievalOptions: RetrievalOptionsCls.fromEncodedStructure(
-        retrievalOptions as Map<number, unknown>
-      ) as RetrievalOptions,
-    })
+    const [type, version, options] = encodedStructure
+    const instantiated = optionsClassFor(type).fromEncodedStructure(options) as RetrievalOptions
+
+    return fromEncoded(DeviceRetrievalMethod, [type, version, instantiated])
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceRetrievalMethod {
-    const structure = cborDecode<DeviceRetrievalMethodStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return DeviceRetrievalMethod.fromEncodedStructure(structure)
+    return decodeBytes(DeviceRetrievalMethod, bytes, options)
   }
 }

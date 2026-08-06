@@ -1,15 +1,33 @@
+import { z } from 'zod'
 import {
+  buildStructure,
   type CborDecodeOptions,
   type CborEncodeOptions,
+  type CborKey,
   CborStructure,
-  cborDecode,
   cborEncode,
+  cborMap,
+  cborStructure,
+  coerceNumericKeys,
   DataItem,
+  decodeBytes,
+  fromEncoded,
 } from '../../cbor'
 import { DeviceRetrievalMethod, type DeviceRetrievalMethodStructure } from './device-retrieval-method'
 import { ProtocolInfo, type ProtocolInfoStructure } from './protocol-info'
 import { Security, type SecurityStructure } from './security'
 import { ServerRetrievalMethod, type ServerRetrievalMethodStructure } from './server-retrieval-method'
+
+// ISO 18013-5 keys DeviceEngagement by unsigned integer, and leaves the range
+// above 4 open. Keys the schema does not name pass through untouched, which is
+// what the previous `extra` bag was doing by hand.
+const schema = cborMap([
+  [0, z.string()],
+  [1, cborStructure(Security)],
+  [2, z.array(cborStructure(DeviceRetrievalMethod)).optional()],
+  [3, z.array(cborStructure(ServerRetrievalMethod)).optional()],
+  [4, cborStructure(ProtocolInfo).optional()],
+])
 
 export type DeviceEngagementStructure = {
   0: string
@@ -29,93 +47,81 @@ export type DeviceEngagementOptions = {
 }
 
 export class DeviceEngagement extends CborStructure {
-  public version: string
-  public security: Security
-  public deviceRetrievalMethods?: Array<DeviceRetrievalMethod>
-  public serverRetrievalMethods?: Array<ServerRetrievalMethod>
-  public protocolInfo?: ProtocolInfo
-  public extra?: Record<string, unknown>
+  public static override schema = schema
 
   /**
-   * Original CBOR bytes (preserved when decoding to ensure encode() returns identical bytes)
+   * Original CBOR bytes, kept when decoding so that encode() reproduces them.
+   * The session keys derive over these, so they cannot be rebuilt by
+   * re-encoding. A plain property rather than a private field: decoded
+   * structures are built without running the constructor.
    */
-  #rawBytes?: Uint8Array
+  protected rawBytes?: Uint8Array
 
   public constructor(options: DeviceEngagementOptions) {
-    super()
-    this.version = options.version
-    this.security = options.security
-    this.deviceRetrievalMethods = options.deviceRetrievalMethods
-    this.serverRetrievalMethods = options.serverRetrievalMethods
-    this.protocolInfo = options.protocolInfo
-    this.extra = options.extra
+    super(
+      buildStructure([
+        [0, options.version],
+        [1, options.security],
+        [2, options.deviceRetrievalMethods],
+        [3, options.serverRetrievalMethods],
+        [4, options.protocolInfo],
+        ...Object.entries(options.extra ?? {}).map(([key, value]) => [Number(key), value] as [CborKey, unknown]),
+      ])
+    )
   }
 
-  public encodedStructure(): DeviceEngagementStructure {
-    let structure: DeviceEngagementStructure = {
-      0: this.version,
-      1: this.security.encodedStructure(),
+  public get version(): string {
+    return this.structure.get(0) as string
+  }
+
+  public get security(): Security {
+    return this.structure.get(1) as Security
+  }
+
+  public get deviceRetrievalMethods(): Array<DeviceRetrievalMethod> | undefined {
+    return this.structure.get(2) as Array<DeviceRetrievalMethod> | undefined
+  }
+
+  public get serverRetrievalMethods(): Array<ServerRetrievalMethod> | undefined {
+    return this.structure.get(3) as Array<ServerRetrievalMethod> | undefined
+  }
+
+  public get protocolInfo(): ProtocolInfo | undefined {
+    return this.structure.get(4) as ProtocolInfo | undefined
+  }
+
+  /** Members outside the range this class models, preserved across a round-trip. */
+  public get extra(): Record<string, unknown> {
+    const extra: Record<string, unknown> = {}
+
+    for (const [key, value] of this.structure) {
+      if (![0, 1, 2, 3, 4].includes(key as number)) extra[String(key)] = value
     }
 
-    if (this.deviceRetrievalMethods) {
-      structure[2] = this.deviceRetrievalMethods.map((drm) => drm.encodedStructure())
-    }
+    return extra
+  }
 
-    if (this.serverRetrievalMethods) {
-      structure[3] = this.serverRetrievalMethods.map((srm) => srm.encodedStructure())
-    }
-
-    if (this.protocolInfo) {
-      structure[4] = this.protocolInfo.encodedStructure()
-    }
-
-    if (this.extra) {
-      structure = { ...structure, ...this.extra }
-    }
-
-    return structure
+  public override encodedStructure(): DeviceEngagementStructure {
+    return super.encodedStructure() as unknown as DeviceEngagementStructure
   }
 
   public override encode(options?: CborEncodeOptions): Uint8Array {
-    if (this.#rawBytes) {
+    if (this.rawBytes) {
       if (options?.asDataItem) {
-        return cborEncode(new DataItem({ buffer: this.#rawBytes }))
+        return cborEncode(new DataItem({ buffer: this.rawBytes }))
       }
-      return this.#rawBytes
+      return this.rawBytes
     }
     return super.encode(options)
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: DeviceEngagementStructure | Map<unknown, unknown>
-  ): DeviceEngagement {
-    let structure = encodedStructure as DeviceEngagementStructure
-
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as DeviceEngagementStructure
-    }
-
-    const definedKeys = ['0', '1', '2', '3', '4']
-    const extras: Record<string, unknown> = {}
-    for (const [k, v] of Object.entries(structure)) {
-      if (definedKeys.includes(k)) continue
-      extras[k] = v
-    }
-
-    return new DeviceEngagement({
-      version: structure[0],
-      security: Security.fromEncodedStructure(structure[1]),
-      deviceRetrievalMethods: structure[2] ? structure[2].map(DeviceRetrievalMethod.fromEncodedStructure) : undefined,
-      serverRetrievalMethods: structure[3] ? structure[3].map(ServerRetrievalMethod.fromEncodedStructure) : undefined,
-      protocolInfo: structure[4] ? ProtocolInfo.fromEncodedStructure(structure[4]) : undefined,
-      extra: extras,
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceEngagement {
+    return fromEncoded(DeviceEngagement, coerceNumericKeys(encodedStructure))
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceEngagement {
-    const structure = cborDecode<DeviceEngagementStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    const engagement = DeviceEngagement.fromEncodedStructure(structure)
-    engagement.#rawBytes = bytes
+    const engagement = decodeBytes(DeviceEngagement, bytes, options)
+    engagement.rawBytes = bytes
     return engagement
   }
 }

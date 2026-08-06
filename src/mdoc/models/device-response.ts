@@ -1,4 +1,13 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborMap,
+  cborStructure,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import type { MdocContext } from '../../context'
 import { type CoseKey, Header, ProtectedHeaders, UnprotectedHeaders } from '../../cose'
 import { base64url } from '../../utils'
@@ -19,6 +28,13 @@ import { DocumentError, type DocumentErrorStructure } from './document-error'
 import { IssuerSigned } from './issuer-signed'
 import type { SessionTranscript } from './session-transcript'
 
+const schema = cborMap([
+  ['version', z.string()],
+  ['documents', z.array(cborStructure(Document)).optional()],
+  ['documentErrors', z.array(cborStructure(DocumentError)).optional()],
+  ['status', z.number()],
+])
+
 export type DeviceResponseStructure = {
   version: string
   documents?: Array<DocumentStructure>
@@ -34,57 +50,45 @@ export type DeviceResponseOptions = {
 }
 
 export class DeviceResponse extends CborStructure {
-  public version: string
-  public documents?: Array<Document>
-  public documentErrors?: Array<DocumentError>
-  public status: number
+  public static override schema = schema
 
   public constructor(options: DeviceResponseOptions) {
-    super()
-    this.version = options.version ?? '1.0'
-    this.documents = options.documents
-    this.documentErrors = options.documentErrors
-    this.status = options.status ?? 0
+    super(
+      buildStructure([
+        ['version', options.version ?? '1.0'],
+        ['documents', options.documents],
+        ['documentErrors', options.documentErrors],
+        ['status', options.status ?? 0],
+      ])
+    )
   }
 
-  public encodedStructure(): DeviceResponseStructure {
-    const structure: Partial<DeviceResponseStructure> = {
-      version: this.version,
-    }
-
-    if (this.documents) {
-      structure.documents = this.documents?.map((d) => d.encodedStructure())
-    }
-
-    if (this.documentErrors) {
-      structure.documentErrors = this.documentErrors?.map((d) => d.encodedStructure())
-    }
-
-    structure.status = this.status
-
-    return structure as DeviceResponseStructure
+  public get version(): string {
+    return this.structure.get('version') as string
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: DeviceResponseStructure | Map<unknown, unknown>
-  ): DeviceResponse {
-    let structure = encodedStructure as DeviceResponseStructure
+  public get documents(): Array<Document> | undefined {
+    return this.structure.get('documents') as Array<Document> | undefined
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as DeviceResponseStructure
-    }
+  public get documentErrors(): Array<DocumentError> | undefined {
+    return this.structure.get('documentErrors') as Array<DocumentError> | undefined
+  }
 
-    return new DeviceResponse({
-      version: structure.version,
-      status: structure.status,
-      documents: structure.documents?.map(Document.fromEncodedStructure),
-      documentErrors: structure.documentErrors?.map(DocumentError.fromEncodedStructure),
-    })
+  public get status(): number {
+    return this.structure.get('status') as number
+  }
+
+  public override encodedStructure(): DeviceResponseStructure {
+    return super.encodedStructure() as DeviceResponseStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceResponse {
+    return fromEncoded(DeviceResponse, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceResponse {
-    const structure = cborDecode<DeviceResponseStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return DeviceResponse.fromEncodedStructure(structure)
+    return decodeBytes(DeviceResponse, bytes, options)
   }
 
   public async verify(
