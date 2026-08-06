@@ -38,7 +38,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@m-doc/core": "workspace:*"
+    "@m-doc/core": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",

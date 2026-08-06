@@ -38,7 +38,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@m-doc/core": "workspace:*",
+    "@m-doc/core": "workspace:^",
     "zod": "^4.4.3"
   },
   "devDependencies": {

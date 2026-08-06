@@ -38,7 +38,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@m-doc/core": "workspace:*",
+    "@m-doc/core": "workspace:^",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@panva/hkdf": "^1.2.1",
