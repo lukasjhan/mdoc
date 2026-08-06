@@ -4,6 +4,7 @@ import type { MdocContext } from '../../context'
 import { DeviceEngagement, type DeviceEngagementStructure } from './device-engagement'
 import { EReaderKey, type EReaderKeyStructure } from './e-reader-key'
 import { Handover } from './handover'
+import { IsoMdocDcApiHandover, type IsoMdocDcApiHandoverOptions } from './iso-mdoc-dc-api-handover'
 import { NfcHandover } from './nfc-handover'
 import {
   Oid4vpDcApiDraft24HandoverInfo,
@@ -48,7 +49,7 @@ const handoverCodec = z.codec(
       const candidates: Array<{
         isCorrectHandover(structure: unknown): boolean
         fromEncodedStructure(structure: unknown): Handover
-      }> = [NfcHandover, QrHandover, Oid4vpHandover, Oid4vpDraft18Handover, Oid4vpDcApiHandover]
+      }> = [NfcHandover, QrHandover, Oid4vpHandover, Oid4vpDraft18Handover, Oid4vpDcApiHandover, IsoMdocDcApiHandover]
 
       for (const candidate of candidates) {
         if (candidate.isCorrectHandover(encoded)) return candidate.fromEncodedStructure(encoded)
@@ -148,6 +149,17 @@ export class SessionTranscript extends CborStructure {
     const handover = await new Oid4vpDcApiHandover({ oid4vpDcApiHandoverInfo: info }).prepare(ctx)
 
     return new SessionTranscript({ handover })
+  }
+
+  /**
+   * Calculate the session transcript for the ISO 18013-7 Annex C `org-iso-mdoc`
+   * DC API protocol, which a wallet answering an `org-iso-mdoc` request uses.
+   */
+  public static async forIsoMdocDcApi(
+    options: Required<Pick<IsoMdocDcApiHandoverOptions, 'encryptionInfoBase64Url' | 'origin'>>,
+    ctx: Pick<MdocContext, 'crypto'>
+  ) {
+    return new SessionTranscript({ handover: await new IsoMdocDcApiHandover(options).prepare(ctx) })
   }
 
   public static async forOid4Vp(options: Oid4vpHandoverInfoOptions, ctx: Pick<MdocContext, 'crypto'>) {
