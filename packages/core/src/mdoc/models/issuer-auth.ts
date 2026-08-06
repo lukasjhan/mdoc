@@ -82,7 +82,7 @@ export class IssuerAuth extends Sign1 {
 
     onCheck({
       status: isSignatureValid ? 'PASSED' : 'FAILED',
-      check: 'Issuer auth signature is invalid',
+      check: 'Issuer auth signature must be valid',
     })
 
     const { validityInfo } = this.mobileSecurityObject

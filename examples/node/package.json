@@ -1,0 +1,27 @@
+{
+  "name": "@m-doc/examples",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runnable examples: issuing, presenting, verifying and reading a VICAL",
+  "scripts": {
+    "issue": "tsx src/01-issue.ts",
+    "present": "tsx src/02-present.ts",
+    "verify": "tsx src/03-verify.ts",
+    "vical": "tsx src/04-vical.ts",
+    "all": "pnpm issue && pnpm present && pnpm verify && pnpm vical",
+    "types:check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@m-doc/context": "workspace:*",
+    "@m-doc/core": "workspace:*",
+    "@m-doc/mdl": "workspace:*",
+    "@m-doc/photo-id": "workspace:*",
+    "@m-doc/vical": "workspace:*",
+    "@peculiar/x509": "^1.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.3"
+  }
+}

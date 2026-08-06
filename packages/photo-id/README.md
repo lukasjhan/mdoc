@@ -7,11 +7,16 @@
 </p>
 
 The PhotoID profile of ISO/IEC TS 23220-4:2026 Annex C: its namespaces, its
-element identifiers, and the conditional rule Table C.2 puts on the
-travel-document elements.
+element identifiers and encodings, and the conditional rule Table C.2 puts on
+the travel-document elements.
 
-[`@m-doc/core`](../core) reads and writes the document; this package says what
-belongs in it. It has no runtime dependencies.
+[`@m-doc/core`](https://www.npmjs.com/package/@m-doc/core) reads and writes the
+document; this package says what belongs in it. It is pure data and functions,
+with **no runtime dependencies at all** — not even on `@m-doc/core`.
+
+Part of [**m-doc**](https://github.com/lukasjhan/mdoc). The
+[browser playground](https://mdoc-playground.vercel.app) issues PhotoIDs with
+it.
 
 ## Installation
 
@@ -36,6 +41,40 @@ import {
 
 Data groups are left as bytes: parsing ICAO 9303 is a separate concern.
 
+## Element identifiers and encodings
+
+```ts
+import {
+  PHOTO_ID_MANDATORY_ELEMENTS,     // Table C.1, presence M
+  PHOTO_ID_RECOMMENDED_ELEMENTS,   // Table C.1 recommends these
+  PHOTO_ID_OPTIONAL_ELEMENTS,      // Table C.1, presence O
+  PHOTO_ID_SPECIFIC_ELEMENTS,      // Table C.2 — PhotoID's own
+  PHOTO_ID_ELEMENT_ENCODING,
+  encodingFor,
+  Sex,
+} from '@m-doc/photo-id'
+
+encodingFor('family_name')     // 'tstr'
+encodingFor('birth_date')      // 'full-date'
+encodingFor('portrait')        // 'bstr'
+encodingFor('sex')             // 'uint'
+encodingFor('age_over_18')     // 'bool' — any NN
+```
+
+`Sex` follows ISO/IEC 5218, with the profile's note that `9` means X rather than
+"not applicable":
+
+```ts
+Sex.NotKnown  // 0
+Sex.Male      // 1
+Sex.Female    // 2
+Sex.X         // 9
+```
+
+The identifier types are exported too — `PhotoIdBaseElementIdentifier`,
+`PhotoIdMandatoryElementIdentifier`, `PhotoIdSpecificElementIdentifier`,
+`PhotoIdEncoding`, `SexValue`.
+
 ## Profile checks
 
 ```ts
@@ -46,11 +85,20 @@ findMissingMandatoryElements(baseClaims)
 
 // Table C.2 makes these conditional: required once dg1 is present
 findTravelDocumentIssues({ photoIdClaims, dataGroupClaims })
-// → [{ element: 'travel_document_mrz', reason: '…' }]
+// → [{ element: 'travel_document_mrz', reason: 'travel_document_mrz is required when dg1 is present' }]
 ```
+
+`findTravelDocumentIssues` takes both sets of claims because the condition spans
+namespaces: `dg1` lives in the data-group namespace and the two elements it
+requires live in the PhotoID namespace. With no `dg1`, they are optional and it
+returns nothing.
 
 `findMissingMandatoryElements` is a finding on a document that was meant to be
 complete. A presented PhotoID is allowed to disclose a subset.
+
+## Requirements
+
+Node 20.19 or newer. Ships ESM and CJS, with type declarations for both.
 
 ## License
 

@@ -11,6 +11,7 @@ Native.
 
 - [Packages](#packages) · [Install](#install)
 - [Quick start](#quick-start) — the whole round trip
+- [Examples](#examples) — four runnable programs
 - [Concepts](#concepts) — `MdocContext`, `CborStructure`
 - [`@m-doc/core`](#m-doccore) — [issuing](#issuing) · [holding](#holding) · [verifying](#verifying) · [reading claims](#reading-claims) · [session transcripts](#session-transcripts) · [COSE](#cose) · [the CBOR layer](#the-cbor-layer)
 - [`@m-doc/context`](#m-doccontext) · [`@m-doc/vical`](#m-docvical) · [`@m-doc/mdl`](#m-docmdl) · [`@m-doc/photo-id`](#m-docphoto-id)
@@ -112,7 +113,30 @@ received.getAllPrettyClaims()['org.iso.18013.5.1.mDL']['org.iso.18013.5.1']
 // { family_name: 'Doe', age_over_18: true } — given_name and document_number stayed behind
 ```
 
-The same round trip, runnable, is in
+## Examples
+
+[`examples/node`](./examples/node) holds four TypeScript programs, each one
+runnable and each one about a single step. No build step — the workspace
+packages resolve to their sources and `tsx` runs them directly.
+
+```bash
+pnpm install
+cd examples/node
+
+pnpm issue     # sign an mDL
+pnpm present   # answer a request with a subset of it
+pnpm verify    # check what came back, one named check at a time
+pnpm vical     # read a real AAMVA trust list
+```
+
+| File | Shows |
+| --- | --- |
+| [`01-issue.ts`](./examples/node/src/01-issue.ts) | Claim types, `age_over_NN`, the MSO, a status list entry, reading back as CBOR and as JSON |
+| [`02-present.ts`](./examples/node/src/02-present.ts) | Session transcripts, items requests, selective disclosure, `intentToRetain`, §7.2.5 age resolution |
+| [`03-verify.ts`](./examples/node/src/03-verify.ts) | Every verification check, grouped by category, then the profile checks a signature cannot answer |
+| [`04-vical.ts`](./examples/node/src/04-vical.ts) | Decoding and verifying a genuine AAMVA VICAL, and looking entries up by country, SKI and docType |
+
+The same round trip as an assertion is in
 [`packages/context/tests/end-to-end.test.ts`](./packages/context/tests/end-to-end.test.ts).
 
 ## Concepts
@@ -241,7 +265,7 @@ makes selective disclosure possible later.
 Revocation is carried in `status`, per the IETF Token Status List binding:
 
 ```ts
-.sign({ …, status: { statusList: { index: 412, uri: 'https://issuer.example.com/statuslists/1' } } })
+.sign({ …, status: { statusList: { idx: 412, uri: 'https://issuer.example.com/statuslists/1' } } })
 ```
 
 Handing the result to a wallet over OpenID4VCI:
@@ -560,7 +584,7 @@ vical.certificateInfos  // Array<CertificateInfo>
 vical.forDocType('org.iso.18013.5.1.mDL')   // entries valid for a docType
 vical.forCountry('NL')                      // by issuing country
 vical.forSubjectKeyIdentifier(ski)          // by SKI
-vical.trustAnchors(docType)                 // Map<hex SKI, CertificateInfo>
+vical.trustAnchors(docType)                 // Map<issuing country, CertificateInfo>
 vical.certificates(docType)                 // Array<Uint8Array>
 ```
 
