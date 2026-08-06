@@ -1,8 +1,14 @@
-import { CborStructure } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
 import type { DataElementIdentifier } from './data-element-identifier'
 import type { DocType } from './doctype'
 import type { IntentToRetain } from './itent-to-retain'
 import type { Namespace } from './namespace'
+
+const schema = cborMap([
+  ['docType', z.string()],
+  ['nameSpaces', z.map(z.string(), z.map(z.string(), z.boolean()))],
+])
 
 export type ItemsRequestStructure = {
   docType: DocType
@@ -17,37 +23,39 @@ export type ItemsRequestOptions = {
 }
 
 export class ItemsRequest extends CborStructure {
-  public docType: DocType
-  public namespaces: Map<Namespace, Map<DataElementIdentifier, IntentToRetain>>
+  public static override schema = schema
 
   public constructor(options: ItemsRequestOptions) {
-    super()
-    this.docType = options.docType
-    this.namespaces =
-      options.namespaces instanceof Map
-        ? options.namespaces
-        : new Map(Object.entries(options.namespaces).map(([ns, inner]) => [ns, new Map(Object.entries(inner))]))
+    super(
+      buildStructure([
+        ['docType', options.docType],
+        [
+          'nameSpaces',
+          options.namespaces instanceof Map
+            ? options.namespaces
+            : new Map(Object.entries(options.namespaces).map(([ns, inner]) => [ns, new Map(Object.entries(inner))])),
+        ],
+      ])
+    )
   }
 
-  public encodedStructure(): ItemsRequestStructure {
-    return {
-      docType: this.docType,
-      nameSpaces: this.namespaces,
-    }
+  public get docType(): DocType {
+    return this.structure.get('docType') as DocType
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: ItemsRequestStructure | Map<unknown, unknown>
-  ): ItemsRequest {
-    let structure = encodedStructure as ItemsRequestStructure
+  public get namespaces(): Map<Namespace, Map<DataElementIdentifier, IntentToRetain>> {
+    return this.structure.get('nameSpaces') as Map<Namespace, Map<DataElementIdentifier, IntentToRetain>>
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as ItemsRequestStructure
-    }
+  public override encodedStructure(): ItemsRequestStructure {
+    return super.encodedStructure() as ItemsRequestStructure
+  }
 
-    return new ItemsRequest({
-      docType: structure.docType,
-      namespaces: structure.nameSpaces,
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): ItemsRequest {
+    return fromEncoded(ItemsRequest, encodedStructure)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ItemsRequest {
+    return decodeBytes(ItemsRequest, bytes, options)
   }
 }

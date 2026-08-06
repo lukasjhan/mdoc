@@ -1,6 +1,17 @@
-import { CborStructure, DataItem } from '../../cbor'
+import { z } from 'zod'
+import {
+  type CborDecodeOptions,
+  CborStructure,
+  cborDataItem,
+  cborDynamicMap,
+  type DataItem,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import { IssuerSignedItem, type IssuerSignedItemStructure } from './issuer-signed-item'
 import type { Namespace } from './namespace'
+
+const schema = cborDynamicMap(z.string(), z.array(cborDataItem(IssuerSignedItem)))
 
 export type IssuerNamespaceStructure = Map<Namespace, Array<DataItem<IssuerSignedItemStructure>>>
 
@@ -9,38 +20,29 @@ export type IssuerNamespaceOptions = {
 }
 
 export class IssuerNamespace extends CborStructure {
-  public issuerNamespaces: Map<Namespace, Array<IssuerSignedItem>>
+  public static override schema = schema
 
   public constructor(options: IssuerNamespaceOptions) {
-    super()
-    this.issuerNamespaces = options.issuerNamespaces
+    super(new Map(options.issuerNamespaces))
   }
 
-  public encodedStructure(): IssuerNamespaceStructure {
-    const map: IssuerNamespaceStructure = new Map()
-
-    this.issuerNamespaces.forEach((v, k) => {
-      const value = v.map((isi) => DataItem.fromData(isi.encodedStructure()))
-      map.set(k, value)
-    })
-
-    return map
-  }
-
-  public static override fromEncodedStructure(encodedStructure: IssuerNamespaceStructure): IssuerNamespace {
-    const issuerNamespaces = new Map()
-
-    encodedStructure.forEach((v, k) => {
-      issuerNamespaces.set(
-        k,
-        v.map((di) => IssuerSignedItem.fromEncodedStructure(di.data))
-      )
-    })
-
-    return new IssuerNamespace({ issuerNamespaces })
+  public get issuerNamespaces(): Map<Namespace, Array<IssuerSignedItem>> {
+    return this.structure as Map<Namespace, Array<IssuerSignedItem>>
   }
 
   public get(namespace: string) {
     return this.issuerNamespaces.get(namespace)
+  }
+
+  public override encodedStructure(): IssuerNamespaceStructure {
+    return super.encodedStructure() as IssuerNamespaceStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): IssuerNamespace {
+    return fromEncoded(IssuerNamespace, encodedStructure)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): IssuerNamespace {
+    return decodeBytes(IssuerNamespace, bytes, options)
   }
 }

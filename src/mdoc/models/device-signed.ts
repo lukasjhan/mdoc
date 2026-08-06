@@ -1,6 +1,21 @@
-import { CborStructure, DataItem } from '../../cbor'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborDataItem,
+  cborMap,
+  cborStructure,
+  type DataItem,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import { DeviceAuth, type DeviceAuthStructure } from './device-auth'
 import { DeviceNamespaces, type DeviceNamespacesStructure } from './device-namespaces'
+
+const schema = cborMap([
+  ['nameSpaces', cborDataItem(DeviceNamespaces)],
+  ['deviceAuth', cborStructure(DeviceAuth)],
+])
 
 export type DeviceSignedStructure = {
   nameSpaces: DataItem<DeviceNamespacesStructure>
@@ -13,34 +28,34 @@ export type DeviceSignedOptions = {
 }
 
 export class DeviceSigned extends CborStructure {
-  public deviceNamespaces: DeviceNamespaces
-  public deviceAuth: DeviceAuth
+  public static override schema = schema
 
   public constructor(options: DeviceSignedOptions) {
-    super()
-    this.deviceNamespaces = options.deviceNamespaces
-    this.deviceAuth = options.deviceAuth
+    super(
+      buildStructure([
+        ['nameSpaces', options.deviceNamespaces],
+        ['deviceAuth', options.deviceAuth],
+      ])
+    )
   }
 
-  public encodedStructure(): DeviceSignedStructure {
-    return {
-      nameSpaces: DataItem.fromData(this.deviceNamespaces.encodedStructure()),
-      deviceAuth: this.deviceAuth.encodedStructure(),
-    }
+  public get deviceNamespaces(): DeviceNamespaces {
+    return this.structure.get('nameSpaces') as DeviceNamespaces
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: DeviceSignedStructure | Map<unknown, unknown>
-  ): DeviceSigned {
-    let structure = encodedStructure as DeviceSignedStructure
+  public get deviceAuth(): DeviceAuth {
+    return this.structure.get('deviceAuth') as DeviceAuth
+  }
 
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as DeviceSignedStructure
-    }
+  public override encodedStructure(): DeviceSignedStructure {
+    return super.encodedStructure() as DeviceSignedStructure
+  }
 
-    return new DeviceSigned({
-      deviceAuth: DeviceAuth.fromEncodedStructure(structure.deviceAuth),
-      deviceNamespaces: DeviceNamespaces.fromEncodedStructure(structure.nameSpaces.data),
-    })
+  public static override fromEncodedStructure(encodedStructure: unknown): DeviceSigned {
+    return fromEncoded(DeviceSigned, encodedStructure)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DeviceSigned {
+    return decodeBytes(DeviceSigned, bytes, options)
   }
 }

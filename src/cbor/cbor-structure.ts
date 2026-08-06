@@ -76,8 +76,9 @@ export abstract class CborStructure {
   }
 }
 
+// Only the prototype is needed: instances are built with Object.create, never
+// through the constructor, so a model may keep its constructor private.
 type SchemaBackedClass<T extends CborStructure> = {
-  new (...args: never[]): T
   prototype: T
   schema?: z.ZodType
   name: string

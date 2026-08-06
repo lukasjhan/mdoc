@@ -18,8 +18,9 @@ export type CborMap = Map<CborKey, unknown>
 /** A single member of a CBOR map structure. */
 export type CborField = readonly [key: CborKey, schema: z.ZodType]
 
+// Only the static decoder is needed, so a model may keep its constructor
+// private -- IssuerSignedItem builds through fromOptions instead.
 type CborStructureClass<T extends CborStructure> = {
-  new (...args: never[]): T
   fromEncodedStructure(encodedStructure: unknown): T
 }
 
@@ -241,7 +242,17 @@ export const cborDynamicMap = (keySchema: z.ZodType, valueSchema: z.ZodType) =>
         return decoded
       },
 
-      encode: (decoded) => new Map<unknown, unknown>(decoded),
+      encode: (decoded) => {
+        const encoded = new Map<unknown, unknown>()
+
+        // The value schema has to run here too: for a map of nested structures
+        // it is what turns each instance back into its encoded form.
+        for (const [key, value] of decoded) {
+          encoded.set(key, z.encode(valueSchema, value))
+        }
+
+        return encoded
+      },
     }
   )
 

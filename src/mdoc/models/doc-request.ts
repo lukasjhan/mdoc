@@ -1,6 +1,21 @@
-import { type CborDecodeOptions, CborStructure, cborDecode, DataItem } from '../../cbor'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborDataItem,
+  cborMap,
+  cborStructure,
+  type DataItem,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import { ItemsRequest, type ItemsRequestStructure } from './items-request'
 import { ReaderAuth, type ReaderAuthStructure } from './reader-auth'
+
+const schema = cborMap([
+  ['itemsRequest', cborDataItem(ItemsRequest)],
+  ['readerAuth', cborStructure(ReaderAuth).optional()],
+])
 
 export type DocRequestStructure = {
   itemsRequest: DataItem<ItemsRequestStructure>
@@ -13,44 +28,34 @@ export type DocRequestOptions = {
 }
 
 export class DocRequest extends CborStructure {
-  public itemsRequest: ItemsRequest
-  public readerAuth?: ReaderAuth
+  public static override schema = schema
 
   public constructor(options: DocRequestOptions) {
-    super()
-    this.itemsRequest = options.itemsRequest
-    this.readerAuth = options.readerAuth
+    super(
+      buildStructure([
+        ['itemsRequest', options.itemsRequest],
+        ['readerAuth', options.readerAuth],
+      ])
+    )
   }
 
-  public encodedStructure(): DocRequestStructure {
-    const structure: DocRequestStructure = {
-      itemsRequest: DataItem.fromData(this.itemsRequest.encodedStructure()),
-    }
-
-    if (this.readerAuth) {
-      structure.readerAuth = this.readerAuth.encodedStructure()
-    }
-
-    return structure
+  public get itemsRequest(): ItemsRequest {
+    return this.structure.get('itemsRequest') as ItemsRequest
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: DocRequestStructure | Map<unknown, unknown>
-  ): DocRequest {
-    let structure = encodedStructure as DocRequestStructure
-
-    if (encodedStructure instanceof Map) {
-      structure = Object.fromEntries(encodedStructure.entries()) as DocRequestStructure
-    }
-
-    return new DocRequest({
-      itemsRequest: ItemsRequest.fromEncodedStructure(structure.itemsRequest.data),
-      readerAuth: structure.readerAuth ? ReaderAuth.fromEncodedStructure(structure.readerAuth) : undefined,
-    })
+  public get readerAuth(): ReaderAuth | undefined {
+    return this.structure.get('readerAuth') as ReaderAuth | undefined
   }
 
-  public static decode(bytes: Uint8Array, options?: CborDecodeOptions): DocRequest {
-    const map = cborDecode<Map<unknown, unknown>>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return DocRequest.fromEncodedStructure(map)
+  public override encodedStructure(): DocRequestStructure {
+    return super.encodedStructure() as DocRequestStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): DocRequest {
+    return fromEncoded(DocRequest, encodedStructure)
+  }
+
+  public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): DocRequest {
+    return decodeBytes(DocRequest, bytes, options)
   }
 }

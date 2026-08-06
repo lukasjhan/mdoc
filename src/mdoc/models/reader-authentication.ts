@@ -1,6 +1,23 @@
-import { type CborDecodeOptions, CborStructure, cborDecode, DataItem } from '../../cbor'
+import { z } from 'zod'
+import {
+  buildStructure,
+  type CborDecodeOptions,
+  CborStructure,
+  cborArray,
+  cborDataItem,
+  cborStructure,
+  type DataItem,
+  decodeBytes,
+  fromEncoded,
+} from '../../cbor'
 import { ItemsRequest, type ItemsRequestStructure } from './items-request'
 import { SessionTranscript, type SessionTranscriptStructure } from './session-transcript'
+
+const schema = cborArray([
+  ['context', z.literal('ReaderAuthentication')],
+  ['sessionTranscript', cborStructure(SessionTranscript)],
+  ['itemsRequest', cborDataItem(ItemsRequest)],
+])
 
 export type ReaderAuthenticationStructure = [string, SessionTranscriptStructure, DataItem<ItemsRequestStructure>]
 
@@ -10,32 +27,35 @@ export type ReaderAuthenticationOptions = {
 }
 
 export class ReaderAuthentication extends CborStructure {
-  public sessionTranscript: SessionTranscript
-  public itemsRequest: ItemsRequest
+  public static override schema = schema
 
   public constructor(options: ReaderAuthenticationOptions) {
-    super()
-    this.sessionTranscript = options.sessionTranscript
-    this.itemsRequest = options.itemsRequest
+    super(
+      buildStructure([
+        ['context', 'ReaderAuthentication'],
+        ['sessionTranscript', options.sessionTranscript],
+        ['itemsRequest', options.itemsRequest],
+      ])
+    )
   }
 
-  public encodedStructure(): ReaderAuthenticationStructure {
-    return [
-      'ReaderAuthentication',
-      this.sessionTranscript.encodedStructure(),
-      DataItem.fromData(this.itemsRequest.encodedStructure()),
-    ]
+  public get sessionTranscript(): SessionTranscript {
+    return this.structure.get('sessionTranscript') as SessionTranscript
   }
 
-  public static override fromEncodedStructure(encodedStructure: ReaderAuthenticationStructure): ReaderAuthentication {
-    return new ReaderAuthentication({
-      sessionTranscript: SessionTranscript.fromEncodedStructure(encodedStructure[1]),
-      itemsRequest: ItemsRequest.fromEncodedStructure(encodedStructure[2].data),
-    })
+  public get itemsRequest(): ItemsRequest {
+    return this.structure.get('itemsRequest') as ItemsRequest
+  }
+
+  public override encodedStructure(): ReaderAuthenticationStructure {
+    return super.encodedStructure() as ReaderAuthenticationStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): ReaderAuthentication {
+    return fromEncoded(ReaderAuthentication, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): ReaderAuthentication {
-    const structure = cborDecode<ReaderAuthenticationStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return ReaderAuthentication.fromEncodedStructure(structure)
+    return decodeBytes(ReaderAuthentication, bytes, options)
   }
 }

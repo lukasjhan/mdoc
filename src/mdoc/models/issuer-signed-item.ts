@@ -1,10 +1,19 @@
-import { type CborDecodeOptions, CborStructure, cborDecode } from '../../cbor'
+import { z } from 'zod'
+import { buildStructure, type CborDecodeOptions, CborStructure, cborMap, decodeBytes, fromEncoded } from '../../cbor'
 import type { MdocContext } from '../../context'
 import { compareBytes } from '../../utils'
 import type { DataElementIdentifier } from './data-element-identifier'
 import type { DataElementValue } from './data-element-value'
 import type { IssuerAuth } from './issuer-auth'
 import type { Namespace } from './namespace'
+
+// The wire spells it digestID; the accessor below keeps this library's digestId.
+const schema = cborMap([
+  ['digestID', z.number()],
+  ['random', z.instanceof(Uint8Array)],
+  ['elementIdentifier', z.string()],
+  ['elementValue', z.unknown()],
+])
 
 export interface IssuerSignedItemStructure {
   digestID: number
@@ -13,7 +22,6 @@ export interface IssuerSignedItemStructure {
   elementValue: DataElementValue
 }
 
-// NOTE: Id vs ID above
 export type IssuerSignedItemOptions = {
   digestId: number
   random: Uint8Array
@@ -22,27 +30,33 @@ export type IssuerSignedItemOptions = {
 }
 
 export class IssuerSignedItem extends CborStructure {
-  #issuerSignedItemStructure: IssuerSignedItemStructure
+  public static override schema = schema
 
-  private constructor(options: IssuerSignedItemStructure) {
-    super()
-
-    this.#issuerSignedItemStructure = options
-  }
-
-  public get random(): Uint8Array {
-    return this.#issuerSignedItemStructure.random
-  }
-  public get elementIdentifier(): DataElementIdentifier {
-    return this.#issuerSignedItemStructure.elementIdentifier
-  }
-
-  public get elementValue(): DataElementValue {
-    return this.#issuerSignedItemStructure.elementValue
+  private constructor(options: IssuerSignedItemOptions) {
+    super(
+      buildStructure([
+        ['digestID', options.digestId],
+        ['random', options.random],
+        ['elementIdentifier', options.elementIdentifier],
+        ['elementValue', options.elementValue],
+      ])
+    )
   }
 
   public get digestId(): number {
-    return this.#issuerSignedItemStructure.digestID
+    return this.structure.get('digestID') as number
+  }
+
+  public get random(): Uint8Array {
+    return this.structure.get('random') as Uint8Array
+  }
+
+  public get elementIdentifier(): DataElementIdentifier {
+    return this.structure.get('elementIdentifier') as DataElementIdentifier
+  }
+
+  public get elementValue(): DataElementValue {
+    return this.structure.get('elementValue')
   }
 
   public async isValid(namespace: Namespace, issuerAuth: IssuerAuth, ctx: Pick<MdocContext, 'crypto'>) {
@@ -75,29 +89,19 @@ export class IssuerSignedItem extends CborStructure {
     return false
   }
 
-  public encodedStructure(): IssuerSignedItemStructure {
-    return this.#issuerSignedItemStructure
-  }
-
   public static fromOptions(options: IssuerSignedItemOptions) {
-    return new IssuerSignedItem({
-      digestID: options.digestId,
-      random: options.random,
-      elementIdentifier: options.elementIdentifier,
-      elementValue: options.elementValue,
-    })
+    return new IssuerSignedItem(options)
   }
 
-  public static override fromEncodedStructure(
-    encodedStructure: IssuerSignedItemStructure | Map<unknown, unknown>
-  ): IssuerSignedItem {
-    return new IssuerSignedItem(
-      encodedStructure instanceof Map ? Object.fromEntries(encodedStructure.entries()) : encodedStructure
-    )
+  public override encodedStructure(): IssuerSignedItemStructure {
+    return super.encodedStructure() as IssuerSignedItemStructure
+  }
+
+  public static override fromEncodedStructure(encodedStructure: unknown): IssuerSignedItem {
+    return fromEncoded(IssuerSignedItem, encodedStructure)
   }
 
   public static override decode(bytes: Uint8Array, options?: CborDecodeOptions): IssuerSignedItem {
-    const structure = cborDecode<IssuerSignedItemStructure>(bytes, { ...(options ?? {}), mapsAsObjects: false })
-    return IssuerSignedItem.fromEncodedStructure(structure)
+    return decodeBytes(IssuerSignedItem, bytes, options)
   }
 }
