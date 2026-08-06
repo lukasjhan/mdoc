@@ -750,3 +750,7 @@ pnpm release
 ## License
 
 Apache-2.0.
+
+This library began as a fork of
+[openwallet-foundation-labs/mdoc-ts](https://github.com/openwallet-foundation-labs/mdoc-ts)
+and has since diverged.

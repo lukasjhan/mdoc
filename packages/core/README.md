@@ -525,11 +525,3 @@ Node 20.19 or newer. Ships ESM and CJS, with type declarations for both.
 ## License
 
 Apache-2.0.
-
-## Credits
-
-Thanks to:
-
-- [auth0/mdl](https://github.com/auth0-lab/mdl) for the mdl implementation this repository started from.
-- [animo-id/mdoc](https://github.com/openwallet-foundation-labs/mdoc-ts) for the rework this library grew out of.
-- [auer-martin](https://github.com/auer-martin) for removing the Node.js dependencies and providing a pluggable crypto interface.
